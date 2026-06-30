@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1920px;height:1080px;overflow:hidden;background:#0a0a0a;font-family:'Inter',sans-serif}
+.bg-blob1{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(163,230,53,0.12) 0%,rgba(163,230,53,0) 70%);left:-80px;top:100px}
+.bg-blob2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,0.08) 0%,rgba(249,115,22,0) 70%);right:80px;bottom:80px}
+.bg-label{position:absolute;font-family:'Space Grotesk',sans-serif;font-size:160px;font-weight:700;color:rgba(163,230,53,0.04);white-space:nowrap;top:50%;transform:translateY(-50%);left:1140px}
+.divider{position:absolute;left:1100px;top:0;width:2px;height:1080px;background:rgba(163,230,53,0.1)}
+.bg-title{position:absolute;left:1180px;top:50%;transform:translateY(-50%)}
+.bg-title h1{font-family:'Space Grotesk',sans-serif;font-size:52px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:16px}
+.bg-title p{font-size:21px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:560px}
+.video-badge{position:absolute;bottom:48px;left:1180px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:10px 20px}
+.video-badge span{font-family:'Space Grotesk',sans-serif;font-size:18px;color:#A3E635;font-weight:700}
+.video-badge small{font-size:15px;color:rgba(255,255,255,0.5)}
+.phone-wrap{position:absolute;left:757px;top:110px}
+.phone-outer{width:406px;height:860px;border-radius:52px;background:#111;border:7px solid #1a1a1a;box-shadow:0 0 0 1px rgba(255,255,255,0.08),0 40px 80px rgba(0,0,0,0.8),0 0 60px rgba(163,230,53,0.08);position:relative;overflow:hidden}
+.phone-notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:30px;background:#0a0a0a;border-radius:20px;z-index:100}
+.phone-screen{position:absolute;top:0;left:0;width:392px;height:846px;border-radius:45px;overflow:hidden}
+.status-bar{position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;z-index:50}
+.status-bar .time{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#0F172A}
+.status-bar .icons{font-size:13px;color:#0F172A}
+.scene{position:absolute;top:0;left:0;width:392px;height:846px;overflow:hidden;background:#FAF8F3}
+.si{position:absolute;top:50px;left:0;right:0;bottom:0;overflow:hidden}
+.ab{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 10px;border-bottom:1px solid #E2E8F0}
+.ab h2{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:#0F172A}
+.back-btn{width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:15px}
+.spc{width:34px}
+
+/* Scene 1: Team */
+#s1 .hero-card{background:#0F5132;border-radius:22px;margin:12px 16px 10px;padding:18px;display:flex;flex-direction:column;gap:10px}
+#s1 .hero-label{font-size:11px;font-weight:700;color:#A3E635;letter-spacing:1.4px}
+#s1 .hero-name{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#fff}
+#s1 .hero-sub{font-size:12px;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:6px}
+#s1 .section-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#0F172A;padding:8px 16px 10px}
+#s1 .mate-grid{display:flex;gap:10px;padding:0 16px;flex-wrap:wrap}
+#s1 .mate{display:flex;flex-direction:column;align-items:center;gap:4px;width:56px}
+#s1 .mate-av{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#fff}
+#s1 .mate-name{font-size:10px;color:#334155;text-align:center}
+#s1 .mate-streak{font-size:10px;color:#F97316;font-weight:700}
+#s1 .match-card{background:#F97316;border-radius:18px;margin:10px 16px 0;padding:16px;display:flex;flex-direction:column;gap:6px}
+#s1 .match-label{font-size:11px;font-weight:700;color:#FFEDD5;letter-spacing:1.2px}
+#s1 .match-name{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#fff}
+#s1 .match-meta{font-size:12px;color:#FFEDD5}
+
+/* Scene 2: Calendar */
+#s2 .month-label{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#0F172A;padding:12px 16px 10px}
+#s2 .cal-grid{background:#fff;border-radius:18px;margin:0 16px 10px;padding:12px;border:1px solid #E2E8F0}
+#s2 .cal-head{display:flex;justify-content:space-around;margin-bottom:8px}
+#s2 .cal-head span{font-size:11px;font-weight:600;color:#94A3B8;width:34px;text-align:center}
+#s2 .cal-row{display:flex;justify-content:space-around;margin-bottom:4px}
+#s2 .cal-day{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#334155}
+#s2 .cal-day.today{background:#0F5132;color:#fff;font-weight:700}
+#s2 .cal-day.event{background:#DCFCE7;color:#15803D;font-weight:600}
+#s2 .cal-day.match{background:#FFEDD5;color:#F97316;font-weight:600}
+#s2 .cal-day.empty{opacity:0}
+#s2 .event-list{padding:0 16px;display:flex;flex-direction:column;gap:8px}
+#s2 .ev-chip{border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+#s2 .ev-chip.green{background:#DCFCE7}
+#s2 .ev-chip.orange{background:#FFEDD5}
+#s2 .ev-label{font-size:13px;font-weight:600}
+#s2 .ev-label.green{color:#15803D}
+#s2 .ev-label.orange{color:#D97706}
+
+/* Scene 3: Stats */
+#s3 .big-stat{background:#0F5132;border-radius:22px;margin:12px 16px 10px;padding:22px;display:flex;flex-direction:column;gap:6px}
+#s3 .bs-label{font-size:11px;font-weight:700;color:#A3E635;letter-spacing:1.4px}
+#s3 .bs-pct{font-family:'Space Grotesk',sans-serif;font-size:64px;font-weight:700;color:#fff;line-height:1}
+#s3 .bs-sub{font-size:12px;color:#DCFCE7}
+#s3 .streak-row{display:flex;gap:10px;margin:0 16px 10px}
+#s3 .streak-card{flex:1;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:4px}
+#s3 .streak-val{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700}
+#s3 .streak-lbl{font-size:11px;font-weight:600}
+#s3 .bar-chart{background:#fff;border-radius:16px;margin:0 16px 10px;padding:12px;height:80px;display:flex;align-items:flex-end;gap:5px;border:1px solid #E2E8F0}
+#s3 .bar{border-radius:5px;flex:1}
+#s3 .motiv-chip{margin:0 16px;background:#DCFCE7;border-radius:12px;padding:12px 14px;display:flex;gap:8px;font-size:12px;color:#15803D;font-weight:600}
+
+/* Scene 4: Achievements */
+#s4 .sum-card{background:#A3E635;border-radius:18px;margin:12px 16px 10px;padding:16px;display:flex;justify-content:space-between;align-items:center}
+#s4 .sum-num{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;color:#0B3D2E}
+#s4 .sum-sub{font-size:12px;font-weight:600;color:#0B3D2E}
+#s4 .sec-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#0F172A;padding:6px 16px 8px}
+#s4 .ach-card{margin:0 16px 8px;background:#0F5132;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px}
+#s4 .ach-icon{width:42px;height:42px;border-radius:50%;background:#A3E635;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+#s4 .ach-name{font-size:13px;font-weight:700;color:#fff}
+#s4 .ach-desc{font-size:11px;color:#DCFCE7;margin-top:2px}
+#s4 .ach-locked{margin:0 16px 8px;background:#fff;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;border:1px solid #E2E8F0;opacity:0.55}
+#s4 .ach-locked-icon{width:42px;height:42px;border-radius:50%;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+#s4 .ach-locked-name{font-size:13px;font-weight:600;color:#64748B}
+#s4 .ach-locked-hint{font-size:11px;color:#94A3B8;margin-top:2px}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video4" data-width="1920" data-height="1080" data-start="0" data-duration="18">
+  <div class="bg-blob1"></div><div class="bg-blob2"></div>
+  <div class="bg-label">ALUMNO</div>
+  <div class="divider"></div>
+  <div class="bg-title" id="bg-title">
+    <h1>Módulo alumno:<br>equipo · stats · logros</h1>
+    <p>El alumno tiene su propia experiencia: ve su equipo, calendario, estadísticas y logros desbloqueados.</p>
+  </div>
+  <div class="video-badge" id="video-badge">
+    <div style="width:28px;height:28px;border-radius:8px;background:#F97316;display:flex;align-items:center;justify-content:center;font-size:15px">⚽</div>
+    <span>Video 4 / 5</span><small>Módulo alumno</small>
+  </div>
+  <div class="phone-wrap">
+    <div class="phone-outer">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+
+        <!-- Scene 1: Team -->
+        <div id="s1" class="scene">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div id="s1-ab" class="ab"><div class="back-btn">‹</div><h2>Mi Equipo</h2><div class="spc"></div></div>
+            <div id="s1-hero" class="hero-card">
+              <div class="hero-label">CATEGORÍA</div>
+              <div class="hero-name">U-12 Halcones</div>
+              <div class="hero-sub">👤 Coach: María González</div>
+            </div>
+            <div id="s1-sec" class="section-title">Mis compañeros · 6</div>
+            <div id="s1-mates" class="mate-grid">
+              <div class="mate"><div class="mate-av" style="background:#15803D">DG</div><span class="mate-name">Daniela</span><span class="mate-streak">🔥5</span></div>
+              <div class="mate"><div class="mate-av" style="background:#F97316">CS</div><span class="mate-name">Carlos</span><span class="mate-streak">🔥3</span></div>
+              <div class="mate"><div class="mate-av" style="background:#3B82F6">SF</div><span class="mate-name">Sofía</span><span class="mate-streak">🔥8</span></div>
+              <div class="mate"><div class="mate-av" style="background:#A855F7">MH</div><span class="mate-name">Miguel</span><span class="mate-streak">🔥1</span></div>
+              <div class="mate"><div class="mate-av" style="background:#EAB308">AL</div><span class="mate-name">Ana</span><span class="mate-streak">🔥4</span></div>
+              <div class="mate"><div class="mate-av" style="background:#EC4899">PM</div><span class="mate-name">Pedro</span><span class="mate-streak">🔥2</span></div>
+            </div>
+            <div id="s1-match" class="match-card">
+              <div class="match-label">PRÓXIMO PARTIDO</div>
+              <div class="match-name">⚽ Vs Tigres FC</div>
+              <div class="match-meta">Sábado 17 mayo · 10:00 · Campo A</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene 2: Calendar -->
+        <div id="s2" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div id="s2-ab" class="ab"><div class="back-btn">‹</div><h2>Mi Calendario</h2><div class="spc"></div></div>
+            <div id="s2-month" class="month-label">Mayo 2026</div>
+            <div id="s2-cal" class="cal-grid">
+              <div class="cal-head"><span>D</span><span>L</span><span>M</span><span>Mi</span><span>J</span><span>V</span><span>S</span></div>
+              <div class="cal-row"><span class="cal-day empty"></span><span class="cal-day empty"></span><span class="cal-day empty"></span><span class="cal-day empty"></span><span class="cal-day">1</span><span class="cal-day event">2</span><span class="cal-day">3</span></div>
+              <div class="cal-row"><span class="cal-day">4</span><span class="cal-day event">5</span><span class="cal-day">6</span><span class="cal-day event">7</span><span class="cal-day">8</span><span class="cal-day event">9</span><span class="cal-day">10</span></div>
+              <div class="cal-row"><span class="cal-day">11</span><span class="cal-day event">12</span><span class="cal-day today">13</span><span class="cal-day event">14</span><span class="cal-day">15</span><span class="cal-day event">16</span><span class="cal-day match">17</span></div>
+              <div class="cal-row"><span class="cal-day">18</span><span class="cal-day event">19</span><span class="cal-day">20</span><span class="cal-day event">21</span><span class="cal-day">22</span><span class="cal-day event">23</span><span class="cal-day">24</span></div>
+            </div>
+            <div id="s2-legend" style="display:flex;gap:14px;padding:0 16px 10px">
+              <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:#DCFCE7"></div><span style="font-size:11px;color:#64748B">Entreno</span></div>
+              <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:#FFEDD5"></div><span style="font-size:11px;color:#64748B">Partido</span></div>
+            </div>
+            <div id="s2-events" class="event-list">
+              <div class="ev-chip green">🏃 <span class="ev-label green">Entreno Sub-12 · Miérc 14 mayo</span></div>
+              <div class="ev-chip orange">⚽ <span class="ev-label orange">Partido Vs Tigres · Sáb 17 mayo</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene 3: Stats -->
+        <div id="s3" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div id="s3-ab" class="ab"><div class="back-btn">‹</div><h2>Mis Estadísticas</h2><div class="spc"></div></div>
+            <div id="s3-big" class="big-stat">
+              <div class="bs-label">ASISTENCIA TOTAL</div>
+              <div class="bs-pct">95%</div>
+              <div class="bs-sub">22 de 24 sesiones · ¡Top 3 de tu equipo!</div>
+            </div>
+            <div id="s3-streaks" class="streak-row">
+              <div class="streak-card" style="background:#F97316">
+                <div class="streak-val" style="color:#fff">🔥 8</div>
+                <div class="streak-lbl" style="color:#FFEDD5">Racha actual</div>
+              </div>
+              <div class="streak-card" style="background:#A3E635">
+                <div class="streak-val" style="color:#0B3D2E">⭐ 12</div>
+                <div class="streak-lbl" style="color:#0B3D2E">Mejor racha</div>
+              </div>
+            </div>
+            <div id="s3-bars" class="bar-chart">
+              <div class="bar" style="background:#15803D;height:70%"></div>
+              <div class="bar" style="background:#15803D;height:55%"></div>
+              <div class="bar" style="background:#15803D;height:85%"></div>
+              <div class="bar" style="background:#15803D;height:65%"></div>
+              <div class="bar" style="background:#CBD5E1;height:25%"></div>
+              <div class="bar" style="background:#15803D;height:80%"></div>
+              <div class="bar" style="background:#15803D;height:60%"></div>
+              <div class="bar" style="background:#15803D;height:90%"></div>
+            </div>
+            <div id="s3-motiv" class="motiv-chip">✨ Si vas mañana, sumas 9 seguidas y desbloqueas un logro 🏆</div>
+          </div>
+        </div>
+
+        <!-- Scene 4: Achievements -->
+        <div id="s4" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div id="s4-ab" class="ab"><div class="back-btn">‹</div><h2>Mis Logros</h2><div class="spc"></div></div>
+            <div id="s4-sum" class="sum-card">
+              <div><div class="sum-num">5 / 17</div><div class="sum-sub">Sigue jugando para más</div></div>
+              <span style="font-size:32px">🏆</span>
+            </div>
+            <div id="s4-sec1" class="sec-title">Desbloqueados 🎉</div>
+            <div id="s4-a1" class="ach-card"><div class="ach-icon">⭐</div><div><div class="ach-name">Primer entrenamiento</div><div class="ach-desc">Completaste tu primera sesión</div></div></div>
+            <div id="s4-a2" class="ach-card"><div class="ach-icon">🔥</div><div><div class="ach-name">Racha 5 sesiones</div><div class="ach-desc">5 entrenamientos consecutivos</div></div></div>
+            <div id="s4-sec2" class="sec-title">Por descubrir 🔒</div>
+            <div id="s4-a3" class="ach-locked"><div class="ach-locked-icon">🔒</div><div><div class="ach-locked-name">Racha 10 sesiones</div><div class="ach-locked-hint">Sigue entrenando...</div></div></div>
+            <div id="s4-a4" class="ach-locked"><div class="ach-locked-icon">🔒</div><div><div class="ach-locked-name">100% asistencia</div><div class="ach-locked-hint">Sin faltas un mes completo</div></div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+var tl = gsap.timeline({ paused: true, onComplete: function(){ tl.play(0); } });
+
+tl.from('#s1-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, 0.2);
+tl.from('#s1-hero', { y: 20, opacity: 0, scale: 0.97, duration: 0.5, ease: 'power3.out' }, 0.35);
+tl.from('#s1-sec', { opacity: 0, duration: 0.3, ease: 'sine.out' }, 0.55);
+tl.from('#s1-mates .mate', { y: 15, opacity: 0, duration: 0.35, ease: 'power2.out', stagger: 0.06 }, 0.65);
+tl.from('#s1-match', { y: 15, opacity: 0, duration: 0.4, ease: 'back.out(1.4)' }, 1.0);
+tl.from('#bg-title,#video-badge', { x: 40, opacity: 0, duration: 0.8, ease: 'power3.out', stagger: 0.15 }, 0.3);
+
+var T12 = 3.0;
+tl.to('#s1', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T12);
+tl.fromTo('#s2', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T12);
+tl.set('#s1', { opacity: 0 }, T12 + 0.41);
+
+var S2 = T12 + 0.41;
+tl.from('#s2-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, S2 + 0.05);
+tl.from('#s2-month', { x: -15, opacity: 0, duration: 0.4, ease: 'expo.out' }, S2 + 0.15);
+tl.from('#s2-cal', { y: 15, opacity: 0, duration: 0.5, ease: 'power2.out' }, S2 + 0.25);
+tl.from('#s2-legend', { opacity: 0, duration: 0.3, ease: 'sine.out' }, S2 + 0.5);
+tl.from('#s2-events .ev-chip', { x: -15, opacity: 0, duration: 0.4, ease: 'power2.out', stagger: 0.12 }, S2 + 0.6);
+
+var T23 = S2 + 2.6;
+tl.to('#s2', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T23);
+tl.fromTo('#s3', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T23);
+tl.set('#s2', { opacity: 0 }, T23 + 0.41);
+
+var S3 = T23 + 0.41;
+tl.from('#s3-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, S3 + 0.05);
+tl.from('#s3-big', { y: 20, opacity: 0, scale: 0.97, duration: 0.5, ease: 'power3.out' }, S3 + 0.2);
+tl.from('#s3-streaks .streak-card', { y: 15, opacity: 0, duration: 0.4, ease: 'power2.out', stagger: 0.1 }, S3 + 0.45);
+tl.from('#s3-bars .bar', { scaleY: 0, transformOrigin: 'bottom', duration: 0.5, ease: 'power3.out', stagger: 0.04 }, S3 + 0.6);
+tl.from('#s3-motiv', { y: 10, opacity: 0, duration: 0.4, ease: 'sine.out' }, S3 + 0.85);
+
+var T34 = S3 + 2.6;
+tl.to('#s3', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T34);
+tl.fromTo('#s4', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T34);
+tl.set('#s3', { opacity: 0 }, T34 + 0.41);
+
+var S4 = T34 + 0.41;
+tl.from('#s4-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, S4 + 0.05);
+tl.from('#s4-sum', { y: 15, opacity: 0, scale: 0.96, duration: 0.5, ease: 'back.out(1.5)' }, S4 + 0.2);
+tl.from('#s4-sec1', { opacity: 0, duration: 0.3, ease: 'sine.out' }, S4 + 0.4);
+tl.from('#s4-a1, #s4-a2', { x: 20, opacity: 0, duration: 0.4, ease: 'power2.out', stagger: 0.1 }, S4 + 0.5);
+tl.from('#s4-sec2', { opacity: 0, duration: 0.3, ease: 'sine.out' }, S4 + 0.7);
+tl.from('#s4-a3, #s4-a4', { x: 20, opacity: 0, duration: 0.35, ease: 'power2.out', stagger: 0.1 }, S4 + 0.8);
+
+window.__timelines['video4'] = tl;
+document.addEventListener('DOMContentLoaded', function(){ tl.play(); });
+</script>
+</body>
+</html>

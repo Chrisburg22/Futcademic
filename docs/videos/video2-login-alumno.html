@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1920px;height:1080px;overflow:hidden;background:#0a0a0a;font-family:'Inter',sans-serif}
+.bg-blob1{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(163,230,53,0.12) 0%,rgba(163,230,53,0) 70%);right:-150px;top:-100px}
+.bg-blob2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(15,81,50,0.3) 0%,rgba(15,81,50,0) 70%);left:-50px;bottom:100px}
+.bg-label{position:absolute;font-family:'Space Grotesk',sans-serif;font-size:200px;font-weight:700;color:rgba(163,230,53,0.04);white-space:nowrap;top:50%;transform:translateY(-50%);left:1140px}
+.divider{position:absolute;left:1100px;top:0;width:2px;height:1080px;background:rgba(163,230,53,0.1)}
+.bg-title{position:absolute;left:1180px;top:50%;transform:translateY(-50%)}
+.bg-title h1{font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:16px}
+.bg-title p{font-size:22px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:560px}
+.video-badge{position:absolute;bottom:48px;left:1180px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:10px 20px}
+.video-badge span{font-family:'Space Grotesk',sans-serif;font-size:18px;color:#A3E635;font-weight:700}
+.video-badge small{font-size:15px;color:rgba(255,255,255,0.5)}
+
+.phone-wrap{position:absolute;left:757px;top:110px}
+.phone-outer{width:406px;height:860px;border-radius:52px;background:#111;border:7px solid #1a1a1a;box-shadow:0 0 0 1px rgba(255,255,255,0.08),0 40px 80px rgba(0,0,0,0.8),0 0 60px rgba(163,230,53,0.08);position:relative;overflow:hidden}
+.phone-notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:30px;background:#0a0a0a;border-radius:20px;z-index:100}
+.phone-screen{position:absolute;top:0;left:0;width:392px;height:846px;border-radius:45px;overflow:hidden}
+
+.status-bar{position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;z-index:50}
+.status-bar .time{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#0F172A}
+.status-bar .icons{font-size:13px;color:#0F172A}
+.status-bar.light-text .time,.status-bar.light-text .icons{color:#fff}
+
+.scene{position:absolute;top:0;left:0;width:392px;height:846px;overflow:hidden;background:#FAF8F3}
+.scene.green-bg{background:#0F5132}
+.scene.dark-bg{background:#0F172A}
+.scene-inner{position:absolute;top:50px;left:0;right:0;bottom:0;overflow:hidden}
+
+/* Scene 1: Login */
+#s1 .logo-row{display:flex;align-items:center;gap:12px;padding:32px 28px 8px}
+#s1 .logo-box{width:44px;height:44px;border-radius:13px;background:#15803D;display:flex;align-items:center;justify-content:center;font-size:22px}
+#s1 .logo-text{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#0F172A}
+#s1 .headline{padding:10px 28px 24px}
+#s1 .headline h1{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#0F172A;margin-bottom:6px}
+#s1 .headline p{font-size:13px;color:#64748B}
+#s1 .fields{padding:0 20px;display:flex;flex-direction:column;gap:12px}
+#s1 .field-wrap{display:flex;flex-direction:column;gap:6px}
+#s1 .field-lbl{font-size:12px;font-weight:600;color:#334155}
+#s1 .field-inp{background:#fff;border:1px solid #E2E8F0;border-radius:14px;height:48px;padding:0 14px;display:flex;align-items:center;font-size:14px;color:#64748B}
+#s1 .field-inp.filled{color:#0F172A}
+#s1 .cta-primary{margin:20px 20px 0;height:52px;background:#15803D;border-radius:14px;display:flex;align-items:center;justify-content:center}
+#s1 .cta-primary span{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#fff}
+#s1 .divider-row{display:flex;align-items:center;gap:12px;padding:16px 20px}
+#s1 .div-line{flex:1;height:1px;background:#E2E8F0}
+#s1 .div-txt{font-size:12px;color:#94A3B8}
+#s1 .cta-secondary{margin:0 20px;height:48px;border-radius:14px;border:1px solid #E2E8F0;background:#fff;display:flex;align-items:center;justify-content:center}
+#s1 .cta-secondary span{font-size:14px;font-weight:600;color:#334155}
+#s1 .alumno-link{text-align:center;padding:16px 20px 0;font-size:13px;font-weight:600;color:#15803D}
+
+/* Scene 2: Student Login */
+#s2 .back-btn{position:absolute;top:10px;left:16px;width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:16px}
+#s2 .logo-row{display:flex;align-items:center;gap:12px;padding:28px 28px 8px}
+#s2 .logo-box{width:44px;height:44px;border-radius:13px;background:#DCFCE7;display:flex;align-items:center;justify-content:center;font-size:24px}
+#s2 .logo-text{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#0F172A}
+#s2 .headline{padding:8px 28px 20px}
+#s2 .headline h1{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#0F172A;margin-bottom:6px}
+#s2 .headline p{font-size:12px;color:#64748B;line-height:1.5}
+#s2 .fields{padding:0 20px;display:flex;flex-direction:column;gap:12px}
+#s2 .field-wrap{display:flex;flex-direction:column;gap:6px}
+#s2 .field-lbl{font-size:12px;font-weight:600;color:#334155}
+#s2 .field-inp{background:#fff;border:1px solid #E2E8F0;border-radius:14px;height:48px;padding:0 14px;display:flex;align-items:center;font-size:14px;color:#0F172A}
+#s2 .field-inp.dim{color:#94A3B8}
+#s2 .cta{margin:20px 20px 0;height:52px;background:#15803D;border-radius:14px;display:flex;align-items:center;justify-content:center}
+#s2 .cta span{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#fff}
+#s2 .bottom-link{text-align:center;padding:14px 20px 0;font-size:12px;color:#64748B}
+#s2 .bottom-link strong{color:#15803D}
+
+/* Scene 3: Onboarding */
+#s3 .onb-body{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:24px;padding:20px}
+#s3 .onb-circle{width:180px;height:180px;border-radius:50%;background:#A3E635;display:flex;align-items:center;justify-content:center;font-size:80px}
+#s3 .onb-text{display:flex;flex-direction:column;align-items:center;gap:10px}
+#s3 .onb-text h1{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#fff;text-align:center}
+#s3 .onb-text p{font-size:13px;color:#DCFCE7;text-align:center;line-height:1.6;max-width:280px}
+#s3 .onb-btn{width:100%;height:54px;background:#A3E635;border-radius:16px;display:flex;align-items:center;justify-content:center}
+#s3 .onb-btn span{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:#0B3D2E}
+
+/* Scene 4: Student Home */
+#s4 .home-header{padding:12px 20px 4px;display:flex;align-items:center;justify-content:space-between}
+#s4 .home-header h2{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#0F172A}
+#s4 .home-header small{font-size:12px;color:#64748B;display:block;margin-bottom:2px}
+#s4 .avatar{width:44px;height:44px;border-radius:50%;background:#DCFCE7;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#15803D}
+#s4 .cards-area{padding:10px 16px;display:flex;flex-direction:column;gap:12px}
+#s4 .coral-card{background:#F97316;border-radius:22px;padding:18px;display:flex;align-items:center;justify-content:space-between}
+#s4 .coral-card .left .label{font-size:11px;font-weight:700;color:#FFEDD5;letter-spacing:1.2px;margin-bottom:4px}
+#s4 .coral-card .left .big{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;color:#fff;line-height:1}
+#s4 .coral-card .left .sub{font-size:12px;color:#FFEDD5;margin-top:4px}
+#s4 .coral-card .pct-circle{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.18);display:flex;flex-direction:column;align-items:center;justify-content:center}
+#s4 .coral-card .pct-circle .num{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#fff;line-height:1}
+#s4 .coral-card .pct-circle .unit{font-size:10px;color:#FFD4B2}
+#s4 .green-card{background:#0F5132;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:10px}
+#s4 .green-card .label{font-size:11px;font-weight:700;color:#A3E635;letter-spacing:1.4px}
+#s4 .green-card .time{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#fff}
+#s4 .green-card .meta{font-size:12px;color:rgba(255,255,255,0.6)}
+#s4 .qa-row{display:flex;gap:10px;padding:0 16px}
+#s4 .qa-card{flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:18px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;height:88px}
+#s4 .qa-card .icon{font-size:20px}
+#s4 .qa-card .lbl{font-size:12px;font-weight:600;color:#0F172A}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video2" data-width="1920" data-height="1080" data-start="0" data-duration="16">
+
+  <div class="bg-blob1"></div>
+  <div class="bg-blob2"></div>
+  <div class="bg-label">LOGIN</div>
+  <div class="divider"></div>
+
+  <div class="bg-title" id="bg-title">
+    <h1>Login alumno<br>con username</h1>
+    <p>El alumno accede sin correo electrónico real usando su <strong style="color:#A3E635">usuario generado</strong> por la academia. Flujo exclusivo para menores de edad.</p>
+  </div>
+
+  <div class="video-badge" id="video-badge">
+    <div style="width:28px;height:28px;border-radius:8px;background:#A3E635;display:flex;align-items:center;justify-content:center;font-size:15px">🔐</div>
+    <span>Video 2 / 5</span>
+    <small>Login alumno</small>
+  </div>
+
+  <div class="phone-wrap">
+    <div class="phone-outer">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+
+        <!-- Scene 1: Login screen -->
+        <div id="s1" class="scene">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="scene-inner">
+            <div id="s1-logo" class="logo-row">
+              <div class="logo-box">🛡️</div>
+              <span class="logo-text">Futcademic</span>
+            </div>
+            <div id="s1-head" class="headline">
+              <h1>Bienvenido de vuelta</h1>
+              <p>Ingresa para gestionar tu academia</p>
+            </div>
+            <div id="s1-fields" class="fields">
+              <div class="field-wrap">
+                <div class="field-lbl">Correo electrónico</div>
+                <div class="field-inp">tu@academia.com</div>
+              </div>
+              <div class="field-wrap">
+                <div class="field-lbl">Contraseña</div>
+                <div class="field-inp">••••••••</div>
+              </div>
+            </div>
+            <div id="s1-cta1" class="cta-primary"><span>Ingresar →</span></div>
+            <div id="s1-div" class="divider-row"><div class="div-line"></div><span class="div-txt">o</span><div class="div-line"></div></div>
+            <div id="s1-cta2" class="cta-secondary"><span>Crear cuenta nueva</span></div>
+            <div id="s1-link" class="alumno-link">Soy alumno · ingresar con usuario</div>
+          </div>
+        </div>
+
+        <!-- Scene 2: Student login -->
+        <div id="s2" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="scene-inner" style="position:relative">
+            <div id="s2-back" class="back-btn">‹</div>
+            <div id="s2-logo" class="logo-row" style="padding-top:36px">
+              <div class="logo-box">⚽</div>
+              <span class="logo-text">Soy alumno</span>
+            </div>
+            <div id="s2-head" class="headline">
+              <p>Usa el usuario que te dio tu academia (ej. juan.perez042)</p>
+            </div>
+            <div id="s2-fields" class="fields">
+              <div class="field-wrap">
+                <div class="field-lbl">Usuario</div>
+                <div class="field-inp">diego.ramirez042</div>
+              </div>
+              <div class="field-wrap">
+                <div class="field-lbl">Contraseña</div>
+                <div class="field-inp dim">••••••••</div>
+              </div>
+            </div>
+            <div id="s2-cta" class="cta"><span>Ingresar</span></div>
+            <div id="s2-bot" class="bottom-link">¿Eres admin? <strong>Inicia con correo</strong></div>
+          </div>
+        </div>
+
+        <!-- Scene 3: Onboarding -->
+        <div id="s3" class="scene green-bg" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar light-text"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="scene-inner">
+            <div id="s3-body" class="onb-body">
+              <div id="s3-circle" class="onb-circle">⚽</div>
+              <div id="s3-text" class="onb-text">
+                <h1>¡Bienvenido al equipo!</h1>
+                <p>Aquí podrás ver tus entrenamientos, ganar logros y seguir tu progreso. ¡A jugar!</p>
+              </div>
+              <div id="s3-btn" class="onb-btn"><span>¡Vamos! 🚀</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene 4: Student Home -->
+        <div id="s4" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="scene-inner">
+            <div id="s4-hdr" class="home-header">
+              <div>
+                <small>¡Hola Diego! ⚽</small>
+                <h2>Mi Inicio</h2>
+              </div>
+              <div class="avatar">DR</div>
+            </div>
+            <div class="cards-area">
+              <div id="s4-coral" class="coral-card">
+                <div class="left">
+                  <div class="label">RACHA ACTUAL</div>
+                  <div class="big">🔥 3</div>
+                  <div class="sub">sesiones seguidas</div>
+                </div>
+                <div class="pct-circle">
+                  <div class="num">87%</div>
+                  <div class="unit">asist.</div>
+                </div>
+              </div>
+              <div id="s4-green" class="green-card">
+                <div class="label">PRÓXIMO ENTRENO</div>
+                <div class="time">Faltan 2h 15min</div>
+                <div class="meta">16:00 · Cancha 1 · Sub-12</div>
+              </div>
+              <div id="s4-qa" class="qa-row">
+                <div class="qa-card">
+                  <div class="icon">📊</div>
+                  <div class="lbl">Estadísticas</div>
+                </div>
+                <div class="qa-card">
+                  <div class="icon">🏆</div>
+                  <div class="lbl">Logros</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+var tl = gsap.timeline({ paused: true, onComplete: function(){ tl.play(0); } });
+
+// Scene 1
+tl.from('#s1-logo', { y: -20, opacity: 0, duration: 0.5, ease: 'power3.out' }, 0.2);
+tl.from('#s1-head', { y: 15, opacity: 0, duration: 0.5, ease: 'power2.out' }, 0.4);
+tl.from('#s1-fields', { y: 15, opacity: 0, duration: 0.5, ease: 'power2.out' }, 0.55);
+tl.from('#s1-cta1', { y: 10, opacity: 0, duration: 0.4, ease: 'back.out(1.5)' }, 0.7);
+tl.from('#s1-div, #s1-cta2', { opacity: 0, duration: 0.4, ease: 'sine.out' }, 0.85);
+tl.from('#s1-link', { y: 6, opacity: 0, duration: 0.4, ease: 'sine.out' }, 0.95);
+tl.from('#bg-title, #video-badge', { x: 40, opacity: 0, duration: 0.8, ease: 'power3.out', stagger: 0.15 }, 0.3);
+
+// T1→2 at 3.0
+var T12 = 3.0;
+tl.to('#s1', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T12);
+tl.fromTo('#s2', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T12);
+tl.set('#s1', { opacity: 0 }, T12 + 0.41);
+
+var S2 = T12 + 0.41;
+tl.from('#s2-back', { opacity: 0, duration: 0.3, ease: 'sine.out' }, S2 + 0.05);
+tl.from('#s2-logo', { y: -15, opacity: 0, duration: 0.4, ease: 'power3.out' }, S2 + 0.1);
+tl.from('#s2-head', { y: 10, opacity: 0, duration: 0.4, ease: 'power2.out' }, S2 + 0.22);
+tl.from('#s2-fields', { y: 12, opacity: 0, duration: 0.45, ease: 'power2.out' }, S2 + 0.32);
+tl.from('#s2-cta', { y: 10, opacity: 0, duration: 0.4, ease: 'back.out(1.5)' }, S2 + 0.5);
+tl.from('#s2-bot', { opacity: 0, duration: 0.4, ease: 'sine.out' }, S2 + 0.65);
+
+// T2→3 at ~7.0
+var T23 = S2 + 2.6;
+tl.to('#s2', { filter: 'blur(8px)', opacity: 0, scale: 1.03, duration: 0.5, ease: 'power2.inOut' }, T23);
+tl.fromTo('#s3', { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' }, T23 + 0.1);
+tl.set('#s2', { opacity: 0 }, T23 + 0.55);
+
+var S3 = T23 + 0.55;
+tl.from('#s3-circle', { scale: 0, opacity: 0, duration: 0.7, ease: 'back.out(2)' }, S3 + 0.1);
+tl.from('#s3-text', { y: 20, opacity: 0, duration: 0.5, ease: 'power3.out' }, S3 + 0.4);
+tl.from('#s3-btn', { y: 15, opacity: 0, duration: 0.4, ease: 'back.out(1.5)' }, S3 + 0.65);
+
+// T3→4
+var T34 = S3 + 2.6;
+tl.to('#s3', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T34);
+tl.fromTo('#s4', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T34);
+tl.set('#s3', { opacity: 0 }, T34 + 0.41);
+
+var S4 = T34 + 0.41;
+tl.from('#s4-hdr', { y: -15, opacity: 0, duration: 0.4, ease: 'power3.out' }, S4 + 0.05);
+tl.from('#s4-coral', { y: 20, opacity: 0, scale: 0.96, duration: 0.5, ease: 'power3.out' }, S4 + 0.2);
+tl.from('#s4-green', { y: 20, opacity: 0, duration: 0.45, ease: 'power2.out' }, S4 + 0.35);
+tl.from('#s4-qa .qa-card', { y: 15, opacity: 0, duration: 0.4, ease: 'power2.out', stagger: 0.1 }, S4 + 0.5);
+
+window.__timelines['video2'] = tl;
+document.addEventListener('DOMContentLoaded', function(){ tl.play(); });
+</script>
+</body>
+</html>

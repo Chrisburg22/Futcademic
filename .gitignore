@@ -1,0 +1,43 @@
+# Env files — NUNCA subir al repo
+**/.env
+**/.env.local
+**/.env.production
+**/.env.*.local
+**/.env.test
+
+# Playwright test artifacts
+**/playwright-report/
+**/test-results/
+**/e2e/artifacts/
+
+# Dependencies
+**/node_modules/
+
+# Build output
+**/dist/
+**/.next/
+**/.expo/
+**/tsconfig.tsbuildinfo
+
+# OS
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+
+# Design files
+*.pen
+
+# Mobile y Backend — repositorios separados
+mobile/
+backend/
+
+# Claude internal
+.claude/

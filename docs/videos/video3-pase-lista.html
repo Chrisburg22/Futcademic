@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1920px;height:1080px;overflow:hidden;background:#0a0a0a;font-family:'Inter',sans-serif}
+.bg-blob1{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(15,81,50,0.3) 0%,rgba(15,81,50,0) 70%);left:-80px;top:150px}
+.bg-blob2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(163,230,53,0.10) 0%,rgba(163,230,53,0) 70%);right:80px;bottom:80px}
+.bg-label{position:absolute;font-family:'Space Grotesk',sans-serif;font-size:180px;font-weight:700;color:rgba(163,230,53,0.04);white-space:nowrap;top:50%;transform:translateY(-50%);left:1140px}
+.divider{position:absolute;left:1100px;top:0;width:2px;height:1080px;background:rgba(163,230,53,0.1)}
+.bg-title{position:absolute;left:1180px;top:50%;transform:translateY(-50%)}
+.bg-title h1{font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:16px}
+.bg-title p{font-size:22px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:560px}
+.video-badge{position:absolute;bottom:48px;left:1180px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:10px 20px}
+.video-badge span{font-family:'Space Grotesk',sans-serif;font-size:18px;color:#A3E635;font-weight:700}
+.video-badge small{font-size:15px;color:rgba(255,255,255,0.5)}
+.phone-wrap{position:absolute;left:757px;top:110px}
+.phone-outer{width:406px;height:860px;border-radius:52px;background:#111;border:7px solid #1a1a1a;box-shadow:0 0 0 1px rgba(255,255,255,0.08),0 40px 80px rgba(0,0,0,0.8),0 0 60px rgba(163,230,53,0.08);position:relative;overflow:hidden}
+.phone-notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:30px;background:#0a0a0a;border-radius:20px;z-index:100}
+.phone-screen{position:absolute;top:0;left:0;width:392px;height:846px;border-radius:45px;overflow:hidden}
+.status-bar{position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;z-index:50}
+.status-bar .time{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#0F172A}
+.status-bar .icons{font-size:13px;color:#0F172A}
+.status-bar.lt .time,.status-bar.lt .icons{color:#fff}
+.scene{position:absolute;top:0;left:0;width:392px;height:846px;overflow:hidden;background:#FAF8F3}
+.scene.green-bg{background:#0F5132}
+.si{position:absolute;top:50px;left:0;right:0;bottom:0;overflow:hidden}
+
+/* Scene 1+2: Attendance list */
+.ab{background:#FAF8F3;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E2E8F0}
+.ab h2{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#0F172A}
+.back-btn{width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:16px}
+.filter-btn{width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:14px}
+.chips-row{display:flex;gap:8px;padding:10px 16px;overflow:hidden}
+.chip{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid #E2E8F0;background:#fff;color:#334155;white-space:nowrap}
+.chip.active{background:#15803D;border-color:#15803D;color:#fff}
+.date-row{padding:4px 16px 10px;font-size:13px;font-weight:600;color:#64748B}
+.student-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #F1F5F9}
+.s-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.s-name{flex:1;font-size:13px;font-weight:600;color:#0F172A}
+.s-check{width:30px;height:30px;border-radius:50%;border:2px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#E2E8F0;flex-shrink:0}
+.s-check.on{background:#15803D;border-color:#15803D;color:#fff}
+.s-check.off{background:#FEE2E2;border-color:#FCA5A5;color:#EF4444}
+.fab{position:absolute;bottom:20px;left:16px;right:16px;height:50px;background:#15803D;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(21,128,61,0.4)}
+.fab span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#fff}
+.fab.loading{background:#0F5132}
+
+/* Scene 4: Success */
+.success-body{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px;padding:24px}
+.success-circle{width:100px;height:100px;border-radius:50%;background:#A3E635;display:flex;align-items:center;justify-content:center;font-size:52px;color:#0B3D2E}
+.success-title{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#fff;text-align:center}
+.success-sub{font-size:14px;color:#DCFCE7;text-align:center;line-height:1.5}
+.success-note{font-size:12px;color:#A3E635;font-weight:600;text-align:center}
+.success-btn{width:100%;height:52px;background:#A3E635;border-radius:14px;display:flex;align-items:center;justify-content:center}
+.success-btn span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#0B3D2E}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video3" data-width="1920" data-height="1080" data-start="0" data-duration="16">
+  <div class="bg-blob1"></div><div class="bg-blob2"></div>
+  <div class="bg-label">ASISTENCIA</div>
+  <div class="divider"></div>
+  <div class="bg-title" id="bg-title">
+    <h1>Pase de lista<br>batch</h1>
+    <p>El admin marca asistencia de toda una categoría en segundos. El sistema completa la sesión automáticamente.</p>
+  </div>
+  <div class="video-badge" id="video-badge">
+    <div style="width:28px;height:28px;border-radius:8px;background:#15803D;display:flex;align-items:center;justify-content:center;font-size:15px">✓</div>
+    <span>Video 3 / 5</span><small>Pase de lista</small>
+  </div>
+  <div class="phone-wrap">
+    <div class="phone-outer">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+
+        <!-- Scene 1: List loaded -->
+        <div id="s1" class="scene">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div id="s1-ab" class="ab"><div class="back-btn">‹</div><h2>Asistencia</h2><div class="filter-btn">▼</div></div>
+            <div id="s1-chips" class="chips-row">
+              <div class="chip active">Sub-12</div><div class="chip">Sub-14</div><div class="chip">Sub-10</div>
+            </div>
+            <div id="s1-date" class="date-row">Lun 12 mayo 2026 · 8 alumnos</div>
+            <div id="s1-r1" class="student-row"><div class="s-av" style="background:#15803D">DR</div><span class="s-name">Diego Ramírez</span><div class="s-check">○</div></div>
+            <div id="s1-r2" class="student-row"><div class="s-av" style="background:#F97316">CS</div><span class="s-name">Carlos Soto</span><div class="s-check">○</div></div>
+            <div id="s1-r3" class="student-row"><div class="s-av" style="background:#3B82F6">DG</div><span class="s-name">Daniela García</span><div class="s-check">○</div></div>
+            <div id="s1-r4" class="student-row"><div class="s-av" style="background:#A855F7">MH</div><span class="s-name">Miguel Herrera</span><div class="s-check">○</div></div>
+            <div id="s1-r5" class="student-row"><div class="s-av" style="background:#EAB308">AL</div><span class="s-name">Ana López</span><div class="s-check">○</div></div>
+            <div id="s1-r6" class="student-row"><div class="s-av" style="background:#EC4899">PM</div><span class="s-name">Pedro Mora</span><div class="s-check">○</div></div>
+            <div id="s1-r7" class="student-row"><div class="s-av" style="background:#64748B">LR</div><span class="s-name">Luis Reyes</span><div class="s-check">○</div></div>
+            <div id="s1-r8" class="student-row"><div class="s-av" style="background:#06B6D4">SF</div><span class="s-name">Sofía Fuentes</span><div class="s-check">○</div></div>
+          </div>
+        </div>
+
+        <!-- Scene 2: Marking (same layout, checks animate in) -->
+        <div id="s2" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div class="ab"><div class="back-btn">‹</div><h2>Asistencia</h2><div class="filter-btn">▼</div></div>
+            <div class="chips-row"><div class="chip active">Sub-12</div><div class="chip">Sub-14</div></div>
+            <div class="date-row">Lun 12 mayo 2026 · 8 alumnos</div>
+            <div class="student-row"><div class="s-av" style="background:#15803D">DR</div><span class="s-name">Diego Ramírez</span><div id="c1" class="s-check">○</div></div>
+            <div class="student-row"><div class="s-av" style="background:#F97316">CS</div><span class="s-name">Carlos Soto</span><div id="c2" class="s-check">○</div></div>
+            <div class="student-row"><div class="s-av" style="background:#3B82F6">DG</div><span class="s-name">Daniela García</span><div id="c3" class="s-check">○</div></div>
+            <div class="student-row"><div class="s-av" style="background:#A855F7">MH</div><span class="s-name">Miguel Herrera</span><div id="c4" class="s-check">○</div></div>
+            <div class="student-row"><div class="s-av" style="background:#EAB308">AL</div><span class="s-name">Ana López</span><div id="c5" class="s-check">○</div></div>
+            <div class="student-row"><div class="s-av" style="background:#EC4899">PM</div><span class="s-name">Pedro Mora</span><div id="c6" class="s-check">○</div></div>
+            <div class="student-row"><div class="s-av" style="background:#64748B">LR</div><span class="s-name">Luis Reyes</span><div id="c7" class="s-check off">✗</div></div>
+            <div class="student-row"><div class="s-av" style="background:#06B6D4">SF</div><span class="s-name">Sofía Fuentes</span><div id="c8" class="s-check off">✗</div></div>
+            <div id="s2-fab" class="fab"><span>Guardar asistencia</span></div>
+          </div>
+        </div>
+
+        <!-- Scene 3: Saving -->
+        <div id="s3" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div class="ab"><div class="back-btn">‹</div><h2>Asistencia</h2><div class="filter-btn">▼</div></div>
+            <div class="chips-row"><div class="chip active">Sub-12</div></div>
+            <div class="date-row">Lun 12 mayo 2026</div>
+            <div class="student-row"><div class="s-av" style="background:#15803D">DR</div><span class="s-name">Diego Ramírez</span><div class="s-check on">✓</div></div>
+            <div class="student-row"><div class="s-av" style="background:#F97316">CS</div><span class="s-name">Carlos Soto</span><div class="s-check on">✓</div></div>
+            <div class="student-row"><div class="s-av" style="background:#3B82F6">DG</div><span class="s-name">Daniela García</span><div class="s-check on">✓</div></div>
+            <div class="student-row"><div class="s-av" style="background:#A855F7">MH</div><span class="s-name">Miguel Herrera</span><div class="s-check on">✓</div></div>
+            <div class="student-row"><div class="s-av" style="background:#EAB308">AL</div><span class="s-name">Ana López</span><div class="s-check on">✓</div></div>
+            <div class="student-row"><div class="s-av" style="background:#EC4899">PM</div><span class="s-name">Pedro Mora</span><div class="s-check on">✓</div></div>
+            <div class="student-row"><div class="s-av" style="background:#64748B">LR</div><span class="s-name">Luis Reyes</span><div class="s-check off">✗</div></div>
+            <div class="student-row"><div class="s-av" style="background:#06B6D4">SF</div><span class="s-name">Sofía Fuentes</span><div class="s-check off">✗</div></div>
+            <div id="s3-fab" class="fab loading"><span id="s3-fab-txt">Guardando...</span></div>
+          </div>
+        </div>
+
+        <!-- Scene 4: Success -->
+        <div id="s4" class="scene green-bg" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar lt"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div class="success-body">
+              <div id="s4-circle" class="success-circle">✓</div>
+              <div id="s4-title" class="success-title">Asistencia guardada</div>
+              <div id="s4-sub" class="success-sub">6 presentes · 2 ausentes</div>
+              <div id="s4-note" class="success-note">Sesión marcada como completada ✓</div>
+              <div id="s4-btn" class="success-btn"><span>Volver a inicio</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+var tl = gsap.timeline({ paused: true, onComplete: function(){ tl.play(0); } });
+
+// Scene 1 entrance
+tl.from('#s1-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, 0.2);
+tl.from('#s1-chips .chip', { x: -10, opacity: 0, duration: 0.3, ease: 'expo.out', stagger: 0.06 }, 0.4);
+tl.from('#s1-date', { opacity: 0, duration: 0.3, ease: 'sine.out' }, 0.55);
+tl.from('#s1-r1,#s1-r2,#s1-r3,#s1-r4,#s1-r5,#s1-r6,#s1-r7,#s1-r8', { x: 20, opacity: 0, duration: 0.35, ease: 'power2.out', stagger: 0.05 }, 0.65);
+tl.from('#bg-title,#video-badge', { x: 40, opacity: 0, duration: 0.8, ease: 'power3.out', stagger: 0.15 }, 0.3);
+
+// T1→2
+var T12 = 2.8;
+tl.to('#s1', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T12);
+tl.fromTo('#s2', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T12);
+tl.set('#s1', { opacity: 0 }, T12 + 0.41);
+
+// Scene 2: animate checks one by one
+var S2 = T12 + 0.41;
+tl.from('#s2-fab', { y: 30, opacity: 0, duration: 0.4, ease: 'back.out(1.5)' }, S2 + 0.1);
+// animate each check to ON state
+var checks = ['#c1','#c2','#c3','#c4','#c5','#c6'];
+checks.forEach(function(id, i) {
+  tl.to(id, { backgroundColor:'#15803D', borderColor:'#15803D', color:'#fff', scale: 1.2, duration: 0.15, ease: 'power4.out' }, S2 + 0.3 + i * 0.2);
+  tl.to(id, { scale: 1, duration: 0.1, ease: 'power2.in' }, S2 + 0.45 + i * 0.2);
+  tl.set(id, { innerHTML: '✓' }, S2 + 0.31 + i * 0.2);
+  tl.addLabel('c' + i, S2 + 0.3 + i * 0.2);
+});
+
+// T2→3
+var T23 = S2 + 2.8;
+tl.to('#s2', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T23);
+tl.fromTo('#s3', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T23);
+tl.set('#s2', { opacity: 0 }, T23 + 0.41);
+
+// Scene 3: loading state
+var S3 = T23 + 0.41;
+tl.to('#s3-fab', { backgroundColor: '#0F5132', duration: 0.3, ease: 'sine.inOut' }, S3 + 0.1);
+
+// T3→4
+var T34 = S3 + 1.5;
+tl.to('#s3', { filter: 'blur(8px)', opacity: 0, scale: 1.02, duration: 0.5, ease: 'power2.inOut' }, T34);
+tl.fromTo('#s4', { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' }, T34 + 0.1);
+tl.set('#s3', { opacity: 0 }, T34 + 0.55);
+
+var S4 = T34 + 0.55;
+tl.from('#s4-circle', { scale: 0, opacity: 0, duration: 0.7, ease: 'back.out(2.5)' }, S4 + 0.1);
+tl.from('#s4-title', { y: 20, opacity: 0, duration: 0.5, ease: 'power3.out' }, S4 + 0.45);
+tl.from('#s4-sub', { y: 15, opacity: 0, duration: 0.4, ease: 'power2.out' }, S4 + 0.6);
+tl.from('#s4-note', { opacity: 0, duration: 0.4, ease: 'sine.out' }, S4 + 0.75);
+tl.from('#s4-btn', { y: 15, opacity: 0, duration: 0.4, ease: 'back.out(1.5)' }, S4 + 0.9);
+
+window.__timelines['video3'] = tl;
+document.addEventListener('DOMContentLoaded', function(){ tl.play(); });
+</script>
+</body>
+</html>

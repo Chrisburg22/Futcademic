@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1920px;height:1080px;overflow:hidden;background:#0a0a0a;font-family:'Inter',sans-serif}
+
+/* Background decoratives */
+.bg-blob1{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(15,81,50,0.35) 0%,rgba(15,81,50,0) 70%);left:-100px;top:200px}
+.bg-blob2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(163,230,53,0.12) 0%,rgba(163,230,53,0) 70%);right:50px;top:100px}
+.bg-blob3{position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,0.10) 0%,rgba(249,115,22,0) 70%);right:200px;bottom:50px}
+.bg-label{position:absolute;font-family:'Space Grotesk',sans-serif;font-size:220px;font-weight:700;color:rgba(163,230,53,0.04);white-space:nowrap;top:50%;transform:translateY(-50%);left:1140px;line-height:1}
+.bg-title{position:absolute;left:1180px;top:50%;transform:translateY(-50%)}
+.bg-title h1{font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:16px}
+.bg-title p{font-family:'Inter',sans-serif;font-size:22px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:560px}
+.step-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#A3E635;margin-right:10px}
+.bg-line{position:absolute;height:2px;background:rgba(163,230,53,0.15);left:1100px;right:0;top:50%;transform:translateY(-1px)}
+.video-badge{position:absolute;bottom:48px;left:1180px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:10px 20px}
+.video-badge span{font-family:'Space Grotesk',sans-serif;font-size:18px;color:#A3E635;font-weight:700}
+.video-badge small{font-size:15px;color:rgba(255,255,255,0.5)}
+
+/* Divider line */
+.divider{position:absolute;left:1100px;top:0;width:2px;height:1080px;background:rgba(163,230,53,0.1)}
+
+/* Phone frame */
+.phone-wrap{position:absolute;left:757px;top:110px}
+.phone-outer{width:406px;height:860px;border-radius:52px;background:#111;border:7px solid #1a1a1a;box-shadow:0 0 0 1px rgba(255,255,255,0.08),0 40px 80px rgba(0,0,0,0.8),0 0 60px rgba(163,230,53,0.08);position:relative;overflow:hidden}
+.phone-notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:30px;background:#0a0a0a;border-radius:20px;z-index:100}
+.phone-screen{position:absolute;top:0;left:0;width:392px;height:846px;border-radius:45px;overflow:hidden}
+
+/* Status bar */
+.status-bar{position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;z-index:50;pointer-events:none}
+.status-bar .time{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#0F172A}
+.status-bar .icons{display:flex;align-items:center;gap:5px;font-size:13px;color:#0F172A}
+.status-bar.dark .time,.status-bar.dark .icons{color:#fff}
+
+/* All scenes share this structure */
+.scene{position:absolute;top:0;left:0;width:392px;height:846px;overflow:hidden;background:#FAF8F3}
+.scene.dark-bg{background:#0F5132}
+.scene-inner{position:absolute;top:50px;left:0;right:0;bottom:0;overflow:hidden}
+
+/* ======== Scene 1: Admin Home ======== */
+#s1 .admin-header{background:#0F5132;padding:18px 20px 20px;display:flex;justify-content:space-between;align-items:flex-start}
+#s1 .admin-header h2{font-family:'Space Grotesk',sans-serif;font-size:22px;color:#fff;font-weight:700}
+#s1 .admin-header small{font-size:12px;color:rgba(255,255,255,0.6);display:block;margin-bottom:2px}
+#s1 .settings-btn{width:36px;height:36px;border-radius:10px;background:#16A34A;display:flex;align-items:center;justify-content:center;font-size:18px}
+#s1 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px 10px}
+#s1 .kpi-card{background:#fff;border-radius:16px;padding:14px;border:1px solid #E2E8F0}
+#s1 .kpi-card.dark{background:#0B3D2E;border-color:#0B3D2E}
+#s1 .kpi-card .k-val{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#0F172A;line-height:1}
+#s1 .kpi-card.dark .k-val{color:#A3E635}
+#s1 .kpi-card .k-lbl{font-size:11px;color:#64748B;margin-top:4px}
+#s1 .kpi-card.dark .k-lbl{color:rgba(255,255,255,0.6)}
+#s1 .qa-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#0F172A;padding:4px 16px 10px}
+#s1 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px}
+#s1 .tile{background:#fff;border-radius:16px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid #E2E8F0}
+#s1 .tile-icon{width:36px;height:36px;border-radius:10px;background:#DCFCE7;display:flex;align-items:center;justify-content:center;font-size:18px}
+#s1 .tile span{font-size:10px;color:#0F172A;text-align:center;font-weight:600}
+
+/* ======== Scene 2: Student List ======== */
+#s2 .appbar{background:#FAF8F3;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E2E8F0}
+#s2 .appbar h2{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#0F172A}
+#s2 .back-btn{width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:16px}
+#s2 .add-btn{width:36px;height:36px;border-radius:50%;background:#15803D;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:700}
+#s2 .search{margin:12px 16px 10px;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;color:#94A3B8}
+#s2 .chips{display:flex;gap:8px;padding:0 16px 12px;overflow:hidden}
+#s2 .chip{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid #E2E8F0;background:#fff;color:#334155;white-space:nowrap}
+#s2 .chip.active{background:#15803D;border-color:#15803D;color:#fff}
+#s2 .student-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F1F5F9}
+#s2 .avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#fff;flex-shrink:0}
+#s2 .student-info{flex:1}
+#s2 .student-info .name{font-size:14px;font-weight:600;color:#0F172A}
+#s2 .student-info .meta{font-size:11px;color:#64748B;margin-top:2px}
+#s2 .status-chip{padding:4px 10px;border-radius:999px;font-size:10px;font-weight:700;background:#DCFCE7;color:#15803D}
+#s2 .fab{position:absolute;bottom:20px;left:16px;right:16px;height:50px;background:#15803D;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(21,128,61,0.4)}
+#s2 .fab span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#fff}
+
+/* ======== Scene 3: Wizard Step 1 ======== */
+#s3 .appbar{background:#FAF8F3;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+#s3 .back-btn{width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:16px}
+#s3 .appbar h2{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:#0F172A}
+#s3 .steps{display:flex;align-items:center;gap:6px;padding:8px 16px 14px}
+#s3 .step{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:600}
+#s3 .step.active{background:#15803D;color:#fff}
+#s3 .step.inactive{background:#F1F5F9;color:#64748B}
+#s3 .step-line{height:1px;width:18px;background:#CBD5E1;flex-shrink:0}
+#s3 .warn-banner{margin:0 16px 14px;background:#FFEDD5;border-radius:12px;padding:12px 14px;display:flex;gap:10px;font-size:12px;color:#334155;line-height:1.4;font-weight:600}
+#s3 .form-group{margin:0 16px 12px}
+#s3 .form-label{font-size:12px;font-weight:600;color:#334155;margin-bottom:6px}
+#s3 .form-input{background:#fff;border:1px solid #E2E8F0;border-radius:14px;height:46px;width:100%;display:flex;align-items:center;padding:0 14px;font-size:14px;color:#0F172A}
+#s3 .form-input.placeholder{color:#94A3B8}
+#s3 .cta{margin:14px 16px 0;height:50px;background:#15803D;border-radius:14px;display:flex;align-items:center;justify-content:center}
+#s3 .cta span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#fff}
+
+/* ======== Scene 4: Wizard Step 2 ======== */
+#s4 .appbar{background:#FAF8F3;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+#s4 .back-btn{width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:16px}
+#s4 .appbar h2{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:#0F172A}
+#s4 .steps{display:flex;align-items:center;gap:6px;padding:8px 16px 14px}
+#s4 .step{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:600}
+#s4 .step.done{background:#15803D;color:#fff}
+#s4 .step.active{background:#15803D;color:#fff}
+#s4 .step.inactive{background:#F1F5F9;color:#64748B}
+#s4 .step-line{height:1px;width:18px;background:#CBD5E1;flex-shrink:0}
+#s4 .toggle-row{display:flex;gap:8px;margin:0 16px 14px}
+#s4 .toggle-btn{flex:1;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+#s4 .toggle-btn.active{background:#15803D;color:#fff}
+#s4 .toggle-btn.inactive{background:#fff;border:1px solid #E2E8F0;color:#334155}
+#s4 .form-group{margin:0 16px 12px}
+#s4 .form-label{font-size:12px;font-weight:600;color:#334155;margin-bottom:6px}
+#s4 .form-input{background:#fff;border:1px solid #E2E8F0;border-radius:14px;height:46px;width:100%;display:flex;align-items:center;padding:0 14px;font-size:14px;color:#0F172A}
+#s4 .form-input.placeholder{color:#94A3B8}
+#s4 .info-chip{margin:0 16px 14px;background:#DCFCE7;border-radius:12px;padding:12px 14px;display:flex;gap:10px;font-size:12px;color:#15803D;line-height:1.4;font-weight:600}
+#s4 .cta{margin:0 16px;height:50px;background:#15803D;border-radius:14px;display:flex;align-items:center;justify-content:center}
+#s4 .cta span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#fff}
+
+/* ======== Scene 5: Wizard Step 3 ======== */
+#s5 .appbar{background:#FAF8F3;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+#s5 .back-btn{width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:16px}
+#s5 .appbar h2{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:#0F172A}
+#s5 .steps{display:flex;align-items:center;gap:6px;padding:8px 16px 14px}
+#s5 .step{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:600}
+#s5 .step.done{background:#15803D;color:#fff}
+#s5 .step.active{background:#15803D;color:#fff}
+#s5 .step-line{height:1px;width:18px;background:#CBD5E1;flex-shrink:0}
+#s5 .summary-card{margin:0 16px 16px;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:16px}
+#s5 .summary-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#0F172A;margin-bottom:12px}
+#s5 .summary-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid #F1F5F9}
+#s5 .summary-row:last-child{border-bottom:none}
+#s5 .s-label{font-size:12px;font-weight:600;color:#64748B}
+#s5 .s-val{font-size:13px;color:#0F172A;text-align:right;max-width:160px}
+#s5 .cta{margin:0 16px;height:50px;background:#15803D;border-radius:14px;display:flex;align-items:center;justify-content:center}
+#s5 .cta span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#fff}
+
+/* ======== Scene 6: Credentials modal ======== */
+#s6{background:#0F172A}
+#s6 .modal-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:340px;background:#fff;border-radius:20px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px}
+#s6 .check-circle{width:56px;height:56px;border-radius:50%;background:#DCFCE7;display:flex;align-items:center;justify-content:center;font-size:28px}
+#s6 .modal-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#0F172A;text-align:center}
+#s6 .modal-sub{font-size:13px;color:#64748B;text-align:center}
+#s6 .creds-box{width:100%;background:#F1F5F9;border-radius:12px;padding:14px}
+#s6 .cred-row{margin-bottom:10px}
+#s6 .cred-row:last-child{margin-bottom:0}
+#s6 .cred-label{font-size:10px;font-weight:700;color:#64748B;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:4px}
+#s6 .cred-val{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:#0F172A}
+#s6 .modal-note{font-size:11px;color:#94A3B8;text-align:center}
+#s6 .modal-btn{width:100%;height:48px;background:#15803D;border-radius:12px;display:flex;align-items:center;justify-content:center}
+#s6 .modal-btn span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#fff}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video1" data-width="1920" data-height="1080" data-start="0" data-duration="18">
+
+  <!-- Background decoratives -->
+  <div class="bg-blob1"></div>
+  <div class="bg-blob2"></div>
+  <div class="bg-blob3"></div>
+  <div class="bg-label">FUTCADEMIC</div>
+  <div class="divider"></div>
+  <div class="bg-line"></div>
+
+  <div class="bg-title" id="bg-title">
+    <h1>Crear alumno<br>con credenciales</h1>
+    <p>El admin registra un alumno en 3 pasos. El sistema genera automáticamente un <strong style="color:#A3E635">username único</strong> para el primer login.</p>
+  </div>
+
+  <div class="video-badge" id="video-badge">
+    <div style="width:28px;height:28px;border-radius:8px;background:#15803D;display:flex;align-items:center;justify-content:center;font-size:15px">⚽</div>
+    <span>Video 1 / 5</span>
+    <small>Crear alumno</small>
+  </div>
+
+  <!-- Phone -->
+  <div class="phone-wrap">
+    <div class="phone-outer">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+
+        <!-- ── Scene 1: Admin Home ── -->
+        <div id="s1" class="scene">
+          <div class="status-bar dark"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="scene-inner">
+            <div id="s1-hdr" class="admin-header">
+              <div>
+                <small>Academia</small>
+                <h2>Sub-12 Halcones</h2>
+              </div>
+              <div class="settings-btn">⚙</div>
+            </div>
+            <div id="s1-kpis" class="kpi-grid">
+              <div class="kpi-card dark">
+                <div class="k-val">24</div>
+                <div class="k-lbl">Alumnos activos</div>
+              </div>
+              <div class="kpi-card">
+                <div class="k-val" style="color:#0F172A">87%</div>
+                <div class="k-lbl">Asistencia sem.</div>
+              </div>
+              <div class="kpi-card">
+                <div class="k-val" style="color:#0F172A">$12k</div>
+                <div class="k-lbl">Ingresos mes</div>
+              </div>
+              <div class="kpi-card">
+                <div class="k-val" style="color:#F97316">3</div>
+                <div class="k-lbl">Eventos semana</div>
+              </div>
+            </div>
+            <div id="s1-qa" class="qa-title">Acciones rápidas</div>
+            <div id="s1-tiles" class="tiles">
+              <div class="tile"><div class="tile-icon">👥</div><span>Estudiantes</span></div>
+              <div class="tile"><div class="tile-icon">🎓</div><span>Profesores</span></div>
+              <div class="tile"><div class="tile-icon">📅</div><span>Eventos</span></div>
+              <div class="tile"><div class="tile-icon">🏆</div><span>Categorías</span></div>
+              <div class="tile"><div class="tile-icon">📍</div><span>Canchas</span></div>
+              <div class="tile"><div class="tile-icon">💰</div><span>Finanzas</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Scene 2: Student List ── -->
+        <div id="s2" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="scene-inner">
+            <div id="s2-ab" class="appbar">
+              <div class="back-btn">‹</div>
+              <h2>Estudiantes</h2>
+              <div class="add-btn">+</div>
+            </div>
+            <div id="s2-srch" class="search">🔍 Buscar por nombre o categoría</div>
+            <div id="s2-chips" class="chips">
+              <div class="chip active">Todos · 24</div>
+              <div class="chip">Sub-12</div>
+              <div class="chip">Sub-14</div>
+            </div>
+            <div id="s2-r1" class="student-row">
+              <div class="avatar" style="background:#15803D">DR</div>
+              <div class="student-info"><div class="name">Diego Ramírez</div><div class="meta">Sub-12 · 11 años</div></div>
+              <div class="status-chip">al día</div>
+            </div>
+            <div id="s2-r2" class="student-row">
+              <div class="avatar" style="background:#F97316">CS</div>
+              <div class="student-info"><div class="name">Carlos Soto</div><div class="meta">Sub-12 · 12 años</div></div>
+              <div class="status-chip">al día</div>
+            </div>
+            <div id="s2-r3" class="student-row">
+              <div class="avatar" style="background:#3B82F6">AM</div>
+              <div class="student-info"><div class="name">Ana Martínez</div><div class="meta">Sub-14 · 13 años</div></div>
+              <div class="status-chip" style="background:#FEF3C7;color:#D97706">pendiente</div>
+            </div>
+            <div id="s2-fab" class="fab">
+              <span>+ Nuevo alumno</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Scene 3: Wizard Step 1 ── -->
+        <div id="s3" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="scene-inner">
+            <div id="s3-ab" class="appbar">
+              <div class="back-btn">‹</div>
+              <h2>Nuevo alumno</h2>
+              <div style="width:36px"></div>
+            </div>
+            <div id="s3-steps" class="steps">
+              <div class="step active">① Alumno</div>
+              <div class="step-line"></div>
+              <div class="step inactive">② Padre</div>
+              <div class="step-line"></div>
+              <div class="step inactive">③ Confirmar</div>
+            </div>
+            <div id="s3-warn" class="warn-banner">🔗 Todo alumno requiere padre vinculado. Crearemos ambos en este flujo.</div>
+            <div id="s3-f1" class="form-group">
+              <div class="form-label">Nombre completo</div>
+              <div class="form-input">Diego Ramírez</div>
+            </div>
+            <div id="s3-f2" style="display:flex;gap:10px;padding:0 16px;margin-bottom:12px">
+              <div style="flex:1">
+                <div class="form-label">Fecha nacimiento</div>
+                <div class="form-input" style="border-radius:14px;background:#fff;border:1px solid #E2E8F0;height:46px;padding:0 12px;font-size:13px;color:#0F172A;display:flex;align-items:center">15 mar 2014</div>
+              </div>
+              <div style="flex:1">
+                <div class="form-label">Categoría</div>
+                <div class="form-input" style="border-radius:14px;background:#fff;border:1px solid #E2E8F0;height:46px;padding:0 12px;font-size:13px;color:#0F172A;display:flex;align-items:center">Sub-12</div>
+              </div>
+            </div>
+            <div id="s3-f3" class="form-group">
+              <div class="form-label">Notas médicas (opcional)</div>
+              <div class="form-input placeholder">Sin notas</div>
+            </div>
+            <div id="s3-cta" class="cta"><span>Siguiente: datos del padre</span></div>
+          </div>
+        </div>
+
+        <!-- ── Scene 4: Wizard Step 2 ── -->
+        <div id="s4" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="scene-inner">
+            <div id="s4-ab" class="appbar">
+              <div class="back-btn">‹</div>
+              <h2>Vincular padre</h2>
+              <div style="width:36px"></div>
+            </div>
+            <div id="s4-steps" class="steps">
+              <div class="step done">✓ Alumno</div>
+              <div class="step-line"></div>
+              <div class="step active">② Padre</div>
+              <div class="step-line"></div>
+              <div class="step inactive">③ Confirmar</div>
+            </div>
+            <div id="s4-toggle" class="toggle-row">
+              <div class="toggle-btn active">Crear nuevo padre</div>
+              <div class="toggle-btn inactive">Vincular existente</div>
+            </div>
+            <div id="s4-f1" class="form-group">
+              <div class="form-label">Nombre del padre/tutor</div>
+              <div class="form-input">María Ramírez</div>
+            </div>
+            <div id="s4-f2" class="form-group">
+              <div class="form-label">Correo (recibirá invitación)</div>
+              <div class="form-input">maria@email.com</div>
+            </div>
+            <div id="s4-f3" class="form-group">
+              <div class="form-label">Teléfono</div>
+              <div class="form-input">+52 555 123 4567</div>
+            </div>
+            <div id="s4-chip" class="info-chip">✉️ Si el correo ya existe en el sistema, lo vincularemos en vez de crear duplicado.</div>
+            <div id="s4-cta" class="cta"><span>Siguiente: confirmar</span></div>
+          </div>
+        </div>
+
+        <!-- ── Scene 5: Wizard Step 3 ── -->
+        <div id="s5" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="scene-inner">
+            <div id="s5-ab" class="appbar">
+              <div class="back-btn">‹</div>
+              <h2>Confirmar</h2>
+              <div style="width:36px"></div>
+            </div>
+            <div id="s5-steps" class="steps">
+              <div class="step done">✓ Alumno</div>
+              <div class="step-line"></div>
+              <div class="step done">✓ Padre</div>
+              <div class="step-line"></div>
+              <div class="step active">③ Confirmar</div>
+            </div>
+            <div id="s5-card" class="summary-card">
+              <div class="summary-title">Resumen</div>
+              <div class="summary-row"><span class="s-label">Nombre</span><span class="s-val">Diego Ramírez</span></div>
+              <div class="summary-row"><span class="s-label">Fecha</span><span class="s-val">15 mar 2014</span></div>
+              <div class="summary-row"><span class="s-label">Categoría</span><span class="s-val">Sub-12</span></div>
+              <div class="summary-row"><span class="s-label">Padre/tutor</span><span class="s-val">María Ramírez · maria@email.com</span></div>
+            </div>
+            <div id="s5-cta" class="cta"><span>Confirmar y crear</span></div>
+          </div>
+        </div>
+
+        <!-- ── Scene 6: Credentials ── -->
+        <div id="s6" class="scene dark-bg" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar dark"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div id="s6-card" class="modal-card" style="top:48%;transform:translate(-50%,-48%)">
+            <div class="check-circle">✓</div>
+            <div class="modal-title">Alumno creado</div>
+            <div class="modal-sub">Entrega estas credenciales al alumno o a su tutor</div>
+            <div class="creds-box">
+              <div class="cred-row">
+                <div class="cred-label">Usuario</div>
+                <div class="cred-val">diego.ramirez042</div>
+              </div>
+              <div style="height:1px;background:#E2E8F0;margin:8px 0"></div>
+              <div class="cred-row">
+                <div class="cred-label">Contraseña temporal</div>
+                <div class="cred-val">Futcamedic2024!</div>
+              </div>
+            </div>
+            <div class="modal-note">Deberá cambiar su contraseña en el primer ingreso</div>
+            <div class="modal-btn"><span>Listo</span></div>
+          </div>
+        </div>
+
+      </div><!-- phone-screen -->
+    </div><!-- phone-outer -->
+  </div><!-- phone-wrap -->
+
+</div>
+
+<script>
+window.__timelines = window.__timelines || {};
+var tl = gsap.timeline({ paused: true, onComplete: function(){ tl.play(0); } });
+
+// ── Scene 1 entrance (0 → 3.0s) ──
+tl.from('#s1-hdr', { y: -30, opacity: 0, duration: 0.6, ease: 'power3.out' }, 0.2);
+tl.from('#s1-kpis .kpi-card', { y: 20, opacity: 0, duration: 0.5, ease: 'power2.out', stagger: 0.07 }, 0.5);
+tl.from('#s1-qa', { opacity: 0, duration: 0.4, ease: 'sine.out' }, 0.9);
+tl.from('#s1-tiles .tile', { y: 15, opacity: 0, duration: 0.4, ease: 'power2.out', stagger: 0.06 }, 1.0);
+tl.from('#bg-title', { x: 40, opacity: 0, duration: 0.8, ease: 'power3.out' }, 0.3);
+tl.from('#video-badge', { y: 20, opacity: 0, duration: 0.6, ease: 'power2.out' }, 0.6);
+
+// ── Transition 1→2 at T=2.8 ──
+var T12 = 2.8;
+tl.to('#s1', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T12);
+tl.fromTo('#s2', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T12);
+tl.set('#s1', { opacity: 0 }, T12 + 0.41);
+
+// ── Scene 2 entrance (3.2 → 6.0) ──
+var S2 = T12 + 0.41;
+tl.from('#s2-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, S2 + 0.05);
+tl.from('#s2-srch', { scaleX: 0.9, opacity: 0, duration: 0.4, ease: 'power2.out' }, S2 + 0.15);
+tl.from('#s2-chips .chip', { x: -10, opacity: 0, duration: 0.3, ease: 'expo.out', stagger: 0.06 }, S2 + 0.25);
+tl.from('#s2-r1, #s2-r2, #s2-r3', { x: 20, opacity: 0, duration: 0.4, ease: 'power2.out', stagger: 0.08 }, S2 + 0.35);
+tl.from('#s2-fab', { y: 30, opacity: 0, duration: 0.5, ease: 'back.out(1.5)' }, S2 + 0.55);
+
+// ── Transition 2→3 at T=5.8 ──
+var T23 = S2 + 2.55;
+tl.to('#s2', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T23);
+tl.fromTo('#s3', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T23);
+tl.set('#s2', { opacity: 0 }, T23 + 0.41);
+
+// ── Scene 3 entrance ──
+var S3 = T23 + 0.41;
+tl.from('#s3-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, S3 + 0.05);
+tl.from('#s3-steps .step, #s3-steps .step-line', { y: 10, opacity: 0, duration: 0.35, ease: 'power2.out', stagger: 0.04 }, S3 + 0.15);
+tl.from('#s3-warn', { y: 10, opacity: 0, duration: 0.4, ease: 'power2.out' }, S3 + 0.3);
+tl.from('#s3-f1, #s3-f2, #s3-f3', { y: 10, opacity: 0, duration: 0.35, ease: 'power2.out', stagger: 0.08 }, S3 + 0.4);
+tl.from('#s3-cta', { y: 15, opacity: 0, duration: 0.4, ease: 'back.out(1.4)' }, S3 + 0.65);
+
+// ── Transition 3→4 ──
+var T34 = S3 + 2.55;
+tl.to('#s3', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T34);
+tl.fromTo('#s4', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T34);
+tl.set('#s3', { opacity: 0 }, T34 + 0.41);
+
+// ── Scene 4 entrance ──
+var S4 = T34 + 0.41;
+tl.from('#s4-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, S4 + 0.05);
+tl.from('#s4-steps .step, #s4-steps .step-line', { y: 10, opacity: 0, duration: 0.35, ease: 'power2.out', stagger: 0.04 }, S4 + 0.15);
+tl.from('#s4-toggle', { scaleX: 0.92, opacity: 0, duration: 0.4, ease: 'power3.out' }, S4 + 0.25);
+tl.from('#s4-f1, #s4-f2, #s4-f3', { y: 10, opacity: 0, duration: 0.35, ease: 'power2.out', stagger: 0.08 }, S4 + 0.35);
+tl.from('#s4-chip', { y: 10, opacity: 0, duration: 0.4, ease: 'sine.out' }, S4 + 0.58);
+tl.from('#s4-cta', { y: 15, opacity: 0, duration: 0.4, ease: 'back.out(1.4)' }, S4 + 0.7);
+
+// ── Transition 4→5 ──
+var T45 = S4 + 2.55;
+tl.to('#s4', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T45);
+tl.fromTo('#s5', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T45);
+tl.set('#s4', { opacity: 0 }, T45 + 0.41);
+
+// ── Scene 5 entrance ──
+var S5 = T45 + 0.41;
+tl.from('#s5-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, S5 + 0.05);
+tl.from('#s5-steps .step, #s5-steps .step-line', { y: 10, opacity: 0, duration: 0.35, ease: 'power2.out', stagger: 0.04 }, S5 + 0.15);
+tl.from('#s5-card', { y: 20, opacity: 0, scale: 0.97, duration: 0.5, ease: 'power3.out' }, S5 + 0.3);
+tl.from('#s5-cta', { y: 15, opacity: 0, duration: 0.4, ease: 'back.out(1.4)' }, S5 + 0.65);
+
+// ── Transition 5→6 ──
+var T56 = S5 + 2.55;
+tl.to('#s5', { filter:'blur(8px)', scale:1.02, opacity:0, duration: 0.5, ease: 'power2.inOut' }, T56);
+tl.fromTo('#s6', { opacity:0 }, { opacity:1, duration: 0.5, ease: 'power2.inOut' }, T56 + 0.1);
+tl.set('#s5', { opacity: 0 }, T56 + 0.55);
+
+// ── Scene 6 entrance ──
+var S6 = T56 + 0.55;
+tl.from('#s6-card', { y: 40, opacity: 0, scale: 0.92, duration: 0.6, ease: 'back.out(1.6)' }, S6 + 0.1);
+
+// Total ~18s - scene 6 holds until 18s then onComplete loops
+
+window.__timelines['video1'] = tl;
+document.addEventListener('DOMContentLoaded', function(){
+  tl.play();
+});
+</script>
+</body>
+</html>

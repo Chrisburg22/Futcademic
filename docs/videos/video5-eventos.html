@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1920px;height:1080px;overflow:hidden;background:#0a0a0a;font-family:'Inter',sans-serif}
+.bg-blob1{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(15,81,50,0.3) 0%,rgba(15,81,50,0) 70%);left:-80px;top:150px}
+.bg-blob2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(163,230,53,0.1) 0%,rgba(163,230,53,0) 70%);right:80px;top:80px}
+.bg-blob3{position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,0.07) 0%,rgba(239,68,68,0) 70%);right:200px;bottom:80px}
+.bg-label{position:absolute;font-family:'Space Grotesk',sans-serif;font-size:170px;font-weight:700;color:rgba(163,230,53,0.04);white-space:nowrap;top:50%;transform:translateY(-50%);left:1140px}
+.divider{position:absolute;left:1100px;top:0;width:2px;height:1080px;background:rgba(163,230,53,0.1)}
+.bg-title{position:absolute;left:1180px;top:50%;transform:translateY(-50%)}
+.bg-title h1{font-family:'Space Grotesk',sans-serif;font-size:52px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:16px}
+.bg-title p{font-size:21px;color:rgba(255,255,255,0.45);line-height:1.6;max-width:560px}
+.video-badge{position:absolute;bottom:48px;left:1180px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:10px 20px}
+.video-badge span{font-family:'Space Grotesk',sans-serif;font-size:18px;color:#A3E635;font-weight:700}
+.video-badge small{font-size:15px;color:rgba(255,255,255,0.5)}
+.phone-wrap{position:absolute;left:757px;top:110px}
+.phone-outer{width:406px;height:860px;border-radius:52px;background:#111;border:7px solid #1a1a1a;box-shadow:0 0 0 1px rgba(255,255,255,0.08),0 40px 80px rgba(0,0,0,0.8),0 0 60px rgba(163,230,53,0.08);position:relative;overflow:hidden}
+.phone-notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:30px;background:#0a0a0a;border-radius:20px;z-index:100}
+.phone-screen{position:absolute;top:0;left:0;width:392px;height:846px;border-radius:45px;overflow:hidden}
+.status-bar{position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:14px 22px 0;z-index:50}
+.status-bar .time{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#0F172A}
+.status-bar .icons{font-size:13px;color:#0F172A}
+.scene{position:absolute;top:0;left:0;width:392px;height:846px;overflow:hidden;background:#FAF8F3}
+.si{position:absolute;top:50px;left:0;right:0;bottom:0;overflow:hidden}
+.ab{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #E2E8F0}
+.ab h2{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:#0F172A}
+.back-btn{width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:15px}
+.filter-btn{width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:12px}
+.spc{width:34px}
+
+/* Scene 1: Events list */
+#s1 .month-lbl{font-size:11px;font-weight:700;color:#64748B;letter-spacing:0.8px;padding:10px 16px 8px}
+#s1 .ev-card{background:#fff;border-radius:14px;margin:0 16px 10px;padding:12px;display:flex;gap:12px;border:1px solid #E2E8F0}
+#s1 .date-block{width:50px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;flex-shrink:0}
+#s1 .date-block.dark{background:#0B3D2E}
+#s1 .date-block.light{background:#F1F5F9}
+#s1 .date-block .mon{font-size:9px;font-weight:600;color:#A3E635}
+#s1 .date-block.light .mon{color:#64748B}
+#s1 .date-block .day{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#fff;line-height:1}
+#s1 .date-block.light .day{color:#0F172A}
+#s1 .ev-body{flex:1;display:flex;flex-direction:column;gap:5px}
+#s1 .ev-badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:9px;font-weight:700;align-self:flex-start}
+#s1 .ev-badge.green{background:#DCFCE7;color:#15803D}
+#s1 .ev-badge.red{background:#FEE2E2;color:#EF4444}
+#s1 .ev-name{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#0F172A}
+#s1 .ev-meta{font-size:11px;color:#64748B}
+#s1 .lista-chip{display:inline-flex;align-items:center;gap:4px;background:#DCFCE7;padding:4px 10px;border-radius:8px;font-size:10px;font-weight:700;color:#15803D;align-self:flex-start}
+#s1 .fab{position:absolute;bottom:20px;left:16px;right:16px;height:50px;background:#15803D;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(21,128,61,0.4)}
+#s1 .fab span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#fff}
+
+/* Scene 2: New event form */
+#s2 .form-group{margin:0 16px 10px}
+#s2 .form-lbl{font-size:12px;font-weight:600;color:#334155;margin-bottom:6px}
+#s2 .form-inp{background:#fff;border:1px solid #E2E8F0;border-radius:12px;height:46px;display:flex;align-items:center;padding:0 14px;font-size:14px;color:#0F172A}
+#s2 .type-row{display:flex;gap:8px;margin:0 16px 10px}
+#s2 .type-btn{flex:1;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+#s2 .type-btn.active{background:#15803D;color:#fff}
+#s2 .type-btn.inactive{background:#fff;border:1px solid #E2E8F0;color:#64748B}
+#s2 .recur-row{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #E2E8F0;border-radius:12px;margin:0 16px 10px;padding:12px 14px}
+#s2 .recur-row span{font-size:13px;font-weight:600;color:#0F172A}
+#s2 .toggle-switch{width:44px;height:26px;border-radius:13px;background:#15803D;display:flex;align-items:center;padding:3px;justify-content:flex-end}
+#s2 .toggle-circle{width:20px;height:20px;border-radius:50%;background:#fff}
+#s2 .weeks-sel{display:flex;gap:8px;margin:0 16px 14px}
+#s2 .week-btn{flex:1;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+#s2 .week-btn.active{background:#15803D;color:#fff}
+#s2 .week-btn.inactive{background:#F1F5F9;color:#64748B}
+#s2 .cta{margin:0 16px;height:50px;background:#15803D;border-radius:14px;display:flex;align-items:center;justify-content:center}
+#s2 .cta span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#fff}
+
+/* Scene 3: Created confirmation */
+#s3 .success-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px;gap:16px}
+#s3 .cal-icon{width:90px;height:90px;border-radius:22px;background:#DCFCE7;display:flex;align-items:center;justify-content:center;font-size:48px}
+#s3 .sc-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#0F172A;text-align:center}
+#s3 .sc-sub{font-size:13px;color:#64748B;text-align:center}
+#s3 .session-list{width:100%;background:#F1F5F9;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+#s3 .session-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #E2E8F0}
+#s3 .session-row:last-child{border-bottom:none}
+#s3 .session-dot{width:8px;height:8px;border-radius:50%;background:#15803D;flex-shrink:0}
+#s3 .session-date{font-size:13px;color:#0F172A;font-weight:600}
+#s3 .sc-btn{width:100%;height:50px;background:#A3E635;border-radius:14px;display:flex;align-items:center;justify-content:center}
+#s3 .sc-btn span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#0B3D2E}
+
+/* Scene 4: Event detail */
+#s4 .ev-header{background:#0F5132;padding:14px 16px}
+#s4 .ev-date-row{display:flex;align-items:center;gap:14px}
+#s4 .ev-date-block{width:56px;background:rgba(255,255,255,0.12);border-radius:12px;padding:8px 0;display:flex;flex-direction:column;align-items:center}
+#s4 .ev-date-block .m{font-size:10px;font-weight:700;color:#A3E635}
+#s4 .ev-date-block .d{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#fff;line-height:1}
+#s4 .ev-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#fff}
+#s4 .ev-cat{font-size:12px;color:#DCFCE7;margin-top:2px}
+#s4 .meta-card{background:#fff;border-radius:14px;margin:12px 16px;padding:14px;display:flex;flex-direction:column;gap:10px;border:1px solid #E2E8F0}
+#s4 .meta-row{display:flex;align-items:center;gap:10px}
+#s4 .meta-ic{width:32px;height:32px;border-radius:999px;background:#DCFCE7;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+#s4 .meta-lbl{font-size:11px;color:#64748B}
+#s4 .meta-val{font-size:13px;font-weight:600;color:#0F172A}
+#s4 .lista-btn{margin:0 16px 10px;height:44px;background:#DCFCE7;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+#s4 .lista-btn span{font-size:13px;font-weight:700;color:#15803D}
+#s4 .cancel-btn{margin:0 16px;height:44px;border:1.5px solid #EF4444;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+#s4 .cancel-btn span{font-size:13px;font-weight:700;color:#EF4444}
+
+/* Scene 5: Cancel sheet */
+#s5{background:rgba(15,23,42,0.0)}
+#s5 .scrim{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.65)}
+#s5 .sheet{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top-left-radius:26px;border-top-right-radius:26px;padding:16px 20px 32px}
+#s5 .handle{width:40px;height:4px;background:#E2E8F0;border-radius:2px;margin:0 auto 16px}
+#s5 .sh-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#0F172A;margin-bottom:8px}
+#s5 .sh-sub{font-size:13px;color:#64748B;line-height:1.5;margin-bottom:20px}
+#s5 .sh-cancel{height:50px;background:#EF4444;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+#s5 .sh-cancel span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#fff}
+#s5 .sh-keep{height:50px;background:#fff;border:1px solid #E2E8F0;border-radius:14px;display:flex;align-items:center;justify-content:center}
+#s5 .sh-keep span{font-size:14px;font-weight:600;color:#334155}
+
+/* Scene 6: Cancelled state */
+#s6 .ev-header{background:#64748B;padding:14px 16px}
+#s6 .ev-date-row{display:flex;align-items:center;gap:14px}
+#s6 .ev-date-block{width:56px;background:rgba(255,255,255,0.12);border-radius:12px;padding:8px 0;display:flex;flex-direction:column;align-items:center}
+#s6 .ev-date-block .m{font-size:10px;font-weight:700;color:#CBD5E1}
+#s6 .ev-date-block .d{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#fff;line-height:1}
+#s6 .cancelled-badge{background:#FEE2E2;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;color:#EF4444;align-self:flex-start;margin-top:4px;display:inline-block}
+#s6 .ev-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#fff}
+#s6 .meta-card{background:#fff;border-radius:14px;margin:12px 16px;padding:14px;border:1px solid #E2E8F0}
+#s6 .toast{position:absolute;bottom:70px;left:16px;right:16px;background:#0F172A;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:10px}
+#s6 .toast-dot{width:8px;height:8px;border-radius:50%;background:#A3E635;flex-shrink:0}
+#s6 .toast-txt{font-size:12px;color:#fff;font-weight:600}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video5" data-width="1920" data-height="1080" data-start="0" data-duration="20">
+  <div class="bg-blob1"></div><div class="bg-blob2"></div><div class="bg-blob3"></div>
+  <div class="bg-label">EVENTOS</div>
+  <div class="divider"></div>
+  <div class="bg-title" id="bg-title">
+    <h1>Eventos recurrentes<br>+ cancelar sesión</h1>
+    <p>El admin crea un evento con 4 sesiones automáticas y puede cancelar sesiones individuales sin afectar las demás.</p>
+  </div>
+  <div class="video-badge" id="video-badge">
+    <div style="width:28px;height:28px;border-radius:8px;background:#EF4444;display:flex;align-items:center;justify-content:center;font-size:15px">📅</div>
+    <span>Video 5 / 5</span><small>Eventos</small>
+  </div>
+  <div class="phone-wrap">
+    <div class="phone-outer">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+
+        <!-- Scene 1: Events list -->
+        <div id="s1" class="scene">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div id="s1-ab" class="ab"><div class="back-btn">‹</div><h2>Eventos</h2><div class="filter-btn">▼</div></div>
+            <div id="s1-month" class="month-lbl">MAYO 2026</div>
+            <div id="s1-c1" class="ev-card">
+              <div class="date-block dark"><span class="mon">MAY</span><span class="day">12</span></div>
+              <div class="ev-body"><div class="ev-badge green">ENTRENAMIENTO</div><div class="ev-name">Sub-12 Halcones</div><div class="ev-meta">16:00 · Campo A</div><div class="lista-chip">✓ PASAR LISTA</div></div>
+            </div>
+            <div id="s1-c2" class="ev-card">
+              <div class="date-block light"><span class="mon">MAY</span><span class="day">17</span></div>
+              <div class="ev-body"><div class="ev-badge red">PARTIDO</div><div class="ev-name">Sub-12 vs Tigres FC</div><div class="ev-meta">10:00 · Campo Central</div></div>
+            </div>
+            <div id="s1-c3" class="ev-card">
+              <div class="date-block light"><span class="mon">MAY</span><span class="day">19</span></div>
+              <div class="ev-body"><div class="ev-badge green">ENTRENAMIENTO</div><div class="ev-name">Sub-12 Halcones</div><div class="ev-meta">16:00 · Campo A</div></div>
+            </div>
+            <div id="s1-fab" class="fab"><span>+ Crear evento</span></div>
+          </div>
+        </div>
+
+        <!-- Scene 2: New event form -->
+        <div id="s2" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div id="s2-ab" class="ab"><div class="back-btn">‹</div><h2>Nuevo evento</h2><div class="spc"></div></div>
+            <div id="s2-f1" class="form-group" style="margin-top:12px">
+              <div class="form-lbl">Nombre</div><div class="form-inp">Entrenamiento Sub-12</div>
+            </div>
+            <div id="s2-type" class="type-row">
+              <div class="type-btn active">Entrenamiento</div>
+              <div class="type-btn inactive">Partido</div>
+            </div>
+            <div id="s2-f2" class="form-group">
+              <div class="form-lbl">Categoría</div><div class="form-inp">Sub-12 Halcones</div>
+            </div>
+            <div id="s2-f3" style="display:flex;gap:10px;margin:0 16px 10px">
+              <div style="flex:1"><div class="form-lbl">Sede</div><div class="form-inp" style="border-radius:12px;background:#fff;border:1px solid #E2E8F0;height:46px;padding:0 12px;font-size:13px;color:#0F172A;display:flex;align-items:center">Campo A</div></div>
+              <div style="flex:1"><div class="form-lbl">Fecha inicio</div><div class="form-inp" style="border-radius:12px;background:#fff;border:1px solid #E2E8F0;height:46px;padding:0 12px;font-size:13px;color:#0F172A;display:flex;align-items:center">2026-06-02</div></div>
+            </div>
+            <div id="s2-recur" class="recur-row"><span>Recurrencia semanal</span><div class="toggle-switch"><div class="toggle-circle"></div></div></div>
+            <div id="s2-weeks" class="weeks-sel">
+              <div class="week-btn inactive">4 sem</div>
+              <div class="week-btn active">8 sem</div>
+              <div class="week-btn inactive">12 sem</div>
+              <div class="week-btn inactive">16 sem</div>
+            </div>
+            <div id="s2-cta" class="cta"><span>Crear evento</span></div>
+          </div>
+        </div>
+
+        <!-- Scene 3: Created confirmation -->
+        <div id="s3" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div id="s3-inner" class="success-inner">
+              <div id="s3-icon" class="cal-icon">📅</div>
+              <div id="s3-title" class="sc-title">Evento creado</div>
+              <div id="s3-sub" class="sc-sub">4 sesiones generadas automáticamente</div>
+              <div id="s3-list" class="session-list">
+                <div class="session-row"><div class="session-dot"></div><span class="session-date">Lun 2 junio 2026</span></div>
+                <div class="session-row"><div class="session-dot"></div><span class="session-date">Lun 9 junio 2026</span></div>
+                <div class="session-row"><div class="session-dot"></div><span class="session-date">Lun 16 junio 2026</span></div>
+                <div class="session-row"><div class="session-dot"></div><span class="session-date">Lun 23 junio 2026</span></div>
+              </div>
+              <div id="s3-btn" class="sc-btn"><span>Ver agenda</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene 4: Event detail -->
+        <div id="s4" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div id="s4-hdr" class="ev-header">
+              <div class="ev-date-row">
+                <div class="ev-date-block"><span class="m">JUN</span><span class="d">09</span></div>
+                <div><div class="ev-title">Entrenamiento Sub-12</div><div class="ev-cat">Sub-12 Halcones</div></div>
+              </div>
+            </div>
+            <div id="s4-meta" class="meta-card">
+              <div class="meta-row"><div class="meta-ic">⏰</div><div><div class="meta-lbl">Hora</div><div class="meta-val">16:00 hrs</div></div></div>
+              <div class="meta-row"><div class="meta-ic">📍</div><div><div class="meta-lbl">Sede</div><div class="meta-val">Campo A</div></div></div>
+              <div class="meta-row"><div class="meta-ic">👥</div><div><div class="meta-lbl">Categoría</div><div class="meta-val">Sub-12 Halcones</div></div></div>
+            </div>
+            <div id="s4-lista" class="lista-btn"><span>✓ PASAR LISTA</span></div>
+            <div id="s4-cancel" class="cancel-btn"><span>⊗ Cancelar esta sesión</span></div>
+          </div>
+        </div>
+
+        <!-- Scene 5: Cancel sheet -->
+        <div id="s5" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <!-- Repeat scene 4 content as background -->
+            <div class="ev-header" style="background:#0F5132;padding:14px 16px">
+              <div style="display:flex;align-items:center;gap:14px">
+                <div style="width:56px;background:rgba(255,255,255,0.12);border-radius:12px;padding:8px 0;display:flex;flex-direction:column;align-items:center"><span style="font-size:10px;font-weight:700;color:#A3E635">JUN</span><span style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#fff;line-height:1">09</span></div>
+                <div><div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#fff">Entrenamiento Sub-12</div><div style="font-size:12px;color:#DCFCE7;margin-top:2px">Sub-12 Halcones</div></div>
+              </div>
+            </div>
+            <div class="scrim" id="s5-scrim"></div>
+            <div id="s5-sheet" class="sheet">
+              <div class="handle"></div>
+              <div class="sh-title">Cancelar sesión</div>
+              <div class="sh-sub">¿Cancelar el entrenamiento del 9 de junio? Las otras 3 sesiones no se verán afectadas.</div>
+              <div class="sh-cancel"><span>Sí, cancelar sesión</span></div>
+              <div class="sh-keep"><span>No, mantener</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scene 6: Cancelled state -->
+        <div id="s6" class="scene" style="opacity:0;transform:translateX(392px)">
+          <div class="status-bar"><span class="time">9:41</span><span class="icons">◼◼▌</span></div>
+          <div class="si">
+            <div id="s6-hdr" class="ev-header">
+              <div class="ev-date-row">
+                <div class="ev-date-block"><span class="m">JUN</span><span class="d">09</span></div>
+                <div>
+                  <div class="ev-title">Entrenamiento Sub-12</div>
+                  <div id="s6-badge" class="cancelled-badge">CANCELADA</div>
+                </div>
+              </div>
+            </div>
+            <div id="s6-meta" class="meta-card">
+              <div style="display:flex;align-items:center;gap:10px;padding:4px 0"><div style="width:32px;height:32px;border-radius:999px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:14px">⏰</div><div><div style="font-size:11px;color:#94A3B8">Hora</div><div style="font-size:13px;font-weight:600;color:#94A3B8">16:00 hrs</div></div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:4px 0"><div style="width:32px;height:32px;border-radius:999px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:14px">📍</div><div><div style="font-size:11px;color:#94A3B8">Sede</div><div style="font-size:13px;font-weight:600;color:#94A3B8">Campo A</div></div></div>
+            </div>
+            <div id="s6-toast" class="toast">
+              <div class="toast-dot"></div>
+              <div class="toast-txt">Sesión cancelada · Las otras 3 sesiones están activas</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+var tl = gsap.timeline({ paused: true, onComplete: function(){ tl.play(0); } });
+
+tl.from('#s1-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, 0.2);
+tl.from('#s1-month', { opacity: 0, duration: 0.3, ease: 'sine.out' }, 0.35);
+tl.from('#s1-c1, #s1-c2, #s1-c3', { x: 20, opacity: 0, duration: 0.4, ease: 'power2.out', stagger: 0.1 }, 0.45);
+tl.from('#s1-fab', { y: 20, opacity: 0, duration: 0.4, ease: 'back.out(1.5)' }, 0.75);
+tl.from('#bg-title, #video-badge', { x: 40, opacity: 0, duration: 0.8, ease: 'power3.out', stagger: 0.15 }, 0.3);
+
+var T12 = 3.0;
+tl.to('#s1', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T12);
+tl.fromTo('#s2', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T12);
+tl.set('#s1', { opacity: 0 }, T12 + 0.41);
+
+var S2 = T12 + 0.41;
+tl.from('#s2-ab', { y: -20, opacity: 0, duration: 0.4, ease: 'power3.out' }, S2 + 0.05);
+tl.from('#s2-f1', { y: 10, opacity: 0, duration: 0.35, ease: 'power2.out' }, S2 + 0.15);
+tl.from('#s2-type', { scaleX: 0.9, opacity: 0, duration: 0.35, ease: 'power3.out' }, S2 + 0.25);
+tl.from('#s2-f2, #s2-f3', { y: 10, opacity: 0, duration: 0.35, ease: 'power2.out', stagger: 0.07 }, S2 + 0.35);
+tl.from('#s2-recur', { x: -10, opacity: 0, duration: 0.35, ease: 'expo.out' }, S2 + 0.5);
+tl.from('#s2-weeks .week-btn', { y: 8, opacity: 0, duration: 0.3, ease: 'power2.out', stagger: 0.06 }, S2 + 0.62);
+tl.from('#s2-cta', { y: 12, opacity: 0, duration: 0.4, ease: 'back.out(1.4)' }, S2 + 0.78);
+
+var T23 = S2 + 2.8;
+tl.to('#s2', { filter: 'blur(8px)', opacity: 0, scale: 1.02, duration: 0.5, ease: 'power2.inOut' }, T23);
+tl.fromTo('#s3', { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' }, T23 + 0.1);
+tl.set('#s2', { opacity: 0 }, T23 + 0.55);
+
+var S3 = T23 + 0.55;
+tl.from('#s3-icon', { scale: 0, opacity: 0, duration: 0.6, ease: 'back.out(2)' }, S3 + 0.1);
+tl.from('#s3-title, #s3-sub', { y: 15, opacity: 0, duration: 0.4, ease: 'power3.out', stagger: 0.1 }, S3 + 0.4);
+tl.from('#s3-list .session-row', { x: 15, opacity: 0, duration: 0.3, ease: 'power2.out', stagger: 0.08 }, S3 + 0.6);
+tl.from('#s3-btn', { y: 10, opacity: 0, duration: 0.4, ease: 'back.out(1.4)' }, S3 + 0.95);
+
+var T34 = S3 + 2.8;
+tl.to('#s3', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T34);
+tl.fromTo('#s4', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T34);
+tl.set('#s3', { opacity: 0 }, T34 + 0.41);
+
+var S4 = T34 + 0.41;
+tl.from('#s4-hdr', { y: -15, opacity: 0, duration: 0.4, ease: 'power3.out' }, S4 + 0.05);
+tl.from('#s4-meta', { y: 15, opacity: 0, duration: 0.45, ease: 'power2.out' }, S4 + 0.2);
+tl.from('#s4-lista, #s4-cancel', { y: 10, opacity: 0, duration: 0.35, ease: 'power2.out', stagger: 0.12 }, S4 + 0.45);
+
+var T45 = S4 + 2.5;
+tl.to('#s4', { filter: 'blur(4px)', scale: 0.98, duration: 0.3, ease: 'power2.inOut' }, T45);
+tl.fromTo('#s5', { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power2.out' }, T45 + 0.05);
+tl.set('#s4', { opacity: 0 }, T45 + 0.35);
+
+var S5 = T45 + 0.35;
+tl.from('#s5-sheet', { y: 200, opacity: 0, duration: 0.5, ease: 'power3.out' }, S5 + 0.05);
+tl.from('#s5-scrim', { opacity: 0, duration: 0.4, ease: 'power2.out' }, S5 + 0.05);
+
+var T56 = S5 + 2.5;
+tl.to('#s5', { x: -392, duration: 0.4, ease: 'power3.inOut' }, T56);
+tl.fromTo('#s6', { x: 392, opacity: 1 }, { x: 0, duration: 0.4, ease: 'power3.inOut' }, T56);
+tl.set('#s5', { opacity: 0 }, T56 + 0.41);
+
+var S6 = T56 + 0.41;
+tl.from('#s6-hdr', { y: -15, opacity: 0, duration: 0.4, ease: 'power3.out' }, S6 + 0.05);
+tl.from('#s6-badge', { scale: 0, opacity: 0, duration: 0.4, ease: 'back.out(2)' }, S6 + 0.3);
+tl.from('#s6-meta', { y: 15, opacity: 0, duration: 0.4, ease: 'power2.out' }, S6 + 0.45);
+tl.from('#s6-toast', { y: 30, opacity: 0, duration: 0.5, ease: 'back.out(1.5)' }, S6 + 0.65);
+
+window.__timelines['video5'] = tl;
+document.addEventListener('DOMContentLoaded', function(){ tl.play(); });
+</script>
+</body>
+</html>
