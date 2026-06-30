@@ -1,4 +1,4 @@
-# Futcamedic Web
+# Futcademic Web
 
 React + TypeScript web app — paridad funcional con `mobile/`. Consume el backend Express + Supabase.
 

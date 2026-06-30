@@ -48,7 +48,7 @@ export function LoginPage() {
   return (
     <Container size={420} my={80}>
       <Stack gap="xs" align="center" mb="lg">
-        <Title order={2}>Futcamedic</Title>
+        <Title order={2}>Futcademic</Title>
         <Text c="dimmed" size="sm">
           Inicia sesión para continuar
         </Text>

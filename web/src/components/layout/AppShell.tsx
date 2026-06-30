@@ -43,7 +43,7 @@ export function AppShell() {
                 <Image src={profile.school.logo_url} h={28} w={28} radius="sm" alt="logo" />
               ) : null}
               <Text fw={700} size="lg">
-                {profile?.school?.name || 'Futcamedic'}
+                {profile?.school?.name || 'Futcademic'}
               </Text>
             </Group>
           </Group>

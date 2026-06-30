@@ -165,7 +165,7 @@ const pause = (ms = 800) => new Promise((r) => setTimeout(r, ms));
 
 test('01 — Pantalla de inicio de sesión', async ({ page }) => {
   await page.goto('/login');
-  await expect(page.getByText('Futcamedic')).toBeVisible();
+  await expect(page.getByText('Futcademic')).toBeVisible();
   await expect(page.getByLabel('Correo')).toBeVisible();
   await expect(page.getByLabel('Contraseña')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible();
