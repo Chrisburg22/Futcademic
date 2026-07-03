@@ -41,3 +41,5 @@ backend/
 
 # Claude internal
 .claude/
+futcademic-manual/
+videos/

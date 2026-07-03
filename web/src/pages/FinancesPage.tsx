@@ -52,7 +52,8 @@ function AdminFinances() {
     ? { type: tab === 'teachers' ? ('pago_profesor' as const) : ('mensualidad' as const), month: Number(month) }
     : undefined;
   const { data: payments = [], isLoading } = useGetPayments(filters);
-  const { data: pending = [] } = useGetPendingPayments(month ? Number(month) : undefined);
+  const { data: pendingData } = useGetPendingPayments(month ? Number(month) : undefined);
+  const pending = pendingData?.pending || [];
 
   return (
     <>
