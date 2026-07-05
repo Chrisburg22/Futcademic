@@ -51,30 +51,41 @@ export function AcceptInvitePage() {
 
   useEffect(() => {
     const init = async () => {
-      // El cliente tiene detectSessionInUrl: false — procesar el hash del
-      // link de invitación manualmente (#access_token=...&refresh_token=...)
+      const query = new URLSearchParams(window.location.search);
       const hash = new URLSearchParams(window.location.hash.slice(1));
-      const errorDescription = hash.get('error_description');
+
+      const errorDescription = query.get('error_description') || hash.get('error_description');
       if (errorDescription) {
         setError(errorDescription.replace(/\+/g, ' '));
         setStatus('invalid');
         return;
       }
 
-      const access_token = hash.get('access_token');
-      const refresh_token = hash.get('refresh_token');
-      if (access_token && refresh_token) {
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token,
-          refresh_token,
-        });
-        if (sessionError) {
+      // Flujo principal: el link apunta a nuestro sitio con ?token_hash=...&type=...
+      // y verificamos el token aquí (el dominio de Supabase no se expone).
+      const tokenHash = query.get('token_hash');
+      const type = query.get('type') as 'invite' | 'magiclink' | null;
+      if (tokenHash && type) {
+        const { error: otpError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+        if (otpError) {
           setError('El enlace de invitación no es válido o ya expiró.');
           setStatus('invalid');
           return;
         }
-        // Limpiar tokens de la URL
         window.history.replaceState(null, '', window.location.pathname);
+      } else {
+        // Fallback: link legacy con tokens en el hash (#access_token=...)
+        const access_token = hash.get('access_token');
+        const refresh_token = hash.get('refresh_token');
+        if (access_token && refresh_token) {
+          const { error: sessionError } = await supabase.auth.setSession({ access_token, refresh_token });
+          if (sessionError) {
+            setError('El enlace de invitación no es válido o ya expiró.');
+            setStatus('invalid');
+            return;
+          }
+          window.history.replaceState(null, '', window.location.pathname);
+        }
       }
 
       const { data: { session } } = await supabase.auth.getSession();
