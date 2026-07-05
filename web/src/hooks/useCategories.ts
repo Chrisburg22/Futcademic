@@ -8,10 +8,11 @@ export const useGetMyCategories = (enabled = true) =>
     enabled,
   });
 
-export const useGetCategories = () =>
+export const useGetCategories = (enabled = true) =>
   useQuery({
     queryKey: ['categories'],
     queryFn: async () => (await api.get('/categories')).data,
+    enabled,
   });
 
 export const useCreateCategory = () => {

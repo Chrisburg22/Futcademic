@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/axios';
+import { supabase } from '../config/supabase';
 
 export const useGetUsers = () =>
   useQuery({
@@ -37,8 +38,14 @@ export const useUpdateUser = () => {
 
 export const useChangePassword = () =>
   useMutation({
-    mutationFn: async (newPassword: string) =>
-      (await api.patch('/users/me/password', { newPassword })).data,
+    mutationFn: async (newPassword: string) => {
+      // Cambiar la contraseña desde el cliente mantiene la sesión viva;
+      // el endpoint admin del backend revoca la sesión y provoca 401 en
+      // las peticiones siguientes (bug del onboarding).
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      return (await api.patch('/users/me/password-changed')).data;
+    },
   });
 
 export const useInviteParent = () => {

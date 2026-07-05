@@ -3,13 +3,13 @@ import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconUpload } from '@tabler/icons-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useUpdateProfile } from '../../hooks/useSettings';
+import { useUpdateOwnProfile } from '../../hooks/useMe';
 import { useUploadAvatar } from '../../hooks/useUpload';
 import { PageHeader } from '../../components/common/PageHeader';
 
 export function EditProfilePage() {
   const { profile, refreshProfile } = useAuth();
-  const update = useUpdateProfile();
+  const update = useUpdateOwnProfile();
   const upload = useUploadAvatar();
 
   const handleAvatarUpload = async (file: File | null) => {
@@ -32,7 +32,14 @@ export function EditProfilePage() {
 
   const onSubmit = async (v: typeof form.values) => {
     if (!profile?.id) return;
-    await update.mutateAsync({ id: profile.id, ...v });
+    await update.mutateAsync({
+      fullName: v.full_name,
+      phone: v.phone,
+      address: v.address,
+      emergency_contact_name: v.emergency_contact_name,
+      emergency_contact_phone: v.emergency_contact_phone,
+      avatar_url: v.avatar_url,
+    });
     await refreshProfile();
     notifications.show({ color: 'green', message: 'Perfil actualizado' });
   };

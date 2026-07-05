@@ -56,6 +56,7 @@ export function EventsPage() {
 
   const form = useForm({
     initialValues: {
+      name: '',
       category_id: '',
       date: new Date(),
       start_time: '',
@@ -64,10 +65,15 @@ export function EventsPage() {
       venue_id: '',
       recurringWeeks: 0,
     },
+    validate: {
+      name: (v) => (v.trim() ? null : 'Requerido'),
+      category_id: (v) => (v ? null : 'Requerido'),
+    },
   });
 
   const onCreate = async (v: typeof form.values) => {
     await create.mutateAsync({
+      name: v.name.trim(),
       category_id: v.category_id,
       date: dayjs(v.date).format('YYYY-MM-DD'),
       start_time: v.start_time || undefined,
@@ -219,6 +225,11 @@ export function EventsPage() {
       <Modal opened={createOpen} onClose={close} title="Nuevo evento" centered>
         <form onSubmit={form.onSubmit(onCreate)}>
           <Stack>
+            <TextInput
+              label="Nombre del evento"
+              required
+              {...form.getInputProps('name')}
+            />
             <Select
               label="Categoría"
               required

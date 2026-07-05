@@ -5,9 +5,13 @@ import { api } from '../api/axios';
 export const useUpdateOwnProfile = () =>
   useMutation({
     mutationFn: async (payload: {
+      fullName?: string;
       firstName?: string;
       lastName?: string;
       phone?: string;
+      address?: string;
+      emergency_contact_name?: string;
+      emergency_contact_phone?: string;
       avatar_url?: string;
     }) => (await api.patch('/users/me/profile', payload)).data,
   });

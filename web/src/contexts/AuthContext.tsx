@@ -50,7 +50,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('id', userId)
         .single();
       if (error) console.error('AuthContext: fetchProfile error:', error);
-      if (data) setProfile(data as Profile);
+      if (data) {
+        // phone/address/emergencia viven en profile_information, no en users
+        const { data: extra } = await supabase
+          .from('profile_information')
+          .select('phone, address, emergency_contact_name, emergency_contact_phone, avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
+        setProfile({
+          ...data,
+          ...(extra
+            ? {
+                phone: extra.phone ?? data.phone,
+                address: extra.address ?? data.address,
+                emergency_contact_name: extra.emergency_contact_name,
+                emergency_contact_phone: extra.emergency_contact_phone,
+                avatar_url: extra.avatar_url ?? data.avatar_url,
+              }
+            : {}),
+        } as Profile);
+      }
     } catch (err) {
       console.error('AuthContext: Unexpected error in fetchProfile:', err);
     } finally {

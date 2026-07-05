@@ -16,7 +16,8 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconPlus, IconEdit } from '@tabler/icons-react';
+import { IconPlus, IconEdit, IconEye } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import {
   useGetCategories,
   useCreateCategory,
@@ -30,6 +31,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 const YEARS = Array.from({ length: 18 }, (_, i) => (new Date().getFullYear() - i).toString());
 
 export function CategoriesPage() {
+  const navigate = useNavigate();
   const { data: categories = [], isLoading } = useGetCategories();
   const { data: teachers = [] } = useGetTeachers();
   const create = useCreateCategory();
@@ -112,9 +114,18 @@ export function CategoriesPage() {
                     </Table.Td>
                     <Table.Td>{c.teacher?.full_name || '—'}</Table.Td>
                     <Table.Td>
-                      <ActionIcon variant="subtle" onClick={() => startEdit(c)} aria-label="Editar">
-                        <IconEdit size={16} />
-                      </ActionIcon>
+                      <Group gap={4}>
+                        <ActionIcon
+                          variant="subtle"
+                          onClick={() => navigate(`/admin/categories/${c.id}`)}
+                          aria-label="Ver detalle"
+                        >
+                          <IconEye size={16} />
+                        </ActionIcon>
+                        <ActionIcon variant="subtle" onClick={() => startEdit(c)} aria-label="Editar">
+                          <IconEdit size={16} />
+                        </ActionIcon>
+                      </Group>
                     </Table.Td>
                   </Table.Tr>
                 ))}

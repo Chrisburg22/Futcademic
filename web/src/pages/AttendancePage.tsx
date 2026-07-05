@@ -10,6 +10,7 @@ import {
   Badge,
   Title,
   SegmentedControl,
+  Tabs,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
@@ -27,6 +28,7 @@ import { useGetStudents, useGetMyChildren } from '../hooks/useStudents';
 import { PageHeader } from '../components/common/PageHeader';
 import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
+import { CategoryAttendanceHistory } from '../components/attendance/CategoryAttendanceHistory';
 
 export function AttendancePage() {
   const { profile } = useAuth();
@@ -86,9 +88,38 @@ function RollCallView() {
     }
   };
 
+  const [tab, setTab] = useState<string | null>('rollcall');
+
   return (
     <>
-      <PageHeader title="Asistencias" description="Pasa lista por categoría" />
+      <PageHeader title="Asistencias" description="Pasa lista y consulta el histórico por categoría" />
+      <Tabs value={tab} onChange={setTab} mb="md">
+        <Tabs.List>
+          <Tabs.Tab value="rollcall">Pase de lista</Tabs.Tab>
+          <Tabs.Tab value="history">Histórico</Tabs.Tab>
+        </Tabs.List>
+      </Tabs>
+
+      {tab === 'history' ? (
+        <>
+          <Card withBorder padding="lg" radius="md" mb="md">
+            <Select
+              label="Categoría"
+              placeholder="Selecciona"
+              value={categoryId}
+              onChange={setCategoryId}
+              data={categories.map((c: any) => ({ value: c.id, label: c.name }))}
+              searchable
+            />
+          </Card>
+          {!categoryId ? (
+            <EmptyState description="Selecciona una categoría para ver su histórico." />
+          ) : (
+            <CategoryAttendanceHistory categoryId={categoryId} />
+          )}
+        </>
+      ) : (
+      <>
       <Card withBorder padding="lg" radius="md" mb="md">
         <Group grow align="flex-end">
           <Select
@@ -142,6 +173,8 @@ function RollCallView() {
             </Button>
           </Stack>
         </Card>
+      )}
+      </>
       )}
     </>
   );

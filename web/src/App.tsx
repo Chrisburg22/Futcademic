@@ -7,6 +7,7 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { ChangePasswordPage } from './pages/auth/ChangePasswordPage';
 import { StudentLoginPage } from './pages/auth/StudentLoginPage';
+import { AcceptInvitePage } from './pages/auth/AcceptInvitePage';
 
 import { DashboardPage } from './pages/DashboardPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -23,6 +24,7 @@ import { StudentDetailPage } from './pages/admin/StudentDetailPage';
 import { TeachersPage } from './pages/admin/TeachersPage';
 import { TeacherDetailPage } from './pages/admin/TeacherDetailPage';
 import { CategoriesPage } from './pages/admin/CategoriesPage';
+import { CategoryDetailPage } from './pages/admin/CategoryDetailPage';
 import { EventsPage } from './pages/admin/EventsPage';
 import { VenuesPage } from './pages/admin/VenuesPage';
 
@@ -40,6 +42,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/student-login" element={<StudentLoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route
         path="/change-password"
         element={
@@ -140,6 +143,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={['super_admin', 'admin']}>
               <CategoriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/categories/:id"
+          element={
+            <ProtectedRoute roles={['super_admin', 'admin', 'profesor']}>
+              <CategoryDetailPage />
             </ProtectedRoute>
           }
         />

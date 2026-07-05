@@ -23,26 +23,31 @@ import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import {
   useGetStudents,
-  useCreateStudent,
   useUpdateStudent,
   useUpdateUniform,
   useUpdateStudentStatus,
   useDeleteStudent,
 } from '../../hooks/useStudents';
-import { useGetCategories } from '../../hooks/useCategories';
+import { StudentWizard } from './components/StudentWizard';
+import { useGetCategories, useGetMyCategories } from '../../hooks/useCategories';
 import { useGetUsers } from '../../hooks/useUsers';
+import { useAuth } from '../../contexts/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 
 export function StudentsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const { data: categories = [] } = useGetCategories();
+  const { profile } = useAuth();
+  const isTeacher = profile?.role === 'profesor';
+  // Un profesor solo trabaja con sus categorías asignadas
+  const { data: myCategories = [] } = useGetMyCategories(isTeacher);
+  const { data: allCategories = [] } = useGetCategories(!isTeacher);
+  const categories = isTeacher ? myCategories : allCategories;
   const { data: users = [] } = useGetUsers();
   const parents = users.filter((u: any) => u.role === 'padre');
   const { data: students = [], isLoading } = useGetStudents(categoryFilter || undefined);
   const navigate = useNavigate();
-  const create = useCreateStudent();
   const update = useUpdateStudent();
   const uniformMut = useUpdateUniform();
   const statusMut = useUpdateStudentStatus();
@@ -52,30 +57,7 @@ export function StudentsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const editing = students.find((s: any) => s.id === editingId);
 
-  const createForm = useForm({
-    initialValues: {
-      full_name: '',
-      birth_date: new Date(),
-      email: '',
-      category_id: '',
-      parent_id: '',
-    },
-  });
-
   const editForm = useForm<any>({ initialValues: {} });
-
-  const onCreate = async (v: typeof createForm.values) => {
-    await create.mutateAsync({
-      full_name: v.full_name,
-      birth_date: dayjs(v.birth_date).format('YYYY-MM-DD'),
-      email: v.email,
-      category_id: v.category_id,
-      parent_id: v.parent_id || null,
-    });
-    notifications.show({ color: 'green', message: 'Alumno creado' });
-    createForm.reset();
-    closeCreate();
-  };
 
   const startEdit = (s: any) => {
     setEditingId(s.id);
@@ -257,30 +239,12 @@ export function StudentsPage() {
         </Card>
       )}
 
-      <Modal opened={createOpen} onClose={closeCreate} title="Nuevo alumno" centered>
-        <form onSubmit={createForm.onSubmit(onCreate)}>
-          <Stack>
-            <TextInput label="Nombre completo" required {...createForm.getInputProps('full_name')} />
-            <DateInput label="Fecha de nacimiento" required {...createForm.getInputProps('birth_date')} />
-            <TextInput label="Correo" type="email" required {...createForm.getInputProps('email')} />
-            <Select
-              label="Categoría"
-              required
-              data={categories.map((c: any) => ({ value: c.id, label: c.name }))}
-              {...createForm.getInputProps('category_id')}
-            />
-            <Select
-              label="Padre/Tutor (opcional)"
-              clearable
-              data={parents.map((p: any) => ({ value: p.id, label: p.full_name }))}
-              {...createForm.getInputProps('parent_id')}
-            />
-            <Button type="submit" loading={create.isPending}>
-              Crear
-            </Button>
-          </Stack>
-        </form>
-      </Modal>
+      <StudentWizard
+        opened={createOpen}
+        onClose={closeCreate}
+        categories={categories}
+        parents={parents}
+      />
 
       <Modal
         opened={!!editingId}
