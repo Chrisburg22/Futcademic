@@ -15,6 +15,8 @@ import { IconLogout, IconMoon, IconSun, IconUser } from '@tabler/icons-react';
 import { Sidebar } from './Sidebar';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../contexts/AuthContext';
+import { ChatProvider } from '../../contexts/ChatContext';
+import { ChatWidget } from '../chat/ChatWidget';
 import { useNavigate } from 'react-router-dom';
 
 export function AppShell() {
@@ -28,7 +30,9 @@ export function AppShell() {
     navigate('/login', { replace: true });
   };
 
-  return (
+  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
+
+  const shell = (
     <MantineAppShell
       header={{ height: 60 }}
       navbar={{ width: 260, breakpoint: 'sm', collapsed: { mobile: !opened } }}
@@ -98,6 +102,10 @@ export function AppShell() {
       <MantineAppShell.Main>
         <Outlet />
       </MantineAppShell.Main>
+
+      {isAdmin && <ChatWidget />}
     </MantineAppShell>
   );
+
+  return isAdmin ? <ChatProvider>{shell}</ChatProvider> : shell;
 }
