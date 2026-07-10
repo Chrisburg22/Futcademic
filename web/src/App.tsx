@@ -27,6 +27,7 @@ import { CategoriesPage } from './pages/admin/CategoriesPage';
 import { CategoryDetailPage } from './pages/admin/CategoryDetailPage';
 import { EventsPage } from './pages/admin/EventsPage';
 import { VenuesPage } from './pages/admin/VenuesPage';
+import { ChatPage } from './pages/admin/ChatPage';
 
 import { EditAcademyPage } from './pages/settings/EditAcademyPage';
 import { EditProfilePage } from './pages/settings/EditProfilePage';
@@ -167,6 +168,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={['super_admin', 'admin']}>
               <VenuesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/chat"
+          element={
+            <ProtectedRoute roles={['super_admin', 'admin']}>
+              <ChatPage />
             </ProtectedRoute>
           }
         />

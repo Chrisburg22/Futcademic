@@ -14,6 +14,7 @@ import {
   IconHeart,
   IconTrophy,
   IconChartBar,
+  IconMessageChatbot,
 } from '@tabler/icons-react';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Role } from '../../types';
@@ -61,6 +62,12 @@ const mainItems: Item[] = [
 ];
 
 const adminItems: Item[] = [
+  {
+    to: '/admin/chat',
+    label: 'Asistente IA',
+    icon: <IconMessageChatbot size={18} />,
+    roles: ['super_admin', 'admin'],
+  },
   {
     to: '/admin/students',
     label: 'Alumnos',
