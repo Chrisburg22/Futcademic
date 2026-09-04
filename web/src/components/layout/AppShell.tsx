@@ -9,9 +9,10 @@ import {
   ActionIcon,
   useMantineColorScheme,
   Image,
+  Badge,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { IconLogout, IconMoon, IconSun, IconUser } from '@tabler/icons-react';
+import { useDisclosure, useNetwork } from '@mantine/hooks';
+import { IconLogout, IconMoon, IconSun, IconUser, IconWifiOff } from '@tabler/icons-react';
 import { Sidebar } from './Sidebar';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +25,7 @@ export function AppShell() {
   const { profile, signOut } = useAuth();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
+  const { online } = useNetwork();
 
   const handleLogout = async () => {
     await signOut();
@@ -52,6 +54,16 @@ export function AppShell() {
             </Group>
           </Group>
           <Group gap="xs">
+            {!online && (
+              <Badge
+                color="gray"
+                variant="light"
+                leftSection={<IconWifiOff size={14} />}
+                title="Sin conexión: estás viendo datos guardados"
+              >
+                Sin conexión
+              </Badge>
+            )}
             <NotificationBell />
             <ActionIcon
               variant="subtle"

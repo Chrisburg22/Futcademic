@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
+import { clearPersistedCache } from '../lib/queryClient';
 import { supabase } from '../config/supabase';
 
 export type Profile = {
@@ -100,6 +101,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(null);
     setSession(null);
     setUser(null);
+    // Borra la caché persistida: si no, el siguiente usuario de este
+    // navegador vería datos de la academia anterior.
+    clearPersistedCache();
   };
 
   return (
