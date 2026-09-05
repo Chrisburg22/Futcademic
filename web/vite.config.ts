@@ -41,6 +41,10 @@ export default defineConfig(({ mode }) => ({
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/],
         cleanupOutdatedCaches: true,
+        // El SW toma el control en la primera visita: la app queda utilizable
+        // sin conexión sin necesidad de recargar. No implica skipWaiting: las
+        // versiones nuevas siguen esperando a que el usuario acepte.
+        clientsClaim: true,
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {

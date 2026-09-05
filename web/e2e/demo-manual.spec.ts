@@ -135,7 +135,15 @@ const FULL_API = {
   venues: VENUES,
   events: EVENTS,
   payments: PAYMENTS,
-  pendingPayments: [{ student_id: 's2', full_name: 'Ana Torres', month: 6 }],
+  // Forma real de payment.controller.ts:102-112: los items llevan `id`
+  // (no `student_id`) y el mes vive en el sobre, no en cada item.
+  pendingPayments: [
+    {
+      id: 's2', full_name: 'Ana Torres', category_id: 'cat1', status: 'activo',
+      category: { name: 'Sub-12', monthly_fee: 500 },
+      monthly_fee: 500, paid_amount: 0, pending_amount: 500, is_fully_paid: false,
+    },
+  ],
   notifications: NOTIFS,
   achievements: ACHIEVEMENTS,
   permissions: PERMISSIONS,

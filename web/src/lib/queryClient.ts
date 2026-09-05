@@ -38,10 +38,8 @@ export function shouldPersistQueryKey(key: readonly unknown[]): boolean {
 // Se llama al cerrar sesión: sin esto, el siguiente usuario del mismo
 // navegador rehidrataría la caché del anterior (fuga entre tenants).
 export function clearPersistedCache() {
+  // El orden importa: al vaciar primero el cliente, cualquier escritura del
+  // persister que siguiera pendiente (va con throttle) ya sale vacía.
   queryClient.clear();
-  try {
-    window.localStorage.removeItem(PERSIST_KEY);
-  } catch {
-    /* modo privado / storage bloqueado */
-  }
+  void queryPersister.removeClient();
 }

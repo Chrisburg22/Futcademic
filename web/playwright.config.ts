@@ -10,6 +10,11 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  // e2e/smoke/ golpea PRODUCCIÓN y crea academias reales. Vive en
+  // playwright.smoke.config.ts y solo se ejecuta a propósito.
+  // pwa.spec.ts necesita el build de producción (el SW no existe en `vite dev`):
+  // vive en playwright.pwa.config.ts.
+  testIgnore: ['smoke/**', 'pwa.spec.ts'],
   fullyParallel: false,
   workers: 1,
   reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],

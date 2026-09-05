@@ -88,7 +88,7 @@ function buildSession(profile: ProfileFixture) {
   };
 }
 
-async function mockSupabase(page: Page, profile: ProfileFixture) {
+export async function mockSupabase(page: Page, profile: ProfileFixture) {
   // AuthContext profile query: GET /rest/v1/users?select=...&id=eq.<uid> (.single())
   await page.route('**/rest/v1/**', async (route: Route) => {
     const url = route.request().url();
@@ -125,7 +125,7 @@ async function mockSupabase(page: Page, profile: ProfileFixture) {
   });
 }
 
-async function mockApi(page: Page, fx: ApiFixtures) {
+export async function mockApi(page: Page, fx: ApiFixtures) {
   const notifications: any[] = JSON.parse(JSON.stringify(fx.notifications ?? []));
 
   // Scope to the backend origin only — a bare `**/api/**` would also swallow the
@@ -133,7 +133,8 @@ async function mockApi(page: Page, fx: ApiFixtures) {
   await page.route('http://localhost:3000/api/**', async (route: Route) => {
     const req = route.request();
     const method = req.method();
-    const path = new URL(req.url()).pathname.replace(/^\/api/, '');
+    const url = new URL(req.url());
+    const path = url.pathname.replace(/^\/api/, '');
 
     const json = (body: unknown, status = 200) =>
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
@@ -166,7 +167,22 @@ async function mockApi(page: Page, fx: ApiFixtures) {
       if (path.startsWith('/users')) return json(fx.teachers ?? fx.users ?? []);
       if (path === '/categories/mine') return json(fx.categories ?? []);
       if (path.startsWith('/categories')) return json(fx.categories ?? []);
-      if (path === '/payments/pending') return json(fx.pendingPayments ?? []);
+      if (path === '/payments/pending') {
+        // El backend devuelve un SOBRE, no un array plano
+        // (payment.controller.ts:115-121). La fixture sigue siendo el array,
+        // que es lo cómodo de escribir en un test; el sobre se monta aquí.
+        const pending = fx.pendingPayments ?? [];
+        return json({
+          month: Number(url.searchParams.get('month')) || new Date().getMonth() + 1,
+          year: new Date().getFullYear(),
+          pending,
+          total_pending_amount: pending.reduce(
+            (acc: number, p: any) => acc + Number(p.pending_amount ?? 0),
+            0,
+          ),
+          total_students: pending.length,
+        });
+      }
       if (path.startsWith('/payments')) return json(fx.payments ?? []);
       if (path.startsWith('/venues')) return json(fx.venues ?? []);
       if (path.startsWith('/attendances')) return json([]);

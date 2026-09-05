@@ -79,7 +79,10 @@ test.describe('regression: cada rol llega a su dashboard', () => {
           },
         },
       });
-      await expect(page.getByText(text)).toBeVisible();
+      // Acotado al contenido: varios de estos textos existen también como
+      // enlace del sidebar, y `getByText` suelto rompe por strict mode en
+      // cuanto ambos coinciden.
+      await expect(page.getByRole('main').getByText(text).first()).toBeVisible();
     });
   }
 });

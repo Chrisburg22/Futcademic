@@ -97,10 +97,10 @@ function AdminFinances() {
           ) : (
             <Stack>
               {pending.map((p: any) => (
-                <Card key={p.student_id} withBorder padding="md" radius="md">
+                <Card key={p.id} withBorder padding="md" radius="md">
                   <Group justify="space-between">
                     <Text fw={500}>{p.full_name}</Text>
-                    <Badge color="orange">Adeuda mes {p.month}</Badge>
+                    <Badge color="orange">Adeuda mes {pendingData?.month}</Badge>
                   </Group>
                 </Card>
               ))}

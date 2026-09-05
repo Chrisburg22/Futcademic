@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test:e2e": "playwright test",
+    "test:e2e:pwa": "playwright test -c playwright.pwa.config.ts",
+    "test:smoke": "playwright test -c playwright.smoke.config.ts",
     "e2e:video": "bash e2e/make-video.sh"
   },
   "dependencies": {
