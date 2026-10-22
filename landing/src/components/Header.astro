@@ -35,9 +35,10 @@ import { REGISTER_URL, LOGIN_URL, SITE } from '../consts';
     position: sticky;
     top: 0;
     z-index: 5;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--linea);
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid rgba(227, 233, 229, 0.9);
   }
 
   .cabecera__fila {
@@ -53,15 +54,21 @@ import { REGISTER_URL, LOGIN_URL, SITE } from '../consts';
     gap: 0.6rem;
     text-decoration: none;
     color: var(--tinta);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    font-size: 1.1rem;
+    font-family: var(--fuente-titulo);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-size: 1.18rem;
   }
 
   .marca__icono {
     width: 28px;
     height: 28px;
     border-radius: 7px;
+    transition: transform var(--t-medio) var(--e-salida);
+  }
+
+  .marca:hover .marca__icono {
+    transform: rotate(-6deg) scale(1.06);
   }
 
   .cabecera__nav {
@@ -72,12 +79,33 @@ import { REGISTER_URL, LOGIN_URL, SITE } from '../consts';
   }
 
   .cabecera__nav a {
+    position: relative;
     color: var(--tinta-70);
     text-decoration: none;
+    padding-block: 0.4rem;
+    transition: color var(--t-rapido) var(--e-salida);
+  }
+
+  .cabecera__nav a::after {
+    content: '';
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    width: 100%;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--verde);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform var(--t-medio) var(--e-salida);
   }
 
   .cabecera__nav a:hover {
-    color: var(--verde-700);
+    color: var(--verde);
+  }
+
+  .cabecera__nav a:hover::after {
+    transform: scaleX(1);
   }
 
   .cabecera__acciones {
@@ -95,11 +123,12 @@ import { REGISTER_URL, LOGIN_URL, SITE } from '../consts';
   }
 
   .cabecera__entrar:hover {
-    color: var(--verde-700);
+    color: var(--verde);
   }
 
   .cabecera__cta {
-    padding: 0.55rem 1.1rem;
+    min-height: 40px;
+    padding: 0.5rem 1.15rem;
     font-size: 0.95rem;
   }
 

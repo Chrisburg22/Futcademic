@@ -4,16 +4,16 @@ import { ANTES } from '../../consts';
 
 <section class="seccion seccion--tenue" id="antes">
   <div class="envoltura">
-    <div class="seccion__intro">
+    <div class="seccion__intro revela">
       <p class="kicker">El antes</p>
       <h2>{ANTES.titulo}</h2>
       <p>{ANTES.entrada}</p>
     </div>
 
-    <ul class="rejilla">
+    <ul class="rejilla escalona">
       {
         ANTES.dolores.map((d) => (
-          <li class="tarjeta">
+          <li class="tarjeta dolor">
             <h3>{d.titulo}</h3>
             <p>{d.texto}</p>
           </li>
@@ -22,3 +22,28 @@ import { ANTES } from '../../consts';
     </ul>
   </div>
 </section>
+
+<style>
+  .dolor {
+    background: var(--papel);
+  }
+
+  /* Línea de acento que crece al pasar el cursor: señala sin gritar. */
+  .dolor::after {
+    content: '';
+    position: absolute;
+    inset-block-end: -1px;
+    inset-inline-start: 1.6rem;
+    width: 2.5rem;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--verde);
+    opacity: 0.25;
+    transition: width var(--t-medio) var(--e-salida), opacity var(--t-medio) var(--e-salida);
+  }
+
+  .dolor:hover::after {
+    width: calc(100% - 3.2rem);
+    opacity: 1;
+  }
+</style>
