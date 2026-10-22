@@ -8,6 +8,8 @@ import { RegisterPage } from './pages/auth/RegisterPage';
 import { ChangePasswordPage } from './pages/auth/ChangePasswordPage';
 import { StudentLoginPage } from './pages/auth/StudentLoginPage';
 import { AcceptInvitePage } from './pages/auth/AcceptInvitePage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 
 import { DashboardPage } from './pages/DashboardPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -44,6 +46,8 @@ export default function App() {
       <Route path="/student-login" element={<StudentLoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/accept-invite" element={<AcceptInvitePage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route
         path="/change-password"
         element={

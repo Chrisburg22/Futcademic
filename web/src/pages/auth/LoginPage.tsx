@@ -81,6 +81,11 @@ export function LoginPage() {
               Entrar
             </Button>
             <Text size="sm" ta="center">
+              <Anchor component={Link} to="/forgot-password">
+                ¿Olvidaste tu contraseña?
+              </Anchor>
+            </Text>
+            <Text size="sm" ta="center">
               ¿No tienes cuenta?{' '}
               <Anchor component={Link} to="/register">
                 Registra tu academia
