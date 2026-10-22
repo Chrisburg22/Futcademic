@@ -5,7 +5,7 @@ import Shot from '../Shot.astro';
 
 <section class="seccion" id="modulos">
   <div class="envoltura">
-    <div class="seccion__intro">
+    <div class="seccion__intro revela">
       <p class="kicker">Qué hace</p>
       <h2>{MODULOS.titulo}</h2>
       <p>{MODULOS.entrada}</p>
@@ -15,17 +15,32 @@ import Shot from '../Shot.astro';
       {
         MODULOS.items.map((m, i) => (
           <article class="modulo" id={m.id}>
-            <div class="modulo__texto">
-              <p class="modulo__numero">{String(i + 1).padStart(2, '0')}</p>
+            <div class="modulo__texto revela">
+              <p class="modulo__numero">
+                <span>{String(i + 1).padStart(2, '0')}</span>
+                <i aria-hidden="true" />
+              </p>
               <h3>{m.nombre}</h3>
               <p>{m.texto}</p>
-              <ul class="lista">
+              <ul class="lista escalona">
                 {m.bullets.map((b) => (
-                  <li>{b}</li>
+                  <li>
+                    <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                      <path
+                        d="M4 10.5l4 4 8-8"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                    {b}
+                  </li>
                 ))}
               </ul>
             </div>
-            <div class="modulo__captura">
+            <div class="modulo__captura revela revela--zoom">
               <Shot src={m.captura} alt={m.alt} />
             </div>
           </article>
@@ -38,62 +53,83 @@ import Shot from '../Shot.astro';
 <style>
   .modulos {
     display: grid;
-    gap: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+    gap: clamp(3rem, 1.5rem + 5vw, 6rem);
   }
 
   .modulo {
     display: grid;
-    gap: 1.5rem;
+    gap: 1.75rem;
     align-items: center;
   }
 
   .modulo__numero {
-    margin: 0 0 0.35rem;
-    font-size: 0.85rem;
-    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 0.6rem;
+    font-family: var(--fuente-titulo);
+    font-size: 0.9rem;
+    font-weight: 700;
     letter-spacing: 0.08em;
     color: var(--verde);
   }
 
+  .modulo__numero i {
+    display: block;
+    height: 1px;
+    width: 2.5rem;
+    background: linear-gradient(90deg, var(--verde), transparent);
+  }
+
   .modulo h3 {
-    font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.65rem);
-    font-weight: 750;
-    letter-spacing: -0.02em;
+    font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem);
+    font-weight: 650;
+    letter-spacing: -0.025em;
   }
 
   .modulo__texto > p {
     color: var(--tinta-70);
-    max-width: 48ch;
+    max-width: 46ch;
   }
 
   .lista {
     display: grid;
-    gap: 0.5rem;
-    margin-top: 1.25rem;
+    gap: 0.6rem;
+    margin-top: 1.4rem;
   }
 
   .lista li {
-    position: relative;
-    padding-inline-start: 1.6rem;
-    font-size: 0.99rem;
-    color: var(--tinta);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    font-size: 1rem;
   }
 
-  .lista li::before {
-    content: '';
-    position: absolute;
-    inset-inline-start: 0;
-    top: 0.55em;
-    width: 9px;
-    height: 9px;
-    border-radius: 3px;
-    background: var(--verde);
+  .lista svg {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    margin-top: 0.2rem;
+    padding: 2px;
+    border-radius: 50%;
+    background: var(--verde-100);
+    color: var(--verde);
   }
 
-  @media (min-width: 860px) {
+  .modulo__captura :global(.captura) {
+    transition: transform var(--t-medio) var(--e-salida),
+      box-shadow var(--t-medio) var(--e-salida);
+  }
+
+  .modulo__captura:hover :global(.captura) {
+    transform: translateY(-4px);
+    box-shadow: var(--sombra-lg);
+  }
+
+  @media (min-width: 880px) {
     .modulo {
-      grid-template-columns: 0.85fr 1.15fr;
-      gap: 3rem;
+      grid-template-columns: 0.82fr 1.18fr;
+      gap: 3.5rem;
     }
 
     .modulo:nth-child(even) .modulo__texto {
