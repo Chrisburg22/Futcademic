@@ -5,6 +5,11 @@ import { test } from '@playwright/test';
  * Se genera aquí para que el texto siga la misma fuente de verdad que el sitio.
  */
 
+// Dominio mostrado en la imagen: el real del despliegue, no uno aspiracional.
+const DOMINIO = (process.env.PUBLIC_SITE_URL ?? 'https://futcademic-landing.vercel.app')
+  .replace(/^https?:\/\//, '')
+  .replace(/\/$/, '');
+
 const HTML = `<!doctype html>
 <html lang="es-MX">
   <head><meta charset="utf-8" /></head>
@@ -23,7 +28,7 @@ const HTML = `<!doctype html>
             <rect x="176" y="234" width="128" height="52" rx="12"></rect>
           </g>
         </svg>
-        <span style="font-size:34px;font-weight:800;letter-spacing:-0.02em">Futcamedic</span>
+        <span style="font-size:34px;font-weight:800;letter-spacing:-0.02em">Futcademic</span>
       </div>
 
       <div>
@@ -39,7 +44,7 @@ const HTML = `<!doctype html>
         <span style="background:#fff;color:#04281a;font-size:24px;font-weight:800;padding:12px 24px;border-radius:999px">
           Gratis durante la beta
         </span>
-        <span style="font-size:24px;color:#a8cbb8">futcamedic.com</span>
+        <span style="font-size:24px;color:#a8cbb8">${DOMINIO}</span>
       </div>
     </div>
   </body>
