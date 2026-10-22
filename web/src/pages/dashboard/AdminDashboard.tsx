@@ -1,4 +1,4 @@
-import { Grid, Card, Text, Group, ThemeIcon, SimpleGrid, Title } from '@mantine/core';
+import { Grid, Card, Text, Group, ThemeIcon, SimpleGrid, Title, Box } from '@mantine/core';
 import {
   IconUsers,
   IconSchool,
@@ -9,6 +9,14 @@ import {
 } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
 import { useGetAdminDashboard } from '../../hooks/useDashboard';
+import { QuickActionsDock, type QuickAction } from '../../components/layout/QuickActionsDock';
+
+const SHORTCUTS: QuickAction[] = [
+  { to: '/admin/students', label: 'Alumnos', icon: <IconSchool size={22} /> },
+  { to: '/admin/teachers', label: 'Profesores', icon: <IconUsers size={22} /> },
+  { to: '/admin/categories', label: 'Categorías', icon: <IconCategory size={22} /> },
+  { to: '/admin/events', label: 'Agenda', icon: <IconCalendarEvent size={22} /> },
+];
 
 function StatCard({
   label,
@@ -111,23 +119,20 @@ export function AdminDashboard() {
         </Grid.Col>
       </Grid>
 
-      <Title order={4} mb="md">
-        Accesos rápidos
-      </Title>
-      <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }}>
-        <ShortcutCard to="/admin/students" label="Alumnos" icon={<IconSchool size={20} />} />
-        <ShortcutCard to="/admin/teachers" label="Profesores" icon={<IconUsers size={20} />} />
-        <ShortcutCard
-          to="/admin/categories"
-          label="Categorías"
-          icon={<IconCategory size={20} />}
-        />
-        <ShortcutCard
-          to="/admin/events"
-          label="Agenda"
-          icon={<IconCalendarEvent size={20} />}
-        />
-      </SimpleGrid>
+      {/* En escritorio hay sitio de sobra: tarjetas. En móvil estos accesos
+          quedaban al final del scroll, así que viven en el dock flotante. */}
+      <Box visibleFrom="sm">
+        <Title order={4} mb="md">
+          Accesos rápidos
+        </Title>
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }}>
+          {SHORTCUTS.map((s) => (
+            <ShortcutCard key={s.to} to={s.to} label={s.label} icon={s.icon} />
+          ))}
+        </SimpleGrid>
+      </Box>
+
+      <QuickActionsDock actions={SHORTCUTS} />
     </>
   );
 }

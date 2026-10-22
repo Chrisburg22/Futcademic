@@ -13,3 +13,50 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/*
+ * Áreas seguras en la PWA instalada.
+ *
+ * Mantine usa --app-shell-header-height tanto para la altura del header fijo
+ * como para el padding superior del main, así que basta con ampliarla: header
+ * y contenido se mantienen sincronizados solos.
+ */
+.mantine-AppShell-root {
+  --app-shell-header-height: calc(60px + env(safe-area-inset-top, 0px));
+}
+
+.mantine-AppShell-header {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/*
+ * El notch en horizontal solo se compensa en el header: el padding lateral del
+ * main es lo que Mantine usa para apartarse del sidebar, y pisarlo mete el
+ * contenido debajo de la navegación en escritorio.
+ */
+.mantine-AppShell-header {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/*
+ * Dock de accesos rápidos (solo móvil). La altura se publica como variable
+ * para que el contenido reserve hueco y el botón del chat se aparte.
+ */
+body[data-quick-dock] {
+  --quick-dock-height: 76px;
+}
+
+@media (min-width: 48em) {
+  body[data-quick-dock] {
+    --quick-dock-height: 0px;
+  }
+}
+
+/* Sin esto, la última tarjeta queda tapada por el dock. */
+.mantine-AppShell-main {
+  padding-bottom: calc(
+    var(--mantine-spacing-md) + var(--quick-dock-height, 0px) +
+      env(safe-area-inset-bottom, 0px)
+  );
+}

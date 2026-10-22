@@ -42,7 +42,14 @@ export function ChatWidget() {
   const hasContent = chat.messages.length > 0 || !!chat.liveUserText;
 
   return (
-    <Affix position={{ bottom: 20, right: 20 }} zIndex={300}>
+    <Affix
+      position={{
+        // Se aparta del dock de accesos rápidos y de la barra de gestos.
+        bottom: 'calc(20px + var(--quick-dock-height, 0px) + env(safe-area-inset-bottom, 0px))',
+        right: 20,
+      }}
+      zIndex={300}
+    >
       {open ? (
         <Paper
           withBorder
