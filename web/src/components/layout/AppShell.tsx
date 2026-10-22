@@ -10,10 +10,12 @@ import {
   useMantineColorScheme,
   Image,
   Badge,
+  Box,
 } from '@mantine/core';
 import { useDisclosure, useNetwork } from '@mantine/hooks';
 import { IconLogout, IconMoon, IconSun, IconUser, IconWifiOff } from '@tabler/icons-react';
 import { Sidebar } from './Sidebar';
+import { InstallButton } from '../pwa/InstallButton';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../contexts/AuthContext';
 import { ChatProvider } from '../../contexts/ChatContext';
@@ -41,19 +43,19 @@ export function AppShell() {
       padding="md"
     >
       <MantineAppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
-          <Group>
+        <Group h="100%" px="md" justify="space-between" wrap="nowrap">
+          <Group wrap="nowrap" style={{ minWidth: 0 }}>
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-            <Group gap="xs">
+            <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
               {profile?.school?.logo_url ? (
                 <Image src={profile.school.logo_url} h={28} w={28} radius="sm" alt="logo" />
               ) : null}
-              <Text fw={700} size="lg">
+              <Text fw={700} size="lg" truncate>
                 {profile?.school?.name || 'Futcademic'}
               </Text>
             </Group>
           </Group>
-          <Group gap="xs">
+          <Group gap="xs" wrap="nowrap">
             {!online && (
               <Badge
                 color="gray"
@@ -64,6 +66,14 @@ export function AppShell() {
                 Sin conexión
               </Badge>
             )}
+            {/* Botón completo en escritorio, icono en móvil: la cabecera va
+                justa de sitio y es ahí donde más se instala. */}
+            <Box visibleFrom="sm">
+              <InstallButton />
+            </Box>
+            <Box hiddenFrom="sm">
+              <InstallButton compact />
+            </Box>
             <NotificationBell />
             <ActionIcon
               variant="subtle"

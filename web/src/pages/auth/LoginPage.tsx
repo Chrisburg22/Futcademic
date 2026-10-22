@@ -11,11 +11,14 @@ import {
   Stack,
   Anchor,
   Alert,
+  Divider,
+  Center,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { InstallButton } from '../../components/pwa/InstallButton';
 
 export function LoginPage() {
   const { session, isLoading } = useAuth();
@@ -90,6 +93,12 @@ export function LoginPage() {
             </Text>
           </Stack>
         </form>
+        {/* Instalar sin necesidad de iniciar sesión: muchos padres y alumnos
+            llegan aquí desde el móvil y es el mejor momento para ofrecerlo. */}
+        <Divider my="lg" label="¿La usas a diario?" labelPosition="center" />
+        <Center>
+          <InstallButton />
+        </Center>
       </Paper>
     </Container>
   );
