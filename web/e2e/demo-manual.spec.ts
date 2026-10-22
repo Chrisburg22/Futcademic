@@ -488,7 +488,7 @@ test('18 — Alumno: Pantalla de login de alumno', async ({ page }) => {
   await expect(page.getByText('Acceso Alumno')).toBeVisible();
   await expect(page.getByLabel('Usuario')).toBeVisible();
   await expect(page.getByLabel('Contraseña')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Inicia aquí' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Inicia sesión aquí' })).toBeVisible();
   await pause(1500);
 });
 

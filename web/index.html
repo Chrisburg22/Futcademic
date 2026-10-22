@@ -11,7 +11,10 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Futcademic" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- "default" reserva la barra de estado para el sistema. Con
+         "black-translucent" el webview arranca en y=0 y el header del AppShell
+         queda escondido debajo del reloj en la PWA instalada. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Futcademic</title>
   </head>
   <body>
