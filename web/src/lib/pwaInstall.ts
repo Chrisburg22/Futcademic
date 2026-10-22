@@ -66,6 +66,27 @@ export function isStandalone() {
   );
 }
 
+/** ¿Es un navegador de escritorio que instala PWAs pero sin `beforeinstallprompt`? */
+export function isDesktopInstallable() {
+  if (typeof window === 'undefined') return false;
+  const ua = window.navigator.userAgent;
+  if (/android|iphone|ipad|ipod/i.test(ua)) return false;
+
+  // Chromium de escritorio (Chrome, Edge, Brave, Opera, Vivaldi) sabe instalar,
+  // pero Brave y algunas variantes no disparan el evento: solo queda el menú.
+  const chromium = /Chrome|Chromium|Edg|OPR/i.test(ua);
+  // Safari en macOS 14+ instala con "Añadir al Dock".
+  const safari = /Safari/i.test(ua) && !/Chrome|Chromium|Edg|OPR/i.test(ua);
+  return chromium || safari;
+}
+
+/** El navegador es Safari (los pasos manuales cambian respecto a Chromium). */
+export function isSafari() {
+  if (typeof window === 'undefined') return false;
+  const ua = window.navigator.userAgent;
+  return /Safari/i.test(ua) && !/Chrome|Chromium|Edg|OPR/i.test(ua);
+}
+
 /** iOS no soporta `beforeinstallprompt`: hay que explicarle al usuario los pasos. */
 export function isIos() {
   if (typeof window === 'undefined') return false;

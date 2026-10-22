@@ -1,21 +1,36 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Paper,
   PasswordInput,
   Button,
-  Title,
   Text,
   Stack,
   Alert,
   Loader,
   Center,
+  Progress,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { supabase } from '../../config/supabase';
+import { AuthLayout } from '../../components/auth/AuthLayout';
+
+const MIN_LENGTH = 8;
+
+/** Pista visual, no una política: solo orienta mientras se escribe. */
+function strengthOf(value: string) {
+  const checks = [
+    value.length >= MIN_LENGTH,
+    /[a-z]/.test(value) && /[A-Z]/.test(value),
+    /\d/.test(value),
+    /[^A-Za-z0-9]/.test(value),
+  ];
+  return checks.filter(Boolean).length;
+}
+
+const STRENGTH_LABELS = ['Muy débil', 'Débil', 'Aceptable', 'Buena', 'Fuerte'];
+const STRENGTH_COLORS = ['red', 'red', 'orange', 'yellow', 'green'];
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -25,11 +40,14 @@ export function ResetPasswordPage() {
 
   const form = useForm({
     initialValues: { password: '', confirm: '' },
+    validateInputOnBlur: true,
     validate: {
-      password: (v) => (v.length >= 8 ? null : 'Mínimo 8 caracteres'),
+      password: (v) => (v.length >= MIN_LENGTH ? null : `Mínimo ${MIN_LENGTH} caracteres`),
       confirm: (v, vals) => (v === vals.password ? null : 'No coinciden'),
     },
   });
+
+  const strength = strengthOf(form.values.password);
 
   useEffect(() => {
     const init = async () => {
@@ -107,7 +125,7 @@ export function ResetPasswordPage() {
 
   if (status === 'loading') {
     return (
-      <Center h="100vh">
+      <Center h="100dvh">
         <Loader />
       </Center>
     );
@@ -115,58 +133,74 @@ export function ResetPasswordPage() {
 
   if (status === 'invalid') {
     return (
-      <Container size={420} my={80}>
-        <Paper withBorder shadow="sm" p="xl" radius="md">
-          <Stack align="center">
-            <Alert color="red" icon={<IconAlertCircle size={16} />} w="100%">
-              {error || 'El enlace de recuperación no es válido o ya expiró.'}
-            </Alert>
-            <Text size="sm" c="dimmed" ta="center">
-              Pide un enlace nuevo para restablecer tu contraseña.
-            </Text>
-            <Button variant="light" onClick={() => navigate('/forgot-password')}>
-              Pedir otro enlace
-            </Button>
-          </Stack>
-        </Paper>
-      </Container>
+      <AuthLayout title="Enlace no válido">
+        <Stack gap="md">
+          <Alert color="red" icon={<IconAlertCircle size={16} />} role="alert">
+            {error || 'El enlace de recuperación no es válido o ya expiró.'}
+          </Alert>
+          <Text fz="sm" c="dimmed">
+            Los enlaces caducan en una hora y solo sirven una vez. Pide uno nuevo
+            para continuar.
+          </Text>
+          <Button size="md" fullWidth onClick={() => navigate('/forgot-password')}>
+            Pedir otro enlace
+          </Button>
+        </Stack>
+      </AuthLayout>
     );
   }
 
   return (
-    <Container size={420} my={80}>
-      <Stack gap="xs" align="center" mb="lg">
-        <Title order={3}>Nueva contraseña</Title>
-        <Text c="dimmed" size="sm" ta="center">
-          Elige una contraseña para volver a entrar a tu cuenta.
-        </Text>
-      </Stack>
-      <Paper withBorder shadow="sm" p="xl" radius="md">
-        <form onSubmit={form.onSubmit(onSubmit)}>
-          <Stack>
-            {error && (
-              <Alert color="red" icon={<IconAlertCircle size={16} />}>
-                {error}
-              </Alert>
-            )}
+    <AuthLayout
+      title="Nueva contraseña"
+      subtitle="Elige una contraseña para volver a entrar a tu cuenta."
+    >
+      <form onSubmit={form.onSubmit(onSubmit)} noValidate>
+        <Stack gap="md">
+          {error && (
+            <Alert color="red" icon={<IconAlertCircle size={16} />} role="alert">
+              {error}
+            </Alert>
+          )}
+          <div>
             <PasswordInput
               label="Contraseña"
-              required
+              description={`Al menos ${MIN_LENGTH} caracteres.`}
               autoComplete="new-password"
+              autoFocus
+              size="md"
+              required
+              withAsterisk={false}
               {...form.getInputProps('password')}
             />
-            <PasswordInput
-              label="Confirmar contraseña"
-              required
-              autoComplete="new-password"
-              {...form.getInputProps('confirm')}
-            />
-            <Button type="submit" loading={saving} fullWidth>
-              Guardar contraseña
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
-    </Container>
+            {form.values.password && (
+              <>
+                <Progress
+                  value={(strength / 4) * 100}
+                  color={STRENGTH_COLORS[strength]}
+                  size="xs"
+                  mt="xs"
+                  aria-hidden
+                />
+                <Text fz="xs" c="dimmed" mt={4}>
+                  Seguridad: {STRENGTH_LABELS[strength]}
+                </Text>
+              </>
+            )}
+          </div>
+          <PasswordInput
+            label="Confirmar contraseña"
+            autoComplete="new-password"
+            size="md"
+            required
+            withAsterisk={false}
+            {...form.getInputProps('confirm')}
+          />
+          <Button type="submit" loading={saving} size="md" fullWidth mt="xs">
+            Guardar contraseña
+          </Button>
+        </Stack>
+      </form>
+    </AuthLayout>
   );
 }

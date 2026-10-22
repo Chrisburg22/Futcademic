@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import {
-  Container,
-  Paper,
   TextInput,
   PasswordInput,
   Button,
-  Title,
   Text,
   Stack,
   Anchor,
@@ -17,6 +14,7 @@ import { IconAlertCircle } from '@tabler/icons-react';
 import { supabase } from '../../config/supabase';
 import { api } from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { AuthLayout } from '../../components/auth/AuthLayout';
 
 export function StudentLoginPage() {
   const { session, isLoading } = useAuth();
@@ -26,9 +24,10 @@ export function StudentLoginPage() {
 
   const form = useForm({
     initialValues: { username: '', password: '' },
+    validateInputOnBlur: true,
     validate: {
-      username: (v) => (v.length >= 2 ? null : 'Usuario requerido'),
-      password: (v) => (v.length >= 6 ? null : 'Mínimo 6 caracteres'),
+      username: (v) => (v.trim().length >= 2 ? null : 'Escribe tu usuario'),
+      password: (v) => (!v ? 'Escribe tu contraseña' : v.length >= 6 ? null : 'Mínimo 6 caracteres'),
     },
   });
 
@@ -47,7 +46,7 @@ export function StudentLoginPage() {
         password: values.password,
       });
       if (authErr) {
-        setError(authErr.message);
+        setError('Usuario o contraseña incorrectos.');
         return;
       }
       navigate('/', { replace: true });
@@ -59,46 +58,50 @@ export function StudentLoginPage() {
   };
 
   return (
-    <Container size={420} my={80}>
-      <Stack gap="xs" align="center" mb="lg">
-        <Title order={2}>Acceso Alumno</Title>
-        <Text c="dimmed" size="sm">
-          Ingresa con tu usuario de alumno
+    <AuthLayout
+      title="Acceso alumno"
+      subtitle="Entra con el usuario que te dio tu academia."
+      footer={
+        <Text fz="sm" ta="center" c="dimmed">
+          ¿Eres administrador o profesor?{' '}
+          <Anchor component={Link} to="/login" fw={500}>
+            Inicia sesión aquí
+          </Anchor>
         </Text>
-      </Stack>
-      <Paper withBorder shadow="sm" p="xl" radius="md">
-        <form onSubmit={form.onSubmit(onSubmit)}>
-          <Stack>
-            {error && (
-              <Alert color="red" icon={<IconAlertCircle size={16} />}>
-                {error}
-              </Alert>
-            )}
-            <TextInput
-              label="Usuario"
-              placeholder="tu_usuario"
-              autoComplete="username"
-              required
-              {...form.getInputProps('username')}
-            />
-            <PasswordInput
-              label="Contraseña"
-              autoComplete="current-password"
-              required
-              {...form.getInputProps('password')}
-            />
-            <Button type="submit" loading={submitting} fullWidth>
-              Entrar
-            </Button>
-            <Text size="sm" ta="center">
-              ¿Eres administrador?{' '}
-              <Anchor component={Link} to="/login">
-                Inicia aquí
-              </Anchor>
-            </Text>
-          </Stack>
-        </form>
-      </Paper>
-    </Container>
+      }
+    >
+      <form onSubmit={form.onSubmit(onSubmit)} noValidate>
+        <Stack gap="md">
+          {error && (
+            <Alert color="red" icon={<IconAlertCircle size={16} />} role="alert">
+              {error}
+            </Alert>
+          )}
+          <TextInput
+            label="Usuario"
+            placeholder="tu_usuario"
+            autoComplete="username"
+            autoCapitalize="none"
+            autoFocus
+            size="md"
+            required
+            withAsterisk={false}
+            {...form.getInputProps('username')}
+          />
+          <PasswordInput
+            label="Contraseña"
+            placeholder="Tu contraseña"
+            autoComplete="current-password"
+            size="md"
+            required
+            withAsterisk={false}
+            {...form.getInputProps('password')}
+          />
+          <Button type="submit" loading={submitting} size="md" fullWidth mt="xs">
+            Entrar
+          </Button>
+        </Stack>
+      </form>
+    </AuthLayout>
   );
 }

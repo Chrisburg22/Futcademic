@@ -1,29 +1,31 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Container,
-  Paper,
   TextInput,
   Button,
-  Title,
   Text,
   Stack,
+  Group,
   Anchor,
   Alert,
+  ThemeIcon,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconAlertCircle, IconMailCheck } from '@tabler/icons-react';
+import { IconAlertCircle, IconArrowLeft, IconMailCheck } from '@tabler/icons-react';
 import { supabase } from '../../config/supabase';
+import { AuthLayout } from '../../components/auth/AuthLayout';
 
 export function ForgotPasswordPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   const form = useForm({
     initialValues: { email: '' },
+    validateInputOnBlur: true,
     validate: {
-      email: (v) => (/^\S+@\S+$/.test(v) ? null : 'Correo inválido'),
+      email: (v) =>
+        !v.trim() ? 'Escribe tu correo' : /^\S+@\S+$/.test(v) ? null : 'Correo inválido',
     },
   });
 
@@ -40,57 +42,73 @@ export function ForgotPasswordPage() {
       setError(error.message);
       return;
     }
-    setSent(true);
+    setSentTo(values.email);
   };
 
+  const backLink = (
+    <Group justify="center">
+      <Anchor component={Link} to="/login" fz="sm">
+        <Group gap={6} wrap="nowrap">
+          <IconArrowLeft size={16} />
+          Volver a iniciar sesión
+        </Group>
+      </Anchor>
+    </Group>
+  );
+
+  if (sentTo) {
+    return (
+      <AuthLayout title="Revisa tu correo" footer={backLink}>
+        <Stack gap="md" align="center" ta="center">
+          <ThemeIcon size={56} radius="xl" variant="light" color="green">
+            <IconMailCheck size={30} stroke={1.6} />
+          </ThemeIcon>
+          <Text>
+            Si <b>{sentTo}</b> tiene una cuenta, le enviamos un enlace para crear
+            una contraseña nueva.
+          </Text>
+          <Text fz="sm" c="dimmed">
+            El enlace caduca en una hora. Si no aparece, mira en spam o correo no
+            deseado.
+          </Text>
+          <Button variant="light" onClick={() => setSentTo(null)}>
+            Usar otro correo
+          </Button>
+        </Stack>
+      </AuthLayout>
+    );
+  }
+
   return (
-    <Container size={420} my={80}>
-      <Stack gap="xs" align="center" mb="lg">
-        <Title order={3}>¿Olvidaste tu contraseña?</Title>
-        <Text c="dimmed" size="sm" ta="center">
-          Escribe tu correo y te enviamos un enlace para crear una nueva.
-        </Text>
-      </Stack>
-      <Paper withBorder shadow="sm" p="xl" radius="md">
-        {sent ? (
-          <Stack>
-            <Alert color="green" icon={<IconMailCheck size={16} />}>
-              Si <b>{form.values.email}</b> tiene una cuenta, le enviamos un
-              enlace para restablecer la contraseña. Revisa también el spam.
+    <AuthLayout
+      title="¿Olvidaste tu contraseña?"
+      subtitle="Escribe tu correo y te enviamos un enlace para crear una nueva."
+      footer={backLink}
+    >
+      <form onSubmit={form.onSubmit(onSubmit)} noValidate>
+        <Stack gap="md">
+          {error && (
+            <Alert color="red" icon={<IconAlertCircle size={16} />} role="alert">
+              {error}
             </Alert>
-            <Text size="sm" ta="center">
-              <Anchor component={Link} to="/login">
-                Volver a iniciar sesión
-              </Anchor>
-            </Text>
-          </Stack>
-        ) : (
-          <form onSubmit={form.onSubmit(onSubmit)}>
-            <Stack>
-              {error && (
-                <Alert color="red" icon={<IconAlertCircle size={16} />}>
-                  {error}
-                </Alert>
-              )}
-              <TextInput
-                label="Correo"
-                placeholder="tu@correo.com"
-                autoComplete="email"
-                required
-                {...form.getInputProps('email')}
-              />
-              <Button type="submit" loading={submitting} fullWidth>
-                Enviar enlace
-              </Button>
-              <Text size="sm" ta="center">
-                <Anchor component={Link} to="/login">
-                  Volver a iniciar sesión
-                </Anchor>
-              </Text>
-            </Stack>
-          </form>
-        )}
-      </Paper>
-    </Container>
+          )}
+          <TextInput
+            label="Correo"
+            placeholder="tu@correo.com"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoFocus
+            size="md"
+            required
+            withAsterisk={false}
+            {...form.getInputProps('email')}
+          />
+          <Button type="submit" loading={submitting} size="md" fullWidth mt="xs">
+            Enviar enlace
+          </Button>
+        </Stack>
+      </form>
+    </AuthLayout>
   );
 }
