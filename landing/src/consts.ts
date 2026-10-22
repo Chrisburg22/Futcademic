@@ -9,20 +9,20 @@
 
 const env = import.meta.env;
 
-export const APP_URL: string = (env.PUBLIC_APP_URL || 'https://app.futcamedic.com').replace(/\/$/, '');
-export const SITE_URL: string = (env.PUBLIC_SITE_URL || 'https://futcamedic.com').replace(/\/$/, '');
+export const APP_URL: string = (env.PUBLIC_APP_URL || 'https://app.futcademic.com').replace(/\/$/, '');
+export const SITE_URL: string = (env.PUBLIC_SITE_URL || 'https://futcademic.com').replace(/\/$/, '');
 export const PRIVACY_URL: string = env.PUBLIC_PRIVACY_URL || '';
 
 export const REGISTER_URL = `${APP_URL}/register`;
 export const LOGIN_URL = `${APP_URL}/login`;
 
 export const SITE = {
-  name: 'Futcamedic',
-  title: 'Futcamedic — El sistema para administrar tu academia de fútbol',
+  name: 'Futcademic',
+  title: 'Futcademic — El sistema para administrar tu academia de fútbol',
   description:
     'Alumnos, asistencias, pagos y entrenamientos de tu academia en un solo lugar. Gratis durante la beta. Crea tu academia en menos de 10 minutos.',
   locale: 'es_MX',
-  email: 'hola@futcamedic.com',
+  email: 'hola@futcademic.com',
 };
 
 /** Precio. Decisión del Product Owner: beta gratuita declarada. */
@@ -84,7 +84,7 @@ export const MODULOS = {
         'Un profesor responsable por categoría',
       ],
       captura: '/capturas/alumnos.png',
-      alt: 'Pantalla de gestión de alumnos del panel de Futcamedic con la lista de alumnos, su categoría y su estatus',
+      alt: 'Pantalla de gestión de alumnos del panel de Futcademic con la lista de alumnos, su categoría y su estatus',
     },
     {
       id: 'asistencias',
@@ -97,7 +97,7 @@ export const MODULOS = {
         'Cada profesor ve solo sus categorías',
       ],
       captura: '/capturas/asistencias.png',
-      alt: 'Pantalla de pase de lista del panel de Futcamedic mostrando los alumnos de una categoría',
+      alt: 'Pantalla de pase de lista del panel de Futcademic mostrando los alumnos de una categoría',
     },
     {
       id: 'pagos',
@@ -110,7 +110,7 @@ export const MODULOS = {
         'Exportación a PDF y Excel',
       ],
       captura: '/capturas/finanzas.png',
-      alt: 'Pantalla de finanzas del panel de Futcamedic con los pagos registrados y los pendientes del mes',
+      alt: 'Pantalla de finanzas del panel de Futcademic con los pagos registrados y los pendientes del mes',
     },
     {
       id: 'eventos',
@@ -123,7 +123,7 @@ export const MODULOS = {
         'Canchas y sedes con sus datos',
       ],
       captura: '/capturas/agenda.png',
-      alt: 'Agenda del panel de Futcamedic con los entrenamientos y partidos programados por categoría',
+      alt: 'Agenda del panel de Futcademic con los entrenamientos y partidos programados por categoría',
     },
   ],
 };
@@ -138,28 +138,28 @@ export const ROLES = {
       texto:
         'Ve la academia completa: alumnos, dinero, asistencias, agenda y profesores. Invita al equipo y define los permisos de cada profesor.',
       captura: '/capturas/dashboard-admin.png',
-      alt: 'Dashboard del administrador en Futcamedic con alumnos activos, ingreso del mes, pagos pendientes y tasa de asistencia',
+      alt: 'Dashboard del administrador en Futcademic con alumnos activos, ingreso del mes, pagos pendientes y tasa de asistencia',
     },
     {
       rol: 'Profesor',
       texto:
         'Entra y ve solo sus categorías. Pasa lista y consulta a sus alumnos. No ve las finanzas de la academia salvo que tú se lo permitas.',
       captura: '/capturas/dashboard-profesor.png',
-      alt: 'Dashboard del profesor en Futcamedic con sus categorías asignadas y su próxima sesión',
+      alt: 'Dashboard del profesor en Futcademic con sus categorías asignadas y su próxima sesión',
     },
     {
       rol: 'Padre o madre',
       texto:
         'Ve únicamente a sus hijos: su asistencia, su próximo entrenamiento y su estado de cuenta. Recibe la notificación cuando registras su pago.',
       captura: '/capturas/dashboard-padre.png',
-      alt: 'Dashboard del padre en Futcamedic con sus hijos, la alerta de pago y el próximo entrenamiento',
+      alt: 'Dashboard del padre en Futcademic con sus hijos, la alerta de pago y el próximo entrenamiento',
     },
     {
       rol: 'Alumno',
       texto:
         'Tiene su propio acceso: su racha de asistencias, sus logros, su equipo y sus estadísticas. Es la parte que hace que el niño quiera venir.',
       captura: '/capturas/dashboard-alumno.png',
-      alt: 'Dashboard del alumno en Futcamedic con su racha de asistencias, entrenamientos del mes y logros',
+      alt: 'Dashboard del alumno en Futcademic con su racha de asistencias, entrenamientos del mes y logros',
     },
   ],
 };
@@ -167,7 +167,7 @@ export const ROLES = {
 export const PRUEBA = {
   titulo: 'Lo que ya funciona hoy',
   entrada:
-    'Futcamedic está en beta y todavía no publicamos casos de clientes. Lo que sigue no son promesas: es lo que el sistema hace en este momento.',
+    'Futcademic está en beta y todavía no publicamos casos de clientes. Lo que sigue no son promesas: es lo que el sistema hace en este momento.',
   items: [
     {
       titulo: 'Los datos de tu academia son tuyos',

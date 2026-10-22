@@ -1,4 +1,4 @@
-# Landing de Futcamedic
+# Landing de Futcademic
 
 Sitio público estático (Astro) que lleva al registro del panel. Independiente de
 `web/` y `backend/`: no consume Supabase ni la API, no tiene JavaScript de

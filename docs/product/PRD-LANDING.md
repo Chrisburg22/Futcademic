@@ -1,13 +1,13 @@
 ---
-title: "PRD — Landing Page Futcamedic"
+title: "PRD — Landing Page Futcademic"
 subtitle: "Sitio público de adquisición self-serve"
 date: "21 de octubre de 2026"
 author:
   - name: "Equipo de Producto"
-    affiliation: "Futcamedic"
+    affiliation: "Futcademic"
 ---
 
-# PRD: Landing Page Futcamedic
+# PRD: Landing Page Futcademic
 
 ## Decisiones tomadas (entrada del Product Owner)
 
@@ -24,7 +24,7 @@ author:
 
 El dueño de una academia de fútbol con 50-500 alumnos administra su operación con cuadernos de asistencia, grupos de WhatsApp, cobro en efectivo y hojas de Excel. No sabe cuánto le deben hoy, no sabe qué alumno lleva tres semanas faltando, y los padres se enteran de todo por mensajes sueltos. Cuando busca una solución, encuentra ERPs genéricos caros o software deportivo en inglés pensado para ligas, no para academias. Necesita ver en treinta segundos que existe una herramienta en español, hecha para su caso exacto, en la que puede abrir una cuenta hoy sin hablar con un vendedor.
 
-Hoy no existe ninguna página pública de Futcamedic. El panel web vive detrás de `/login` y no hay URL que se pueda compartir, mandar por WhatsApp o indexar.
+Hoy no existe ninguna página pública de Futcademic. El panel web vive detrás de `/login` y no hay URL que se pueda compartir, mandar por WhatsApp o indexar.
 
 ---
 
@@ -112,7 +112,7 @@ Requisitos técnicos:
 
 1. El sitio corre en local con un solo comando y construye sin errores de TypeScript.
 2. Las diez secciones listadas existen y tienen contenido real — ningún *lorem ipsum*, ninguna captura de ejemplo genérica.
-3. Todas las capturas provienen del panel real de Futcamedic con datos de prueba, no de plantillas.
+3. Todas las capturas provienen del panel real de Futcademic con datos de prueba, no de plantillas.
 4. Cada CTA apunta a `${PUBLIC_APP_URL}/register` y abre el registro real del panel.
 5. La condición de precio durante beta es visible sin hacer scroll en móvil (375 px de ancho).
 6. La página se lee sin scroll horizontal entre 320 px y 1920 px.
@@ -165,10 +165,12 @@ sigue sin verificarse hasta el primer deploy.
 **Hallazgos del producto detectados al capturar** (no son del landing, pero
 afectan lo que se muestra):
 
-1. El nombre está escrito de dos formas en el repositorio: "Futcamedic" en
-   `docs/product/`, `CLAUDE.md` y `web/package.json`; "Futcademic" en el
-   directorio del repositorio y en los comentarios de `web/e2e/`. El sitio usa
-   **Futcamedic**. Hay que unificar antes de registrar dominio.
+1. **Resuelto el 22 de octubre de 2026**: el nombre estaba escrito de dos
+   formas en el repositorio ("Futcademic" en `docs/product/`, `CLAUDE.md` y
+   `web/package.json`; "Futcademic" en el directorio del repositorio y en los
+   comentarios de `web/e2e/`). Se unificó a **Futcademic**, que es como ya
+   estaba desplegado el panel. Falta hacer el mismo cambio en `docs/product/`,
+   `CLAUDE.md` y `web/package.json`.
 2. El selector de mes de Finanzas muestra "October" en una interfaz en español,
    y la lista de pendientes dice "ADEUDA MES 10". Aparece en una captura
    publicada.
@@ -176,8 +178,14 @@ afectan lo que se muestra):
    `onboarded_at`. Es correcto, pero conviene saberlo: el landing promete que
    "entra y ve sus categorías", y antes hay un paso más.
 
-**Lo que no está hecho:** publicar (falta dominio y `PUBLIC_APP_URL` real),
-aviso de privacidad y herramienta de analítica.
+**Publicado el 22 de octubre de 2026** en https://futcademic-landing.vercel.app
+(proyecto `futcademic-landing` de la cuenta `future.web.256`, root `landing/`,
+importado desde GitHub: cada push a `main` redespliega). `PUBLIC_APP_URL`
+apunta a https://futcademic.vercel.app, el panel ya desplegado — dato que
+estaba enterrado en `web/playwright.smoke.config.ts`.
+
+**Lo que no está hecho:** dominio propio, aviso de privacidad y herramienta de
+analítica.
 
 ---
 
