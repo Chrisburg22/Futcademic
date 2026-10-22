@@ -1,0 +1,61 @@
+---
+import { LOGIN_URL, PRIVACY_URL, SITE } from '../consts';
+const anio = new Date().getFullYear();
+---
+
+<footer class="pie">
+  <div class="envoltura pie__fila">
+    <p class="pie__marca">{SITE.name} · Beta</p>
+    <nav class="pie__nav" aria-label="Enlaces del pie">
+      <a href={LOGIN_URL}>Ya tengo cuenta</a>
+      <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+      {PRIVACY_URL && <a href={PRIVACY_URL}>Aviso de privacidad</a>}
+    </nav>
+    <p class="pie__legal">© {anio} {SITE.name}</p>
+  </div>
+</footer>
+
+<style>
+  .pie {
+    background: var(--verde-900);
+    color: #cddbd3;
+    padding-block: 2.5rem;
+  }
+
+  .pie__fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 2rem;
+  }
+
+  .pie__marca {
+    margin: 0;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .pie__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    font-size: 0.95rem;
+  }
+
+  .pie__nav a {
+    color: #cddbd3;
+    text-decoration: none;
+  }
+
+  .pie__nav a:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
+
+  .pie__legal {
+    margin: 0;
+    margin-inline-start: auto;
+    font-size: 0.9rem;
+    color: #9db3a8;
+  }
+</style>

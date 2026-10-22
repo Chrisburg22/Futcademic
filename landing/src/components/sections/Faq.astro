@@ -1,0 +1,71 @@
+---
+import { FAQ } from '../../consts';
+---
+
+<section class="seccion seccion--tenue" id="faq">
+  <div class="envoltura">
+    <div class="seccion__intro">
+      <p class="kicker">Preguntas</p>
+      <h2>{FAQ.titulo}</h2>
+    </div>
+
+    <div class="faq">
+      {
+        FAQ.items.map((item, i) => (
+          <details open={i === 0}>
+            <summary>{item.q}</summary>
+            <p>{item.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq {
+    max-width: 76ch;
+    border-top: 1px solid var(--linea);
+  }
+
+  details {
+    border-bottom: 1px solid var(--linea);
+  }
+
+  summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 1.1rem 2.5rem 1.1rem 0;
+    font-weight: 700;
+    position: relative;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::after {
+    content: '';
+    position: absolute;
+    inset-inline-end: 0.5rem;
+    top: 1.5rem;
+    width: 10px;
+    height: 10px;
+    border-inline-end: 2px solid var(--tinta-50);
+    border-block-end: 2px solid var(--tinta-50);
+    transform: rotate(45deg);
+    transition: transform 0.15s ease;
+  }
+
+  details[open] summary::after {
+    transform: rotate(-135deg);
+    top: 1.75rem;
+  }
+
+  details p {
+    margin: 0;
+    padding: 0 2.5rem 1.25rem 0;
+    color: var(--tinta-70);
+    max-width: var(--ancho-texto);
+  }
+</style>

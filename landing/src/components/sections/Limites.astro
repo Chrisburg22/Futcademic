@@ -1,0 +1,35 @@
+---
+import { LIMITES } from '../../consts';
+---
+
+<section class="seccion" id="limites">
+  <div class="envoltura">
+    <div class="seccion__intro">
+      <p class="kicker">Los límites</p>
+      <h2>{LIMITES.titulo}</h2>
+      <p>{LIMITES.entrada}</p>
+    </div>
+
+    <ul class="rejilla">
+      {
+        LIMITES.items.map((l) => (
+          <li class="tarjeta tarjeta--limite">
+            <h3>{l.titulo}</h3>
+            <p>{l.texto}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .tarjeta--limite {
+    background: var(--ambar-50);
+    border-color: #f0dcc2;
+  }
+
+  .tarjeta--limite h3 {
+    color: #8a3f06;
+  }
+</style>

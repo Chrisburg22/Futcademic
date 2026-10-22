@@ -1,0 +1,63 @@
+---
+import { ROLES } from '../../consts';
+import Shot from '../Shot.astro';
+---
+
+<section class="seccion seccion--tenue" id="roles">
+  <div class="envoltura">
+    <div class="seccion__intro">
+      <p class="kicker">Quién lo usa</p>
+      <h2>{ROLES.titulo}</h2>
+      <p>{ROLES.entrada}</p>
+    </div>
+
+    <ul class="roles">
+      {
+        ROLES.items.map((r) => (
+          <li class="rol">
+            <Shot src={r.captura} alt={r.alt} />
+            <div class="rol__texto">
+              <h3>{r.rol}</h3>
+              <p>{r.texto}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .roles {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  .rol {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Las capturas de rol tienen alturas distintas: se igualan para que los
+     textos de las cuatro tarjetas arranquen a la misma altura. */
+  .rol :global(.captura img) {
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    object-position: top left;
+  }
+
+  .rol__texto {
+    padding-top: 1rem;
+  }
+
+  .rol h3 {
+    margin-bottom: 0.3rem;
+  }
+
+  .rol p {
+    margin: 0;
+    color: var(--tinta-70);
+    font-size: 0.99rem;
+  }
+</style>

@@ -1,0 +1,260 @@
+/* Tokens y base del sitio. Paleta heredada de web/public/icon.svg (#006d35). */
+
+:root {
+  --verde: #006d35;
+  --verde-900: #04281a;
+  --verde-700: #005429;
+  --verde-100: #e4f1e9;
+  --verde-50: #f2f8f4;
+
+  --tinta: #10201a;
+  --tinta-70: #41524b;
+  --tinta-50: #6b7a74;
+
+  --papel: #ffffff;
+  --papel-2: #f7f8f7;
+  --linea: #e2e6e3;
+
+  --ambar: #b35309;
+  --ambar-50: #fdf5ec;
+
+  --radio: 14px;
+  --radio-sm: 10px;
+  --ancho: 1100px;
+  --ancho-texto: 62ch;
+
+  --sombra: 0 1px 2px rgba(16, 32, 26, 0.05), 0 8px 24px -12px rgba(16, 32, 26, 0.18);
+
+  --fuente: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--fuente);
+  color: var(--tinta);
+  background: var(--papel);
+  line-height: 1.6;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(2.1rem, 1.4rem + 3.2vw, 3.6rem);
+  font-weight: 800;
+}
+
+h2 {
+  font-size: clamp(1.6rem, 1.2rem + 1.8vw, 2.4rem);
+  font-weight: 750;
+}
+
+h3 {
+  font-size: 1.12rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0 0 1em;
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--verde-700);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.envoltura {
+  width: 100%;
+  max-width: var(--ancho);
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+.seccion {
+  padding-block: clamp(3.5rem, 2rem + 6vw, 6.5rem);
+  border-top: 1px solid var(--linea);
+}
+
+/* La cabecera es sticky: los anclas no deben quedar debajo de ella. */
+[id] {
+  scroll-margin-top: 80px;
+}
+
+.seccion--tenue {
+  background: var(--papel-2);
+}
+
+.seccion__intro {
+  max-width: var(--ancho-texto);
+  margin-bottom: 2.5rem;
+}
+
+.seccion__intro p {
+  color: var(--tinta-70);
+  font-size: 1.06rem;
+  margin: 0;
+}
+
+.kicker {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--verde-700);
+  margin: 0 0 1rem;
+}
+
+.rejilla {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.tarjeta {
+  background: var(--papel);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 1.5rem;
+}
+
+.tarjeta h3 {
+  margin-bottom: 0.4rem;
+}
+
+.tarjeta p {
+  margin: 0;
+  color: var(--tinta-70);
+  font-size: 0.99rem;
+}
+
+/* Botones */
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.95rem 1.6rem;
+  border-radius: 999px;
+  font-size: 1.04rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.boton--primario {
+  background: var(--verde);
+  color: #fff;
+}
+
+.boton--primario:hover {
+  background: var(--verde-700);
+}
+
+.boton--fantasma {
+  background: transparent;
+  color: var(--tinta);
+  border-color: var(--linea);
+  padding-block: 0.6rem;
+  font-size: 0.96rem;
+}
+
+.boton--fantasma:hover {
+  border-color: var(--verde);
+  color: var(--verde-700);
+}
+
+.boton--claro {
+  background: #fff;
+  color: var(--verde-900);
+}
+
+.boton--claro:hover {
+  background: var(--verde-100);
+}
+
+:where(a, button, summary):focus-visible {
+  outline: 3px solid var(--verde);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Capturas del producto */
+.captura {
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  overflow: hidden;
+  background: var(--papel-2);
+  box-shadow: var(--sombra);
+}
+
+.captura img {
+  width: 100%;
+}
+
+.captura__falta {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  aspect-ratio: 16 / 10;
+  padding: 1.5rem;
+  color: var(--tinta-50);
+  font-size: 0.9rem;
+  background-image: linear-gradient(135deg, var(--papel-2) 25%, transparent 25%),
+    linear-gradient(225deg, var(--papel-2) 25%, transparent 25%),
+    linear-gradient(45deg, var(--papel-2) 25%, transparent 25%),
+    linear-gradient(315deg, var(--papel-2) 25%, var(--papel) 25%);
+  background-size: 16px 16px;
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

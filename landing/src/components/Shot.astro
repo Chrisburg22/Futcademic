@@ -1,0 +1,60 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+
+interface Props {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  loading?: 'lazy' | 'eager';
+}
+
+const { src, alt, width, height, loading = 'lazy' } = Astro.props;
+
+// Las capturas se generan con `npm run capturas` (Playwright contra el panel
+// con backend mockeado). Si falta una, se muestra un hueco rotulado en vez de
+// una imagen rota: el sitio no se publica con capturas de ejemplo genéricas.
+const archivo = path.join(process.cwd(), 'public', src);
+const existe = fs.existsSync(archivo);
+
+/** Dimensiones reales del PNG (cabecera IHDR) para reservar el espacio exacto. */
+function medirPng(ruta: string) {
+  const b = fs.readFileSync(ruta);
+  return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
+}
+
+const medida = existe && src.endsWith('.png') ? medirPng(archivo) : null;
+const w = width ?? medida?.w ?? 1280;
+const h = height ?? medida?.h ?? 720;
+---
+
+<figure class="captura">
+  {
+    existe ? (
+      <img src={src} alt={alt} width={w} height={h} loading={loading} decoding="async" />
+    ) : (
+      <div class="captura__falta">
+        <p>
+          Falta la captura <code>{src}</code>
+          <br />
+          Generala con <code>npm run capturas</code>
+        </p>
+      </div>
+    )
+  }
+</figure>
+
+<style>
+  figure {
+    margin: 0;
+  }
+
+  .captura__falta p {
+    margin: 0;
+  }
+
+  code {
+    font-size: 0.85em;
+  }
+</style>
