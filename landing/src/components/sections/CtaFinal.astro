@@ -1,0 +1,48 @@
+---
+import { CTA_FINAL, REGISTER_URL, LOGIN_URL } from '../../consts';
+---
+
+<section class="cierre" id="empezar">
+  <div class="envoltura cierre__caja">
+    <h2>{CTA_FINAL.titulo}</h2>
+    <p class="cierre__texto">{CTA_FINAL.texto}</p>
+    <a class="boton boton--claro" href={REGISTER_URL}>{CTA_FINAL.cta}</a>
+    <p class="cierre__nota">
+      ¿Tu academia ya está dentro? <a href={LOGIN_URL}>Entra aquí</a>.
+    </p>
+  </div>
+</section>
+
+<style>
+  .cierre {
+    background: var(--verde);
+    color: #fff;
+    padding-block: clamp(3.5rem, 2rem + 6vw, 6rem);
+  }
+
+  .cierre__caja {
+    text-align: center;
+  }
+
+  .cierre h2 {
+    color: #fff;
+  }
+
+  .cierre__texto {
+    max-width: 48ch;
+    margin-inline: auto;
+    margin-bottom: 1.75rem;
+    color: #dbece2;
+    font-size: 1.08rem;
+  }
+
+  .cierre__nota {
+    margin: 1.25rem 0 0;
+    font-size: 0.95rem;
+    color: #d7e9df;
+  }
+
+  .cierre__nota a {
+    color: #fff;
+  }
+</style>

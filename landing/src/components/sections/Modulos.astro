@@ -1,0 +1,103 @@
+---
+import { MODULOS } from '../../consts';
+import Shot from '../Shot.astro';
+---
+
+<section class="seccion" id="modulos">
+  <div class="envoltura">
+    <div class="seccion__intro">
+      <p class="kicker">Qué hace</p>
+      <h2>{MODULOS.titulo}</h2>
+      <p>{MODULOS.entrada}</p>
+    </div>
+
+    <div class="modulos">
+      {
+        MODULOS.items.map((m, i) => (
+          <article class="modulo" id={m.id}>
+            <div class="modulo__texto">
+              <p class="modulo__numero">{String(i + 1).padStart(2, '0')}</p>
+              <h3>{m.nombre}</h3>
+              <p>{m.texto}</p>
+              <ul class="lista">
+                {m.bullets.map((b) => (
+                  <li>{b}</li>
+                ))}
+              </ul>
+            </div>
+            <div class="modulo__captura">
+              <Shot src={m.captura} alt={m.alt} />
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .modulos {
+    display: grid;
+    gap: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+  }
+
+  .modulo {
+    display: grid;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .modulo__numero {
+    margin: 0 0 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--verde);
+  }
+
+  .modulo h3 {
+    font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.65rem);
+    font-weight: 750;
+    letter-spacing: -0.02em;
+  }
+
+  .modulo__texto > p {
+    color: var(--tinta-70);
+    max-width: 48ch;
+  }
+
+  .lista {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+
+  .lista li {
+    position: relative;
+    padding-inline-start: 1.6rem;
+    font-size: 0.99rem;
+    color: var(--tinta);
+  }
+
+  .lista li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0.55em;
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    background: var(--verde);
+  }
+
+  @media (min-width: 860px) {
+    .modulo {
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: 3rem;
+    }
+
+    .modulo:nth-child(even) .modulo__texto {
+      order: 2;
+    }
+  }
+</style>

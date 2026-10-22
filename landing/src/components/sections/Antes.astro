@@ -1,0 +1,24 @@
+---
+import { ANTES } from '../../consts';
+---
+
+<section class="seccion seccion--tenue" id="antes">
+  <div class="envoltura">
+    <div class="seccion__intro">
+      <p class="kicker">El antes</p>
+      <h2>{ANTES.titulo}</h2>
+      <p>{ANTES.entrada}</p>
+    </div>
+
+    <ul class="rejilla">
+      {
+        ANTES.dolores.map((d) => (
+          <li class="tarjeta">
+            <h3>{d.titulo}</h3>
+            <p>{d.texto}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

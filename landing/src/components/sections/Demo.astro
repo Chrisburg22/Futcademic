@@ -1,0 +1,105 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+
+// El video sale de `web/e2e` (recorrido grabado contra el panel con backend
+// mockeado) y se copia a `public/demo/`. Mientras no exista, la sección
+// muestra el índice del recorrido en vez de un reproductor vacío.
+const VIDEO = '/demo/recorrido.mp4';
+const POSTER = '/capturas/dashboard-admin.png';
+const existeVideo = fs.existsSync(path.join(process.cwd(), 'public', VIDEO));
+const existePoster = fs.existsSync(path.join(process.cwd(), 'public', POSTER));
+
+const capitulos = [
+  'Dar de alta un alumno y asignarlo a su categoría',
+  'Pasar lista de un entrenamiento',
+  'Registrar un pago y avisar al padre',
+  'Programar entrenamientos recurrentes',
+  'Lo que ve el alumno cuando entra',
+];
+---
+
+<section class="seccion seccion--tenue" id="demo">
+  <div class="envoltura">
+    <div class="seccion__intro">
+      <p class="kicker">Demo</p>
+      <h2>Míralo funcionando antes de registrarte</h2>
+      <p>
+        Recorrido por el sistema real, sin edición ni pantallas de mentira. Veinte segundos para ver
+        si esto resuelve lo tuyo.
+      </p>
+    </div>
+
+    {
+      existeVideo ? (
+        <div class="reproductor">
+          <video controls preload="none" poster={existePoster ? POSTER : undefined} width="1280" height="720">
+            <source src={VIDEO} type="video/mp4" />
+            Tu navegador no puede reproducir el video.
+          </video>
+        </div>
+      ) : (
+        <div class="captura captura__falta">
+          <p>
+            Falta el video <code>{VIDEO}</code>
+            <br />
+            Generalo con <code>npm run demo</code>
+          </p>
+        </div>
+      )
+    }
+
+    <ol class="capitulos">
+      {capitulos.map((c) => <li>{c}</li>)}
+    </ol>
+  </div>
+</section>
+
+<style>
+  .reproductor {
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    overflow: hidden;
+    background: #000;
+    box-shadow: var(--sombra);
+  }
+
+  .reproductor video {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .capitulos {
+    display: grid;
+    gap: 0.6rem;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: cap;
+  }
+
+  .capitulos li {
+    position: relative;
+    padding-inline-start: 2.2rem;
+    color: var(--tinta-70);
+    font-size: 0.99rem;
+    counter-increment: cap;
+  }
+
+  .capitulos li::before {
+    content: counter(cap);
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0.1em;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--verde-100);
+    color: var(--verde-700);
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+</style>

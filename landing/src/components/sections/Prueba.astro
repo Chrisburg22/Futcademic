@@ -1,0 +1,30 @@
+---
+import { PRUEBA } from '../../consts';
+---
+
+<section class="seccion" id="prueba">
+  <div class="envoltura">
+    <div class="seccion__intro">
+      <p class="kicker">Lo verificable</p>
+      <h2>{PRUEBA.titulo}</h2>
+      <p>{PRUEBA.entrada}</p>
+    </div>
+
+    <ul class="rejilla">
+      {
+        PRUEBA.items.map((p) => (
+          <li class="tarjeta tarjeta--prueba">
+            <h3>{p.titulo}</h3>
+            <p>{p.texto}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .tarjeta--prueba {
+    border-inline-start: 3px solid var(--verde);
+  }
+</style>

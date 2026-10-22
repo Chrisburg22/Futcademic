@@ -1,0 +1,91 @@
+---
+import { HERO, PRECIO, REGISTER_URL } from '../../consts';
+import Shot from '../Shot.astro';
+---
+
+<section class="heroe">
+  <div class="envoltura">
+    <p class="heroe__kicker">{HERO.kicker}</p>
+    <h1>{HERO.titulo}</h1>
+    <p class="heroe__sub">{HERO.subtitulo}</p>
+
+    <p class="heroe__precio">
+      <strong>{PRECIO.corto}.</strong> Te avisamos con 30 días de anticipación antes de cobrar.
+    </p>
+
+    <div class="heroe__acciones">
+      <a class="boton boton--primario" href={REGISTER_URL}>{HERO.cta}</a>
+      <a class="boton boton--fantasma" href="#modulos">Ver qué hace</a>
+    </div>
+    <p class="heroe__nota">{HERO.ctaNota}</p>
+
+    <div class="heroe__captura">
+      <Shot
+        src="/capturas/dashboard-admin.png"
+        alt="Panel de administración de Futcamedic: alumnos activos, ingreso del mes, pagos pendientes y tasa de asistencia"
+        loading="eager"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .heroe {
+    padding-block: clamp(2.5rem, 1.5rem + 5vw, 5rem) 0;
+    background: linear-gradient(180deg, var(--verde-50) 0%, var(--papel) 100%);
+  }
+
+  .heroe__kicker {
+    display: inline-block;
+    margin: 0 0 1rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    background: var(--verde-100);
+    color: var(--verde-700);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  h1 {
+    max-width: 16ch;
+  }
+
+  .heroe__sub {
+    max-width: 54ch;
+    font-size: clamp(1.05rem, 1rem + 0.4vw, 1.22rem);
+    color: var(--tinta-70);
+    margin-bottom: 1.25rem;
+  }
+
+  .heroe__precio {
+    display: inline-block;
+    margin: 0 0 1.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radio-sm);
+    background: var(--ambar-50);
+    border: 1px solid #f0dcc2;
+    color: var(--ambar);
+    font-size: 0.98rem;
+  }
+
+  .heroe__precio strong {
+    color: #8a3f06;
+  }
+
+  .heroe__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .heroe__nota {
+    margin: 0.9rem 0 0;
+    font-size: 0.92rem;
+    color: var(--tinta-50);
+  }
+
+  .heroe__captura {
+    margin-top: clamp(2.5rem, 1.5rem + 4vw, 4rem);
+  }
+</style>

@@ -1,0 +1,49 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/sections/Hero.astro';
+import Antes from '../components/sections/Antes.astro';
+import Modulos from '../components/sections/Modulos.astro';
+import Roles from '../components/sections/Roles.astro';
+import Demo from '../components/sections/Demo.astro';
+import Prueba from '../components/sections/Prueba.astro';
+import Limites from '../components/sections/Limites.astro';
+import Faq from '../components/sections/Faq.astro';
+import CtaFinal from '../components/sections/CtaFinal.astro';
+import { FAQ, SITE, SITE_URL } from '../consts';
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ.items.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+
+const appSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: SITE.name,
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web, Android, iOS',
+  url: SITE_URL,
+  description: SITE.description,
+  inLanguage: 'es-MX',
+};
+---
+
+<Base>
+  <Hero />
+  <Antes />
+  <Modulos />
+  <Roles />
+  <Demo />
+  <Prueba />
+  <Limites />
+  <Faq />
+  <CtaFinal />
+
+  <script type="application/ld+json" set:html={JSON.stringify(appSchema)} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} is:inline />
+</Base>
