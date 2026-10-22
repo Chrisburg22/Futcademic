@@ -45,14 +45,24 @@ test('se puede instalar desde el login, sin iniciar sesión', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Instalar app' })).toBeVisible();
 });
 
-test('el botón aparece cuando el navegador ofrece instalar', async ({ page }) => {
+test('en escritorio se ofrece aunque no haya evento nativo', async ({ page }) => {
   await loginAs(page, { api: { dashboards: DASHBOARDS } });
 
-  // Antes del evento no hay botón: no se promete algo que el navegador no ofrece.
-  await expect(page.getByRole('button', { name: 'Instalar app' })).toBeHidden();
+  // Chromium de escritorio sabe instalar aunque no dispare
+  // `beforeinstallprompt`, así que el botón se muestra y explica los pasos del
+  // menú en vez de desaparecer.
+  const boton = page.getByRole('button', { name: 'Instalar app' });
+  await expect(boton).toBeVisible();
+  await boton.click();
+  await expect(page.getByText(/menú del navegador|Añadir al Dock/)).toBeVisible();
+});
 
+test('al llegar el evento nativo el botón pasa a instalar directo', async ({ page }) => {
+  await loginAs(page, { api: { dashboards: DASHBOARDS } });
   await fireInstallPrompt(page);
-  await expect(page.getByRole('button', { name: 'Instalar app' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Instalar app' }).click();
+  expect(await page.evaluate(() => (window as any).__promptCalled)).toBe(true);
 });
 
 test('al pulsarlo se abre el diálogo nativo y el botón desaparece', async ({ page }) => {
