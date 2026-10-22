@@ -1,0 +1,45 @@
+---
+import { PRUEBA } from '../../consts';
+---
+
+<section class="seccion" id="prueba">
+  <div class="envoltura">
+    <div class="seccion__intro revela">
+      <p class="kicker">Lo verificable</p>
+      <h2>{PRUEBA.titulo}</h2>
+      <p>{PRUEBA.entrada}</p>
+    </div>
+
+    <ul class="rejilla escalona">
+      {
+        PRUEBA.items.map((p) => (
+          <li class="tarjeta tarjeta--prueba">
+            <h3>{p.titulo}</h3>
+            <p>{p.texto}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .tarjeta--prueba {
+    padding-inline-start: 1.9rem;
+  }
+
+  .tarjeta--prueba::before {
+    content: '';
+    position: absolute;
+    inset-block: 1.6rem;
+    inset-inline-start: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: linear-gradient(180deg, var(--verde), var(--lima));
+    transition: inset-block var(--t-medio) var(--e-salida);
+  }
+
+  .tarjeta--prueba:hover::before {
+    inset-block: 0.9rem;
+  }
+</style>

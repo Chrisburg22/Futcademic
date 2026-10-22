@@ -1,0 +1,150 @@
+---
+import { REGISTER_URL, LOGIN_URL, SITE } from '../consts';
+---
+
+<header class="cabecera">
+  <div class="envoltura cabecera__fila">
+    <a class="marca" href="/">
+      <svg class="marca__icono" viewBox="0 0 512 512" aria-hidden="true" focusable="false">
+        <rect width="512" height="512" rx="96" fill="#006d35"></rect>
+        <g fill="#ffffff">
+          <rect x="176" y="136" width="56" height="240" rx="12"></rect>
+          <rect x="176" y="136" width="164" height="56" rx="12"></rect>
+          <rect x="176" y="234" width="128" height="52" rx="12"></rect>
+        </g>
+      </svg>
+      <span class="marca__texto">{SITE.name}</span>
+    </a>
+
+    <nav class="cabecera__nav" aria-label="Secciones">
+      <a href="#modulos">Qué hace</a>
+      <a href="#roles">Quién lo usa</a>
+      <a href="#limites">Límites</a>
+      <a href="#faq">Preguntas</a>
+    </nav>
+
+    <div class="cabecera__acciones">
+      <a class="cabecera__entrar" href={LOGIN_URL}>Entrar</a>
+      <a class="boton boton--primario cabecera__cta" href={REGISTER_URL}>Crear mi academia</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid rgba(227, 233, 229, 0.9);
+  }
+
+  .cabecera__fila {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: 64px;
+  }
+
+  .marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    color: var(--tinta);
+    font-family: var(--fuente-titulo);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-size: 1.18rem;
+  }
+
+  .marca__icono {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    transition: transform var(--t-medio) var(--e-salida);
+  }
+
+  .marca:hover .marca__icono {
+    transform: rotate(-6deg) scale(1.06);
+  }
+
+  .cabecera__nav {
+    display: none;
+    gap: 1.4rem;
+    margin-inline-start: auto;
+    font-size: 0.95rem;
+  }
+
+  .cabecera__nav a {
+    position: relative;
+    color: var(--tinta-70);
+    text-decoration: none;
+    padding-block: 0.4rem;
+    transition: color var(--t-rapido) var(--e-salida);
+  }
+
+  .cabecera__nav a::after {
+    content: '';
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    width: 100%;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--verde);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform var(--t-medio) var(--e-salida);
+  }
+
+  .cabecera__nav a:hover {
+    color: var(--verde);
+  }
+
+  .cabecera__nav a:hover::after {
+    transform: scaleX(1);
+  }
+
+  .cabecera__acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-inline-start: auto;
+  }
+
+  .cabecera__entrar {
+    color: var(--tinta-70);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .cabecera__entrar:hover {
+    color: var(--verde);
+  }
+
+  .cabecera__cta {
+    min-height: 40px;
+    padding: 0.5rem 1.15rem;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 640px) {
+    .cabecera__cta {
+      display: none;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .cabecera__nav {
+      display: flex;
+    }
+
+    .cabecera__acciones {
+      margin-inline-start: 0;
+    }
+  }
+</style>

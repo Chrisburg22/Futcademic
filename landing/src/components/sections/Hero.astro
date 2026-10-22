@@ -1,0 +1,206 @@
+---
+import { HERO, PRECIO, REGISTER_URL } from '../../consts';
+import Shot from '../Shot.astro';
+
+const chips = ['Alumnos', 'Asistencias', 'Pagos', 'Entrenamientos'];
+---
+
+<section class="heroe">
+  <div class="heroe__fondo" aria-hidden="true">
+    <span class="mancha mancha--a"></span>
+    <span class="mancha mancha--b"></span>
+    <span class="malla"></span>
+  </div>
+
+  <div class="envoltura heroe__contenido">
+    <p class="heroe__kicker entra entra-1">{HERO.kicker}</p>
+    <h1 class="entra entra-2">{HERO.titulo}</h1>
+    <p class="heroe__sub entra entra-3">{HERO.subtitulo}</p>
+
+    <p class="heroe__precio entra entra-3">
+      <strong>{PRECIO.corto}.</strong> Te avisamos con 30 días de anticipación antes de cobrar.
+    </p>
+
+    <div class="heroe__acciones entra entra-4">
+      <a class="boton boton--primario" href={REGISTER_URL}>{HERO.cta}</a>
+      <a class="boton boton--fantasma" href="#modulos">Ver qué hace</a>
+    </div>
+    <p class="heroe__nota entra entra-4">{HERO.ctaNota}</p>
+
+    <ul class="chips entra entra-5">
+      {
+        chips.map((c) => (
+          <li class="chip">
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <path
+                d="M4 10.5l4 4 8-8"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            {c}
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="heroe__captura entra entra-5">
+      <Shot
+        src="/capturas/dashboard-admin.png"
+        alt="Panel de administración de Futcademic: alumnos activos, ingreso del mes, pagos pendientes y tasa de asistencia"
+        loading="eager"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .heroe {
+    position: relative;
+    isolation: isolate;
+    padding-block: clamp(3rem, 1.5rem + 6vw, 6rem) 0;
+    overflow: hidden;
+  }
+
+  /* Fondo: degradado suave + dos manchas de color que respiran despacio. */
+  .heroe__fondo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, var(--verde-50) 0%, var(--papel) 62%);
+  }
+
+  .mancha {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.5;
+  }
+
+  .mancha--a {
+    inset-block-start: -18%;
+    inset-inline-start: -10%;
+    width: min(46vw, 560px);
+    aspect-ratio: 1;
+    background: radial-gradient(circle, rgba(123, 211, 137, 0.75), transparent 68%);
+  }
+
+  .mancha--b {
+    inset-block-start: -6%;
+    inset-inline-end: -14%;
+    width: min(40vw, 480px);
+    aspect-ratio: 1;
+    background: radial-gradient(circle, rgba(0, 109, 53, 0.42), transparent 68%);
+  }
+
+  .malla {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(0, 109, 53, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 109, 53, 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, #000 30%, transparent 75%);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .mancha--a {
+      animation: respirar 15s ease-in-out infinite;
+    }
+
+    .mancha--b {
+      animation: respirar 19s ease-in-out infinite reverse;
+    }
+  }
+
+  .heroe__kicker {
+    display: inline-block;
+    margin: 0 0 1.25rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--verde-100);
+    backdrop-filter: blur(8px);
+    color: var(--verde);
+    font-size: 0.85rem;
+    font-weight: 650;
+  }
+
+  h1 {
+    max-width: 15ch;
+  }
+
+  .heroe__sub {
+    max-width: 52ch;
+    font-size: clamp(1.08rem, 1rem + 0.5vw, 1.3rem);
+    color: var(--tinta-70);
+    margin-bottom: 1.5rem;
+  }
+
+  .heroe__precio {
+    display: inline-block;
+    margin: 0 0 1.75rem;
+    padding: 0.65rem 1.1rem;
+    border-radius: var(--radio-sm);
+    background: var(--ambar-50);
+    border: 1px solid var(--ambar-linea);
+    color: var(--ambar);
+    font-size: 0.98rem;
+  }
+
+  .heroe__precio strong {
+    color: #8a3f06;
+  }
+
+  .heroe__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .heroe__nota {
+    margin: 1rem 0 0;
+    font-size: 0.92rem;
+    color: var(--tinta-50);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 2rem;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid var(--linea);
+    backdrop-filter: blur(6px);
+    font-size: 0.9rem;
+    font-weight: 550;
+    color: var(--tinta-70);
+  }
+
+  .chip svg {
+    width: 15px;
+    height: 15px;
+    color: var(--verde);
+    flex: none;
+  }
+
+  .heroe__captura {
+    margin-top: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+    padding-bottom: clamp(2rem, 1rem + 3vw, 3.5rem);
+  }
+
+  .heroe__captura :global(.captura) {
+    box-shadow: var(--sombra-lg);
+  }
+</style>

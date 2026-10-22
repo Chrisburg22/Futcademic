@@ -1,0 +1,47 @@
+---
+import { LIMITES } from '../../consts';
+---
+
+<section class="seccion" id="limites">
+  <div class="envoltura">
+    <div class="seccion__intro revela">
+      <p class="kicker kicker--ambar">Los límites</p>
+      <h2>{LIMITES.titulo}</h2>
+      <p>{LIMITES.entrada}</p>
+    </div>
+
+    <ul class="rejilla escalona">
+      {
+        LIMITES.items.map((l) => (
+          <li class="tarjeta tarjeta--limite">
+            <h3>{l.titulo}</h3>
+            <p>{l.texto}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .kicker--ambar {
+    color: var(--ambar);
+  }
+
+  .tarjeta--limite {
+    background: var(--ambar-50);
+    border-color: var(--ambar-linea);
+  }
+
+  .tarjeta--limite:hover {
+    border-color: #e5c89c;
+  }
+
+  .tarjeta--limite h3 {
+    color: #8a3f06;
+  }
+
+  .tarjeta--limite p {
+    color: #6b4a2c;
+  }
+</style>

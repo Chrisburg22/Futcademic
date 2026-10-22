@@ -1,36 +1,38 @@
 import { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import {
-  Container,
-  Paper,
   TextInput,
   PasswordInput,
   Button,
-  Title,
   Text,
   Stack,
+  Group,
   Anchor,
   Alert,
   Divider,
   Center,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconSchool } from '@tabler/icons-react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { InstallButton } from '../../components/pwa/InstallButton';
+import { AuthLayout } from '../../components/auth/AuthLayout';
+import { InstallButton, useCanInstall } from '../../components/pwa/InstallButton';
 
 export function LoginPage() {
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
+  const canInstall = useCanInstall();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm({
     initialValues: { email: '', password: '' },
+    validateInputOnBlur: true,
     validate: {
-      email: (v) => (/^\S+@\S+$/.test(v) ? null : 'Correo inválido'),
-      password: (v) => (v.length >= 6 ? null : 'Mínimo 6 caracteres'),
+      email: (v) =>
+        !v.trim() ? 'Escribe tu correo' : /^\S+@\S+$/.test(v) ? null : 'Correo inválido',
+      password: (v) => (!v ? 'Escribe tu contraseña' : v.length >= 6 ? null : 'Mínimo 6 caracteres'),
     },
   });
 
@@ -42,64 +44,93 @@ export function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword(values);
     setSubmitting(false);
     if (error) {
-      setError(error.message);
+      // El mensaje de Supabase llega en inglés y es el mismo para correo
+      // inexistente y contraseña mala; lo traducimos sin dar más pistas.
+      setError(
+        error.message === 'Invalid login credentials'
+          ? 'Correo o contraseña incorrectos.'
+          : error.message,
+      );
       return;
     }
     navigate('/', { replace: true });
   };
 
   return (
-    <Container size={420} my={80}>
-      <Stack gap="xs" align="center" mb="lg">
-        <Title order={2}>Futcademic</Title>
-        <Text c="dimmed" size="sm">
-          Inicia sesión para continuar
-        </Text>
-      </Stack>
-      <Paper withBorder shadow="sm" p="xl" radius="md">
-        <form onSubmit={form.onSubmit(onSubmit)}>
-          <Stack>
-            {error && (
-              <Alert color="red" icon={<IconAlertCircle size={16} />}>
-                {error}
-              </Alert>
-            )}
-            <TextInput
-              label="Correo"
-              placeholder="tu@correo.com"
-              autoComplete="email"
-              required
-              {...form.getInputProps('email')}
-            />
-            <PasswordInput
-              label="Contraseña"
-              autoComplete="current-password"
-              required
-              {...form.getInputProps('password')}
-            />
-            <Button type="submit" loading={submitting} fullWidth>
-              Entrar
-            </Button>
-            <Text size="sm" ta="center">
-              ¿No tienes cuenta?{' '}
-              <Anchor component={Link} to="/register">
-                Registra tu academia
-              </Anchor>
-            </Text>
-            <Text size="sm" ta="center">
-              <Anchor component={Link} to="/student-login">
-                Acceso alumno
-              </Anchor>
-            </Text>
-          </Stack>
-        </form>
-        {/* Instalar sin necesidad de iniciar sesión: muchos padres y alumnos
-            llegan aquí desde el móvil y es el mejor momento para ofrecerlo. */}
-        <Divider my="lg" label="¿La usas a diario?" labelPosition="center" />
-        <Center>
-          <InstallButton />
-        </Center>
-      </Paper>
-    </Container>
+    <AuthLayout
+      title="Inicia sesión"
+      subtitle="Entra con el correo de tu academia."
+      footer={
+        <Stack gap="sm">
+          <Text fz="sm" ta="center" c="dimmed">
+            ¿No tienes cuenta?{' '}
+            <Anchor component={Link} to="/register" fw={500}>
+              Registra tu academia
+            </Anchor>
+          </Text>
+          {/* Instalar sin necesidad de iniciar sesión: muchos padres y alumnos
+              llegan aquí desde el móvil y es el mejor momento para ofrecerlo.
+              Solo se dibuja si el navegador puede hacerlo. */}
+          {canInstall && (
+            <>
+              <Divider label="¿La usas a diario?" labelPosition="center" />
+              <Center>
+                <InstallButton />
+              </Center>
+            </>
+          )}
+        </Stack>
+      }
+    >
+      <form onSubmit={form.onSubmit(onSubmit)} noValidate>
+        <Stack gap="md">
+          {error && (
+            <Alert color="red" icon={<IconAlertCircle size={16} />} role="alert">
+              {error}
+            </Alert>
+          )}
+          <TextInput
+            label="Correo"
+            placeholder="tu@correo.com"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoFocus
+            size="md"
+            required
+            withAsterisk={false}
+            {...form.getInputProps('email')}
+          />
+          <PasswordInput
+            label="Contraseña"
+            placeholder="Tu contraseña"
+            autoComplete="current-password"
+            size="md"
+            required
+            withAsterisk={false}
+            {...form.getInputProps('password')}
+          />
+          <Group justify="flex-end" mt={-8}>
+            <Anchor component={Link} to="/forgot-password" fz="sm">
+              ¿Olvidaste tu contraseña?
+            </Anchor>
+          </Group>
+          <Button type="submit" loading={submitting} size="md" fullWidth mt="xs">
+            Entrar
+          </Button>
+          <Divider label="o" labelPosition="center" />
+          <Button
+            component={Link}
+            to="/student-login"
+            variant="default"
+            size="md"
+            fullWidth
+            leftSection={<IconSchool size={18} />}
+          >
+            Acceso alumno
+          </Button>
+        </Stack>
+      </form>
+    </AuthLayout>
   );
 }

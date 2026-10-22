@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Paper,
   PasswordInput,
   Button,
-  Title,
   Text,
   Stack,
   Alert,
@@ -14,10 +11,12 @@ import {
   Badge,
   Loader,
   Center,
+  Paper,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { supabase } from '../../config/supabase';
+import { AuthLayout } from '../../components/auth/AuthLayout';
 
 const ROLE_LABELS: Record<string, string> = {
   super_admin: 'Super administrador',
@@ -42,6 +41,7 @@ export function AcceptInvitePage() {
   const [saving, setSaving] = useState(false);
 
   const form = useForm({
+    validateInputOnBlur: true,
     initialValues: { password: '', confirm: '' },
     validate: {
       password: (v) => (v.length >= 8 ? null : 'Mínimo 8 caracteres'),
@@ -131,7 +131,7 @@ export function AcceptInvitePage() {
 
   if (status === 'loading') {
     return (
-      <Center h="100vh">
+      <Center h="100dvh">
         <Loader />
       </Center>
     );
@@ -139,77 +139,80 @@ export function AcceptInvitePage() {
 
   if (status === 'invalid') {
     return (
-      <Container size={420} my={80}>
-        <Paper withBorder shadow="sm" p="xl" radius="md">
-          <Stack align="center">
-            <Alert color="red" icon={<IconAlertCircle size={16} />} w="100%">
-              {error || 'El enlace de invitación no es válido o ya expiró.'}
-            </Alert>
-            <Text size="sm" c="dimmed" ta="center">
-              Pide a tu academia que te envíe una nueva invitación.
-            </Text>
-            <Button variant="light" onClick={() => navigate('/login')}>
-              Ir a iniciar sesión
-            </Button>
-          </Stack>
-        </Paper>
-      </Container>
+      <AuthLayout title="Invitación no válida">
+        <Stack gap="md">
+          <Alert color="red" icon={<IconAlertCircle size={16} />} role="alert">
+            {error || 'El enlace de invitación no es válido o ya expiró.'}
+          </Alert>
+          <Text fz="sm" c="dimmed">
+            Pide a tu academia que te envíe una invitación nueva.
+          </Text>
+          <Button variant="light" size="md" fullWidth onClick={() => navigate('/login')}>
+            Ir a iniciar sesión
+          </Button>
+        </Stack>
+      </AuthLayout>
     );
   }
 
   return (
-    <Container size={460} my={80}>
-      <Stack gap="xs" align="center" mb="lg">
-        <Title order={3}>¡Bienvenido!</Title>
-        <Text c="dimmed" size="sm" ta="center">
-          Fuiste invitado a {invited?.school?.name || 'una academia'}. Crea tu
-          contraseña para activar tu cuenta.
-        </Text>
-      </Stack>
-      <Paper withBorder shadow="sm" p="xl" radius="md">
-        <Stack>
-          <Group>
-            <Avatar radius="xl" size="lg">
+    <AuthLayout
+      title="¡Bienvenido!"
+      subtitle={`Te invitaron a ${invited?.school?.name || 'una academia'}. Crea tu contraseña para activar la cuenta.`}
+    >
+      <Stack gap="lg">
+        <Paper withBorder radius="md" p="sm" bg="var(--mantine-color-gray-0)">
+          <Group wrap="nowrap">
+            <Avatar radius="xl" size="md" color="futcamedic">
               {invited?.full_name?.[0]?.toUpperCase()}
             </Avatar>
-            <div>
-              <Text fw={500}>{invited?.full_name}</Text>
-              <Text size="xs" c="dimmed">
+            <div style={{ minWidth: 0 }}>
+              <Text fw={500} truncate>
+                {invited?.full_name}
+              </Text>
+              <Text fz="xs" c="dimmed" truncate>
                 {invited?.email}
               </Text>
-              {invited?.role && (
-                <Badge size="sm" variant="light" mt={4}>
-                  {ROLE_LABELS[invited.role] || invited.role}
-                </Badge>
-              )}
             </div>
+            {invited?.role && (
+              <Badge size="sm" variant="light" ml="auto">
+                {ROLE_LABELS[invited.role] || invited.role}
+              </Badge>
+            )}
           </Group>
-          <form onSubmit={form.onSubmit(onSubmit)}>
-            <Stack>
-              {error && (
-                <Alert color="red" icon={<IconAlertCircle size={16} />}>
-                  {error}
-                </Alert>
-              )}
-              <PasswordInput
-                label="Contraseña"
-                required
-                autoComplete="new-password"
-                {...form.getInputProps('password')}
-              />
-              <PasswordInput
-                label="Confirmar contraseña"
-                required
-                autoComplete="new-password"
-                {...form.getInputProps('confirm')}
-              />
-              <Button type="submit" loading={saving} fullWidth>
-                Crear cuenta
-              </Button>
-            </Stack>
-          </form>
-        </Stack>
-      </Paper>
-    </Container>
+        </Paper>
+
+        <form onSubmit={form.onSubmit(onSubmit)} noValidate>
+          <Stack gap="md">
+            {error && (
+              <Alert color="red" icon={<IconAlertCircle size={16} />} role="alert">
+                {error}
+              </Alert>
+            )}
+            <PasswordInput
+              label="Contraseña"
+              description="Al menos 8 caracteres."
+              required
+              withAsterisk={false}
+              autoFocus
+              size="md"
+              autoComplete="new-password"
+              {...form.getInputProps('password')}
+            />
+            <PasswordInput
+              label="Confirmar contraseña"
+              required
+              withAsterisk={false}
+              size="md"
+              autoComplete="new-password"
+              {...form.getInputProps('confirm')}
+            />
+            <Button type="submit" loading={saving} size="md" fullWidth mt="xs">
+              Crear cuenta
+            </Button>
+          </Stack>
+        </form>
+      </Stack>
+    </AuthLayout>
   );
 }
