@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Card,
   Group,
@@ -12,12 +12,23 @@ import {
   ActionIcon,
   Avatar,
   Text,
+  Pagination,
+  Tooltip,
+  Center,
+  Loader,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
-import { useDisclosure } from '@mantine/hooks';
+import { useDebouncedValue, useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconPlus, IconEdit, IconShirt, IconTrash, IconEye } from '@tabler/icons-react';
+import {
+  IconPlus,
+  IconEdit,
+  IconShirt,
+  IconTrash,
+  IconEye,
+  IconSearch,
+} from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +39,10 @@ import {
   useUpdateStudentStatus,
   useDeleteStudent,
 } from '../../hooks/useStudents';
+import {
+  useAttendanceSummaries,
+  type StudentAttendanceSummary,
+} from '../../hooks/useAttendances';
 import { StudentWizard } from './components/StudentWizard';
 import { useGetCategories, useGetMyCategories } from '../../hooks/useCategories';
 import { useGetUsers } from '../../hooks/useUsers';
@@ -36,8 +51,87 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 
+const PAGE_SIZE = 25;
+
+/** Compara ignorando mayúsculas y acentos: "jose" encuentra a "José". */
+const normalize = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+
+function AttendanceCell({
+  summary,
+  loading,
+}: {
+  summary?: StudentAttendanceSummary;
+  loading: boolean;
+}) {
+  if (loading && !summary) return <Text size="xs" c="dimmed">…</Text>;
+  if (!summary || summary.rate == null)
+    return (
+      <Text size="xs" c="dimmed">
+        —
+      </Text>
+    );
+
+  const color = summary.rate >= 70 ? 'green' : summary.rate >= 40 ? 'yellow' : 'red';
+  return (
+    <Group gap={6} wrap="nowrap">
+      <Badge variant="light" color={color}>
+        {summary.rate}%
+      </Badge>
+      <Text size="xs" c="dimmed">
+        {summary.present}/{summary.total}
+      </Text>
+    </Group>
+  );
+}
+
+function AbsenceCell({
+  summary,
+  loading,
+}: {
+  summary?: StudentAttendanceSummary;
+  loading: boolean;
+}) {
+  if (loading && !summary) return <Text size="xs" c="dimmed">…</Text>;
+  if (!summary || summary.daysSince == null)
+    return (
+      <Tooltip label="Sin ninguna asistencia registrada">
+        <Text size="xs" c="dimmed">
+          Sin registro
+        </Text>
+      </Tooltip>
+    );
+
+  if (summary.daysSince === 0) {
+    return (
+      <Text size="sm" c="dimmed">
+        Hoy
+      </Text>
+    );
+  }
+
+  // Tres semanas sin venir es la señal de fuga que el dueño necesita ver sin
+  // tener que abrir la ficha de cada alumno.
+  const atRisk = summary.daysSince >= 21;
+  const warning = summary.daysSince >= 14;
+  return (
+    <Tooltip label={`Última asistencia: ${dayjs(summary.lastPresent).format('DD/MM/YYYY')}`}>
+      <Text size="sm" fw={atRisk ? 600 : 400} c={atRisk ? 'red' : warning ? 'orange' : undefined}>
+        {summary.daysSince} d{atRisk ? ' · riesgo' : ''}
+      </Text>
+    </Tooltip>
+  );
+}
+
 export function StudentsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebouncedValue(search, 200);
+  const [page, setPage] = useState(1);
+
   const { profile } = useAuth();
   const isTeacher = profile?.role === 'profesor';
   // Un profesor solo trabaja con sus categorías asignadas
@@ -52,6 +146,35 @@ export function StudentsPage() {
   const uniformMut = useUpdateUniform();
   const statusMut = useUpdateStudentStatus();
   const deleteMut = useDeleteStudent();
+
+  const filtered = useMemo(() => {
+    const q = normalize(debouncedSearch.trim());
+    if (!q) return students;
+    return students.filter((s: any) => normalize(s.full_name || '').includes(q));
+  }, [students, debouncedSearch]);
+
+  // Volver a la primera página al cambiar el conjunto: si no, una búsqueda que
+  // devuelve 3 resultados mientras estás en la página 4 se ve vacía.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, categoryFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage],
+  );
+
+  // El resumen de asistencia se calcula en el cliente sobre las categorías de
+  // esta página: con 300 alumnos traer el histórico de toda la academia sería
+  // inviable en un teléfono.
+  const visibleCategoryIds = useMemo(
+    () => [...new Set(paged.map((s: any) => s.category_id).filter(Boolean))] as string[],
+    [paged],
+  );
+  const { byStudent, isLoading: loadingAttendance } =
+    useAttendanceSummaries(visibleCategoryIds);
 
   const [createOpen, { open: openCreate, close: closeCreate }] = useDisclosure(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -97,35 +220,63 @@ export function StudentsPage() {
         }
       />
       <Card withBorder padding="md" radius="md" mb="md">
-        <Select
-          label="Filtrar por categoría"
-          placeholder="Todas"
-          clearable
-          value={categoryFilter}
-          onChange={setCategoryFilter}
-          data={categories.map((c: any) => ({ value: c.id, label: c.name }))}
-        />
+        <Group grow align="flex-end">
+          <TextInput
+            label="Buscar"
+            placeholder="Nombre del alumno"
+            leftSection={<IconSearch size={16} />}
+            value={search}
+            onChange={(e) => setSearch(e.currentTarget.value)}
+          />
+          <Select
+            label="Filtrar por categoría"
+            placeholder="Todas"
+            clearable
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            data={categories.map((c: any) => ({ value: c.id, label: c.name }))}
+          />
+        </Group>
       </Card>
 
       {isLoading ? (
         <LoadingState />
       ) : students.length === 0 ? (
-        <EmptyState description="Sin alumnos registrados." />
+        <EmptyState
+          description="Sin alumnos registrados."
+          action={
+            <Button leftSection={<IconPlus size={16} />} onClick={openCreate} mt="sm">
+              Registrar el primero
+            </Button>
+          }
+        />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title="Sin resultados"
+          description={`Ningún alumno coincide con "${debouncedSearch}".`}
+          action={
+            <Button variant="light" onClick={() => setSearch('')} mt="sm">
+              Limpiar búsqueda
+            </Button>
+          }
+        />
       ) : (
         <Card withBorder padding={0} radius="md">
-          <Table.ScrollContainer minWidth={600}>
+          <Table.ScrollContainer minWidth={820}>
             <Table verticalSpacing="sm">
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>Alumno</Table.Th>
                   <Table.Th>Categoría</Table.Th>
+                  <Table.Th>Asistencia del mes</Table.Th>
+                  <Table.Th>Sin venir</Table.Th>
                   <Table.Th>Status</Table.Th>
                   <Table.Th>Uniforme</Table.Th>
                   <Table.Th />
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {students.map((s: any) => (
+                {paged.map((s: any) => (
                   <Table.Tr key={s.id}>
                     <Table.Td>
                       <Group gap="sm">
@@ -144,6 +295,18 @@ export function StudentsPage() {
                     </Table.Td>
                     <Table.Td>
                       <Badge variant="light">{s.category?.name || '—'}</Badge>
+                    </Table.Td>
+                    <Table.Td>
+                      <AttendanceCell
+                        summary={byStudent.get(s.id)}
+                        loading={loadingAttendance}
+                      />
+                    </Table.Td>
+                    <Table.Td>
+                      <AbsenceCell
+                        summary={byStudent.get(s.id)}
+                        loading={loadingAttendance}
+                      />
                     </Table.Td>
                     <Table.Td>
                       <Select
@@ -236,7 +399,35 @@ export function StudentsPage() {
               </Table.Tbody>
             </Table>
           </Table.ScrollContainer>
+
+          <Group justify="space-between" p="md" wrap="wrap">
+            <Text size="sm" c="dimmed">
+              {filtered.length === students.length
+                ? `${students.length} ${students.length === 1 ? 'alumno' : 'alumnos'}`
+                : `${filtered.length} de ${students.length} alumnos`}
+            </Text>
+            {totalPages > 1 && (
+              <Pagination
+                value={currentPage}
+                onChange={setPage}
+                total={totalPages}
+                size="sm"
+                withEdges
+              />
+            )}
+          </Group>
         </Card>
+      )}
+
+      {loadingAttendance && (
+        <Center mt="xs">
+          <Group gap="xs">
+            <Loader size="xs" />
+            <Text size="xs" c="dimmed">
+              Calculando asistencia…
+            </Text>
+          </Group>
+        </Center>
       )}
 
       <StudentWizard

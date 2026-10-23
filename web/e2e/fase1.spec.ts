@@ -152,6 +152,66 @@ test('students: cambiar status', async ({ page }) => {
   await expect(page.getByText('Status')).toBeVisible();
 });
 
+// --- Search ---
+test('students: el buscador filtra por nombre e ignora acentos', async ({ page }) => {
+  await loginAs(page, { api: API_FX, goto: '/admin/students' });
+  await expect(page.getByText('Carlos López')).toBeVisible();
+  await expect(page.getByText('Ana Torres')).toBeVisible();
+
+  await page.getByLabel('Buscar').fill('ana');
+  await expect(page.getByText('Ana Torres')).toBeVisible();
+  await expect(page.getByText('Carlos López')).toBeHidden();
+  await expect(page.getByText('1 de 2 alumnos')).toBeVisible();
+
+  // "lopez" sin tilde encuentra a "López".
+  await page.getByLabel('Buscar').fill('lopez');
+  await expect(page.getByText('Carlos López')).toBeVisible();
+  await expect(page.getByText('Ana Torres')).toBeHidden();
+});
+
+// --- Attendance columns ---
+const localIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const dayOfThisMonth = (day: number) => {
+  const now = new Date();
+  return localIso(new Date(now.getFullYear(), now.getMonth(), day));
+};
+
+const daysAgo = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return localIso(d);
+};
+
+/**
+ * Carlos: 2 de 3 sesiones del mes → 67 %.
+ * Ana: 0 de 2 este mes y su última asistencia fue hace 40 días → riesgo.
+ */
+const ATTENDANCES = [
+  { id: 'a1', student_id: 's1', date: dayOfThisMonth(1), type: 'entrenamiento', present: true },
+  { id: 'a2', student_id: 's1', date: dayOfThisMonth(2), type: 'entrenamiento', present: true },
+  { id: 'a3', student_id: 's1', date: dayOfThisMonth(3), type: 'entrenamiento', present: false },
+  { id: 'a4', student_id: 's2', date: dayOfThisMonth(1), type: 'entrenamiento', present: false },
+  { id: 'a5', student_id: 's2', date: dayOfThisMonth(2), type: 'entrenamiento', present: false },
+  { id: 'a6', student_id: 's2', date: daysAgo(40), type: 'entrenamiento', present: true },
+];
+
+test('students: muestra asistencia del mes y días sin venir', async ({ page }) => {
+  await loginAs(page, {
+    api: {
+      ...API_FX,
+      extra: { ...API_FX.extra, '/attendances/category/cat1': ATTENDANCES },
+    },
+    goto: '/admin/students',
+  });
+
+  await expect(page.getByText('67%', { exact: true })).toBeVisible();
+  await expect(page.getByText('2/3', { exact: true })).toBeVisible();
+  await expect(page.getByText('0%', { exact: true })).toBeVisible();
+  await expect(page.getByText('40 d · riesgo')).toBeVisible();
+});
+
 // --- Student detail page ---
 test('students: navegar a detalle', async ({ page }) => {
   await loginAs(page, { api: API_FX, goto: '/admin/students' });
