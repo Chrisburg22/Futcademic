@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
+  Alert,
   Card,
   Group,
   Select,
@@ -13,6 +14,7 @@ import {
   Tabs,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
+import { IconBan, IconCalendarCheck } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import dayjs from 'dayjs';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,6 +26,7 @@ import {
 } from '../hooks/useAttendances';
 import { useCheckAchievements } from '../hooks/useAchievements';
 import { useGetMyCategories, useGetCategories } from '../hooks/useCategories';
+import { useGetTrainings } from '../hooks/useEvents';
 import { useGetStudents, useGetMyChildren } from '../hooks/useStudents';
 import { PageHeader } from '../components/common/PageHeader';
 import { LoadingState } from '../components/common/LoadingState';
@@ -58,6 +61,15 @@ function RollCallView() {
   const { data: existing } = useGetAttendancesByCategory(categoryId || '', dateStr);
   const save = useSaveAttendances();
   const checkAchievements = useCheckAchievements();
+  const markComplete = useMarkTrainingComplete();
+
+  // Sesión programada que corresponde a lo que se está registrando. Permite
+  // atar las asistencias a su `training` y marcarlo como completado al guardar.
+  const { data: dayTrainings = [] } = useGetTrainings(
+    categoryId && dateStr ? { category_id: categoryId, date: dateStr } : undefined,
+  );
+  const session = dayTrainings.find((t: any) => t.type === type);
+  const sessionCancelled = !!(session?.cancelled ?? session?.is_cancelled);
 
   useEffect(() => {
     if (!existing) return;
@@ -70,16 +82,30 @@ function RollCallView() {
 
   const onSave = async () => {
     if (!categoryId || !dateStr) return;
+    const trainingId = session && !sessionCancelled ? session.id : undefined;
     await save.mutateAsync({
       category_id: categoryId,
       date: dateStr,
       type,
+      training_id: trainingId,
       records: students.map((s: any) => ({
         student_id: s.id,
         present: !!marks[s.id],
       })),
     });
     notifications.show({ color: 'green', message: 'Asistencias guardadas' });
+    // La sesión queda cerrada: es lo que enciende el "Completada" del panel
+    // del profesor. Si falla, las asistencias ya se guardaron igual.
+    if (trainingId) {
+      try {
+        await markComplete.mutateAsync(trainingId);
+      } catch {
+        notifications.show({
+          color: 'orange',
+          message: 'Se guardaron las asistencias, pero no se pudo cerrar la sesión.',
+        });
+      }
+    }
     const presentIds = students
       .filter((s: any) => marks[s.id])
       .map((s: any) => s.id);
@@ -141,6 +167,28 @@ function RollCallView() {
           />
         </Group>
       </Card>
+
+      {categoryId && session && (
+        <Alert
+          variant="light"
+          color={sessionCancelled ? 'red' : 'green'}
+          icon={sessionCancelled ? <IconBan size={16} /> : <IconCalendarCheck size={16} />}
+          mb="md"
+        >
+          {sessionCancelled ? (
+            <>
+              Esta sesión está cancelada. Puedes registrar asistencias, pero no se
+              cerrará como completada.
+            </>
+          ) : (
+            <>
+              Sesión programada de las {session.start_time || '—'}
+              {session.completed || session.is_completed ? ' · ya registrada' : ''}. Al
+              guardar quedará marcada como completada.
+            </>
+          )}
+        </Alert>
+      )}
 
       {!categoryId ? (
         <EmptyState description="Selecciona una categoría para mostrar alumnos." />

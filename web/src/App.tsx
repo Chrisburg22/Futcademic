@@ -96,11 +96,21 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/attendance" element={<AttendancePage />} />
+        <Route
+          path="/attendance"
+          element={
+            <ProtectedRoute permission="can_take_attendance">
+              <AttendancePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/finances"
           element={
-            <ProtectedRoute roles={['super_admin', 'admin', 'padre']}>
+            <ProtectedRoute
+              roles={['super_admin', 'admin', 'padre', 'profesor']}
+              permission="can_view_finances"
+            >
               <FinancesPage />
             </ProtectedRoute>
           }
@@ -110,7 +120,10 @@ export default function App() {
         <Route
           path="/admin/students"
           element={
-            <ProtectedRoute roles={['super_admin', 'admin', 'profesor']}>
+            <ProtectedRoute
+              roles={['super_admin', 'admin', 'profesor']}
+              permission="can_manage_students"
+            >
               <StudentsPage />
             </ProtectedRoute>
           }
@@ -118,7 +131,10 @@ export default function App() {
         <Route
           path="/admin/students/:id"
           element={
-            <ProtectedRoute roles={['super_admin', 'admin', 'profesor']}>
+            <ProtectedRoute
+              roles={['super_admin', 'admin', 'profesor']}
+              permission="can_manage_students"
+            >
               <StudentDetailPage />
             </ProtectedRoute>
           }
@@ -142,7 +158,10 @@ export default function App() {
         <Route
           path="/admin/categories"
           element={
-            <ProtectedRoute roles={['super_admin', 'admin']}>
+            <ProtectedRoute
+              roles={['super_admin', 'admin', 'profesor']}
+              permission="can_manage_categories"
+            >
               <CategoriesPage />
             </ProtectedRoute>
           }
@@ -158,7 +177,10 @@ export default function App() {
         <Route
           path="/admin/events"
           element={
-            <ProtectedRoute roles={['super_admin', 'admin']}>
+            <ProtectedRoute
+              roles={['super_admin', 'admin', 'profesor']}
+              permission="can_manage_events"
+            >
               <EventsPage />
             </ProtectedRoute>
           }

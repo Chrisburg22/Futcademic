@@ -37,11 +37,22 @@ const STUDENTS = [
   },
 ];
 
+/** Permisos por defecto de `teacher_permissions` en la base de datos. */
+const PERMISSIONS = {
+  can_take_attendance: true,
+  can_manage_events: true,
+  can_view_finances: false,
+  can_manage_students: true,
+  can_manage_payments: false,
+  can_manage_categories: false,
+};
+
 const API_FX = {
   categories: CATEGORIES,
   students: STUDENTS,
   notifications: [],
   dashboards: { profesor: DASHBOARD_PROF },
+  permissions: PERMISSIONS,
   extra: {} as Record<string, any>,
 };
 
@@ -69,6 +80,39 @@ test('profesor: sidebar muestra items correctos', async ({ page }) => {
   // Admin-only items hidden for profesor.
   await expect(nav.getByRole('link', { name: 'Profesores' })).toBeHidden();
   await expect(nav.getByRole('link', { name: 'Canchas' })).toBeHidden();
+});
+
+test('profesor: el sidebar sigue sus permisos, no solo su rol', async ({ page }) => {
+  // Sin `can_take_attendance` y sin `can_manage_students`, pero con
+  // `can_view_finances`: Finanzas es de admin por rol y aun así debe aparecer.
+  await loginAs(page, {
+    profile: TEACHER_PROFILE,
+    api: {
+      ...API_FX,
+      permissions: {
+        ...PERMISSIONS,
+        can_take_attendance: false,
+        can_manage_students: false,
+        can_view_finances: true,
+      },
+    },
+  });
+  const nav = page.getByRole('navigation');
+  await expect(nav.getByRole('link', { name: 'Inicio' })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Finanzas' })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Asistencias' })).toBeHidden();
+  await expect(nav.getByRole('link', { name: 'Alumnos' })).toBeHidden();
+});
+
+test('profesor sin can_take_attendance no entra a /attendance', async ({ page }) => {
+  await loginAs(page, {
+    profile: TEACHER_PROFILE,
+    api: { ...API_FX, permissions: { ...PERMISSIONS, can_take_attendance: false } },
+  });
+  await page.goto('/attendance');
+  // La ruta rebota al inicio en vez de mostrar el pase de lista.
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByText('Mis categorías')).toBeVisible();
 });
 
 test('profesor sin onboarding es redirigido a /onboarding', async ({ page }) => {

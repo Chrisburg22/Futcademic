@@ -17,9 +17,17 @@ import {
   IconMessageChatbot,
 } from '@tabler/icons-react';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Role } from '../../types';
+import { useMyPermissionGate } from '../../hooks/usePermissions';
+import type { Role, TeacherPermissions } from '../../types';
 
-type Item = { to: string; label: string; icon: React.ReactNode; roles?: Role[] };
+type Item = {
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+  roles?: Role[];
+  /** Permiso de profesor exigido además del rol. Los demás roles lo cumplen. */
+  permission?: keyof TeacherPermissions;
+};
 
 const mainItems: Item[] = [
   { to: '/', label: 'Inicio', icon: <IconHome size={18} /> },
@@ -27,12 +35,14 @@ const mainItems: Item[] = [
     to: '/attendance',
     label: 'Asistencias',
     icon: <IconCalendarCheck size={18} />,
+    permission: 'can_take_attendance',
   },
   {
     to: '/finances',
     label: 'Finanzas',
     icon: <IconCash size={18} />,
-    roles: ['super_admin', 'admin', 'padre'],
+    roles: ['super_admin', 'admin', 'padre', 'profesor'],
+    permission: 'can_view_finances',
   },
   {
     to: '/children',
@@ -73,6 +83,7 @@ const adminItems: Item[] = [
     label: 'Alumnos',
     icon: <IconSchool size={18} />,
     roles: ['super_admin', 'admin', 'profesor'],
+    permission: 'can_manage_students',
   },
   {
     to: '/admin/teachers',
@@ -84,13 +95,15 @@ const adminItems: Item[] = [
     to: '/admin/categories',
     label: 'Categorías',
     icon: <IconCategory size={18} />,
-    roles: ['super_admin', 'admin'],
+    roles: ['super_admin', 'admin', 'profesor'],
+    permission: 'can_manage_categories',
   },
   {
     to: '/admin/events',
     label: 'Agenda',
     icon: <IconCalendarEvent size={18} />,
-    roles: ['super_admin', 'admin'],
+    roles: ['super_admin', 'admin', 'profesor'],
+    permission: 'can_manage_events',
   },
   {
     to: '/admin/venues',
@@ -113,11 +126,16 @@ const settingsItems: Item[] = [
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { profile } = useAuth();
+  const { can } = useMyPermissionGate();
   const role = profile?.role;
   const location = useLocation();
 
   const visible = (items: Item[]) =>
-    items.filter((i) => !i.roles || (role && i.roles.includes(role)));
+    items.filter(
+      (i) =>
+        (!i.roles || (role && i.roles.includes(role))) &&
+        (!i.permission || can(i.permission)),
+    );
 
   const renderItems = (items: Item[]) =>
     visible(items).map((i) => (

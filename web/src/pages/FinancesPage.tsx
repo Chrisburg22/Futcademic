@@ -28,6 +28,7 @@ import {
 } from '../hooks/usePayments';
 import { useGetStudents, useGetMyChildren } from '../hooks/useStudents';
 import { useGetTeachers } from '../hooks/useUsers';
+import { useMyPermissionGate } from '../hooks/usePermissions';
 import { PageHeader } from '../components/common/PageHeader';
 import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
@@ -47,6 +48,10 @@ function AdminFinances() {
   const [month, setMonth] = useState<string | null>(String(new Date().getMonth() + 1));
   const [tab, setTab] = useState<string | null>('students');
   const [opened, { open, close }] = useDisclosure(false);
+  // Un profesor puede llegar aquí con `can_view_finances` pero sin poder
+  // registrar cobros: el alta de pago exige `can_manage_payments`.
+  const { can } = useMyPermissionGate();
+  const canRegister = can('can_manage_payments');
 
   const filters = month
     ? { type: tab === 'teachers' ? ('pago_profesor' as const) : ('mensualidad' as const), month: Number(month) }
@@ -60,7 +65,7 @@ function AdminFinances() {
       <PageHeader
         title="Finanzas"
         description="Pagos de alumnos y profesores"
-        actions={<Button onClick={open}>Registrar pago</Button>}
+        actions={canRegister ? <Button onClick={open}>Registrar pago</Button> : undefined}
       />
       <Card withBorder padding="md" radius="md" mb="md">
         <Group>
@@ -108,7 +113,7 @@ function AdminFinances() {
           )}
         </Tabs.Panel>
       </Tabs>
-      <RegisterPaymentModal opened={opened} onClose={close} />
+      {canRegister && <RegisterPaymentModal opened={opened} onClose={close} />}
     </>
   );
 }

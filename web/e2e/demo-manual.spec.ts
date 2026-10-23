@@ -276,7 +276,12 @@ test('06 — Admin: Categorías', async ({ page }) => {
   await expect(page.getByText('Sub-14')).toBeVisible();
   await pause(500);
   await page.getByRole('button', { name: 'Nueva categoría' }).click();
-  await expect(page.getByText('Años de nacimiento')).toBeVisible();
+  // El alta configura el grupo completo: año, cuota y horario de temporada.
+  // Se acota al modal porque "Mensualidad" también es columna de la tabla.
+  const nuevaCategoria = page.getByRole('dialog');
+  await expect(nuevaCategoria.getByText('Año de nacimiento')).toBeVisible();
+  await expect(nuevaCategoria.getByText('Mensualidad')).toBeVisible();
+  await expect(nuevaCategoria.getByText('Días de entrenamiento')).toBeVisible();
   await pause(1000);
   await page.keyboard.press('Escape');
   await pause(500);

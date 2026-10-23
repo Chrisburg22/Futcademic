@@ -11,6 +11,9 @@ import {
   Avatar,
   Text,
   Badge,
+  MultiSelect,
+  Switch,
+  Divider,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
@@ -23,13 +26,35 @@ import {
   useInviteTeacher,
   useInviteAdmin,
 } from '../../hooks/useUsers';
+import { useGetCategories } from '../../hooks/useCategories';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
+import type { TeacherPermissions } from '../../types';
+
+const PERM_LABELS: Record<keyof TeacherPermissions, string> = {
+  can_take_attendance: 'Tomar asistencia',
+  can_manage_events: 'Gestionar eventos',
+  can_view_finances: 'Ver finanzas',
+  can_manage_students: 'Gestionar alumnos',
+  can_manage_payments: 'Gestionar pagos',
+  can_manage_categories: 'Gestionar categorías',
+};
+
+/** Mismos valores por defecto que `teacher_permissions` en la base de datos. */
+const DEFAULT_PERMISSIONS: TeacherPermissions = {
+  can_take_attendance: true,
+  can_manage_events: true,
+  can_view_finances: false,
+  can_manage_students: true,
+  can_manage_payments: false,
+  can_manage_categories: false,
+};
 
 export function TeachersPage() {
   const navigate = useNavigate();
   const { data: teachers = [], isLoading } = useGetTeachers();
+  const { data: categories = [] } = useGetCategories();
   const invite = useInviteTeacher();
   const inviteAdminMut = useInviteAdmin();
   const [inviteOpen, { open, close }] = useDisclosure(false);
@@ -53,7 +78,13 @@ export function TeachersPage() {
   };
 
   const form = useForm({
-    initialValues: { email: '', fullName: '' },
+    initialValues: {
+      email: '',
+      fullName: '',
+      phone: '',
+      categoryIds: [] as string[],
+      permissions: { ...DEFAULT_PERMISSIONS },
+    },
     validate: {
       email: (v) => (/^\S+@\S+$/.test(v) ? null : 'Correo inválido'),
       fullName: (v) => (v.length >= 2 ? null : 'Requerido'),
@@ -61,13 +92,32 @@ export function TeachersPage() {
   });
 
   const onInvite = async (v: typeof form.values) => {
-    await invite.mutateAsync(v);
-    notifications.show({
-      color: 'green',
-      message: 'Invitación enviada. El profesor recibirá un correo.',
-    });
-    form.reset();
-    close();
+    try {
+      // Categorías y permisos viajan con la invitación: el profesor entra ya
+      // configurado en vez de pasar por tres pantallas después.
+      await invite.mutateAsync({
+        email: v.email.trim(),
+        fullName: v.fullName.trim(),
+        phone: v.phone || undefined,
+        categoryIds: v.categoryIds.length ? v.categoryIds : undefined,
+        permissions: v.permissions,
+      });
+      notifications.show({
+        color: 'green',
+        message: v.categoryIds.length
+          ? `Invitación enviada con ${v.categoryIds.length} ${
+              v.categoryIds.length === 1 ? 'categoría asignada' : 'categorías asignadas'
+            }.`
+          : 'Invitación enviada. El profesor recibirá un correo.',
+      });
+      form.reset();
+      close();
+    } catch (e: any) {
+      notifications.show({
+        color: 'red',
+        message: e?.response?.data?.error || 'Error al enviar la invitación',
+      });
+    }
   };
 
   return (
@@ -135,16 +185,42 @@ export function TeachersPage() {
         </Card>
       )}
 
-      <Modal opened={inviteOpen} onClose={close} title="Invitar profesor" centered>
+      <Modal opened={inviteOpen} onClose={close} title="Invitar profesor" centered size="lg">
         <form onSubmit={form.onSubmit(onInvite)}>
           <Stack>
             <TextInput label="Nombre completo" required {...form.getInputProps('fullName')} />
-            <TextInput
-              label="Correo"
-              type="email"
-              required
-              {...form.getInputProps('email')}
+            <Group grow>
+              <TextInput
+                label="Correo"
+                type="email"
+                required
+                {...form.getInputProps('email')}
+              />
+              <TextInput label="Teléfono (opcional)" {...form.getInputProps('phone')} />
+            </Group>
+
+            <MultiSelect
+              label="Categorías a su cargo"
+              placeholder="Puedes asignarlas después"
+              searchable
+              data={categories.map((c: any) => ({ value: c.id, label: c.name }))}
+              {...form.getInputProps('categoryIds')}
             />
+
+            <Divider my="xs" label="Permisos" labelPosition="center" />
+            <Text size="xs" c="dimmed" mt={-8}>
+              Puedes cambiarlos cuando quieras desde la ficha del profesor.
+            </Text>
+            <Stack gap="xs">
+              {(Object.keys(PERM_LABELS) as Array<keyof TeacherPermissions>).map((key) => (
+                <Switch
+                  key={key}
+                  label={PERM_LABELS[key]}
+                  {...form.getInputProps(`permissions.${key}`, { type: 'checkbox' })}
+                />
+              ))}
+            </Stack>
+
             <Button type="submit" loading={invite.isPending}>
               Enviar invitación
             </Button>
