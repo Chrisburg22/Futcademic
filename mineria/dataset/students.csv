@@ -1,0 +1,257 @@
+student_id,school_id,school_name,category_id,category_name,full_name,birth_date,edad,fecha_alta,fecha_baja,status,uniform_delivered,current_streak,max_streak,last_attendance_date,perfil_latente,origen
+STU-0001,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Ximena Morales Gutierrez,2022-07-13,4,2026-05-22,,activo,True,2,22,2026-10-21,comprometido,espejo_real
+STU-0002,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Fernanda Gutierrez Mendoza,2022-02-15,4,2026-05-15,,activo,False,5,9,2026-10-21,intermitente,espejo_real
+STU-0003,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Leonardo Lopez Ortiz,2022-12-09,4,2026-05-29,,activo,True,20,20,2026-10-21,comprometido,espejo_real
+STU-0004,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Diego Cruz Alvarez,2020-02-28,6,2026-05-25,,pendiente,True,0,7,2026-10-12,en_fuga,espejo_real
+STU-0005,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Adrian Mendoza Hernandez,2021-06-18,5,2026-05-26,,activo,True,1,10,2026-10-21,intermitente,espejo_real
+STU-0006,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Fernanda Flores Ramirez,2021-12-06,5,2026-05-15,2026-09-29,inactivo,True,3,16,2026-09-28,comprometido,espejo_real
+STU-0007,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Adrian Cruz Aguilar,2021-04-02,5,2026-05-21,,activo,False,25,25,2026-10-21,moroso,espejo_real
+STU-0008,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Valentina Torres Gomez,2021-09-10,5,2026-05-14,,beca,True,7,8,2026-10-21,moroso,espejo_real
+STU-0009,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Leonardo Gonzalez Morales,2021-05-10,5,2026-05-09,,activo,True,17,24,2026-10-21,comprometido,espejo_real
+STU-0010,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Fernando Garcia Rodriguez,2021-11-23,5,2026-05-07,2026-10-18,inactivo,True,0,14,2026-10-12,intermitente,espejo_real
+STU-0011,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Jimena Ortiz Mendoza,2021-02-09,5,2026-05-14,,activo,True,18,28,2026-10-21,comprometido,espejo_real
+STU-0012,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Isabella Vargas Alvarez,2021-10-13,5,2026-05-17,,activo,True,17,27,2026-10-21,comprometido,espejo_real
+STU-0013,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Pablo Rodriguez Jimenez,2021-10-08,5,2026-05-19,,activo,False,15,21,2026-10-21,comprometido,espejo_real
+STU-0014,SCH-0001,Master Fut MR,CAT-0001,Categoria 20/21,Ximena Perez Lopez,2021-07-16,5,2026-08-30,,activo,True,0,11,2026-10-14,comprometido,espejo_real
+STU-0015,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Hector Sanchez Gonzalez,2018-08-08,8,2026-06-11,,beca,True,3,12,2026-10-21,intermitente,espejo_real
+STU-0016,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Raul Sanchez Mendoza,2018-06-14,8,2026-05-15,2026-09-27,inactivo,True,0,6,2026-09-10,intermitente,espejo_real
+STU-0017,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Fernanda Lopez Cruz,2020-03-22,6,2026-05-16,,activo,True,2,10,2026-10-21,comprometido,espejo_real
+STU-0018,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Renata Sanchez Aguilar,2020-02-21,6,2026-05-19,,activo,True,16,16,2026-10-21,intermitente,espejo_real
+STU-0019,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Carlos Gutierrez Flores,2020-04-14,6,2026-05-15,,activo,False,21,21,2026-10-21,comprometido,espejo_real
+STU-0020,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Daniela Aguilar Aguilar,2019-09-13,7,2026-05-20,2026-09-29,inactivo,True,0,10,2026-09-23,en_fuga,espejo_real
+STU-0021,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Fernando Gutierrez Romero,2020-09-12,6,2026-05-21,2026-07-20,inactivo,True,2,5,2026-07-15,comprometido,espejo_real
+STU-0022,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Luis Alvarez Hernandez,2019-03-27,7,2026-05-24,2026-06-23,inactivo,False,0,1,2026-06-01,intermitente,espejo_real
+STU-0023,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Sebastian Flores Gutierrez,2018-09-22,8,2026-05-22,,activo,True,3,18,2026-10-21,comprometido,espejo_real
+STU-0024,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Hector Gutierrez Jimenez,2018-03-25,8,2026-05-15,,activo,True,0,17,2026-10-14,comprometido,espejo_real
+STU-0025,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Carlos Diaz Medina,2018-10-24,8,2026-07-12,,pendiente,True,15,15,2026-10-21,comprometido,espejo_real
+STU-0026,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Matias Mendoza Martinez,2018-03-01,8,2026-09-03,,activo,True,4,13,2026-10-21,intermitente,espejo_real
+STU-0027,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Mariana Lopez Romero,2019-05-01,7,2026-05-19,,activo,True,12,17,2026-10-21,moroso,espejo_real
+STU-0028,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Oscar Ramirez Ramirez,2020-01-20,6,2026-05-12,,activo,True,21,21,2026-10-21,comprometido,espejo_real
+STU-0029,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Natalia Aguilar Vargas,2018-09-09,8,2026-05-23,,activo,False,4,13,2026-10-21,comprometido,espejo_real
+STU-0030,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Emiliano Flores Torres,2019-09-02,7,2026-05-26,,activo,False,5,25,2026-10-21,comprometido,espejo_real
+STU-0031,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Paulina Jimenez Vazquez,2019-09-17,7,2026-05-12,,activo,True,7,13,2026-10-21,comprometido,espejo_real
+STU-0032,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Emiliano Perez Ramirez,2019-10-02,7,2026-05-18,,activo,True,21,21,2026-10-21,comprometido,espejo_real
+STU-0033,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Miguel Lopez Martinez,2018-02-03,8,2026-05-07,,activo,True,24,24,2026-10-21,intermitente,espejo_real
+STU-0034,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Regina Ramirez Morales,2019-04-05,7,2026-05-25,,activo,True,19,19,2026-10-21,intermitente,espejo_real
+STU-0035,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Samuel Diaz Aguilar,2020-06-24,6,2026-05-18,,activo,True,7,28,2026-10-21,intermitente,espejo_real
+STU-0036,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Regina Rodriguez Flores,2018-12-28,8,2026-08-30,,activo,True,0,11,2026-10-19,moroso,espejo_real
+STU-0037,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Fernando Reyes Perez,2019-03-27,7,2026-05-23,,activo,False,5,9,2026-10-21,en_fuga,espejo_real
+STU-0038,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Fernanda Gonzalez Gonzalez,2019-07-01,7,2026-05-19,,activo,True,5,17,2026-10-21,intermitente,espejo_real
+STU-0039,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Mateo Ruiz Morales,2018-09-20,8,2026-05-31,2026-07-08,inactivo,True,0,3,2026-06-29,en_fuga,espejo_real
+STU-0040,SCH-0001,Master Fut MR,CAT-0002,Categoria 18/19,Jesus Reyes Hernandez,2020-10-08,6,2026-05-13,,activo,False,4,15,2026-10-21,comprometido,espejo_real
+STU-0041,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Jesus Garcia Diaz,2018-11-26,8,2026-05-25,,activo,True,2,9,2026-10-21,intermitente,espejo_real
+STU-0042,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Jimena Perez Torres,2017-05-03,9,2026-05-10,,activo,True,2,10,2026-10-21,intermitente,espejo_real
+STU-0043,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Daniel Lopez Cruz,2017-06-14,9,2026-05-20,2026-09-14,inactivo,True,3,13,2026-09-09,moroso,espejo_real
+STU-0044,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Juan Alvarez Morales,2016-11-03,10,2026-05-08,,activo,True,6,21,2026-10-21,comprometido,espejo_real
+STU-0045,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Carlos Medina Morales,2017-04-03,9,2026-06-21,,activo,False,19,19,2026-10-21,comprometido,espejo_real
+STU-0046,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Luis Hernandez Diaz,2016-01-14,10,2026-05-11,,activo,True,32,32,2026-10-21,comprometido,espejo_real
+STU-0047,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Mateo Perez Garcia,2017-12-15,9,2026-05-15,,activo,False,0,9,2026-10-19,en_fuga,espejo_real
+STU-0048,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Valentina Mendoza Ruiz,2017-06-18,9,2026-05-24,,activo,True,0,17,2026-10-15,intermitente,espejo_real
+STU-0049,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Sofia Perez Gutierrez,2017-06-28,9,2026-05-18,,activo,True,2,14,2026-10-21,moroso,espejo_real
+STU-0050,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Camila Torres Ramirez,2018-02-07,8,2026-08-10,,pendiente,True,1,16,2026-10-21,comprometido,espejo_real
+STU-0051,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Adrian Hernandez Mendoza,2018-03-10,8,2026-06-20,,activo,True,18,19,2026-10-21,comprometido,espejo_real
+STU-0052,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Ivan Lopez Vazquez,2017-07-20,9,2026-08-31,,activo,True,2,5,2026-10-21,en_fuga,espejo_real
+STU-0053,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Jesus Diaz Rodriguez,2017-02-24,9,2026-05-26,2026-06-28,inactivo,True,0,6,2026-06-15,en_fuga,espejo_real
+STU-0054,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Alejandro Ramirez Vargas,2016-06-09,10,2026-05-24,,pendiente,True,13,13,2026-10-21,comprometido,espejo_real
+STU-0055,SCH-0001,Master Fut MR,CAT-0003,Categoria 16/17,Samuel Romero Alvarez,2016-01-11,10,2026-07-30,,activo,True,8,10,2026-10-21,intermitente,espejo_real
+STU-0056,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Samuel Jimenez Rodriguez,2014-11-02,12,2026-05-07,,activo,True,2,18,2026-10-21,intermitente,espejo_real
+STU-0057,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Alejandro Mendoza Hernandez,2015-02-08,11,2026-05-09,2026-09-23,inactivo,True,0,16,2026-09-14,comprometido,espejo_real
+STU-0058,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Jesus Castillo Mendoza,2014-05-25,12,2026-05-24,2026-09-22,inactivo,True,4,5,2026-09-21,intermitente,espejo_real
+STU-0059,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Sofia Romero Flores,2016-10-15,10,2026-05-19,,activo,True,23,23,2026-10-21,moroso,espejo_real
+STU-0060,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Fernanda Morales Gomez,2014-01-12,12,2026-05-13,,activo,False,12,14,2026-10-21,comprometido,espejo_real
+STU-0061,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Paulina Ruiz Gomez,2014-10-18,12,2026-08-22,,activo,True,21,21,2026-10-21,comprometido,espejo_real
+STU-0062,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Gabriel Mendoza Gomez,2015-11-19,11,2026-05-22,,activo,False,15,15,2026-10-21,comprometido,espejo_real
+STU-0063,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Mateo Alvarez Morales,2015-08-14,11,2026-06-09,2026-08-23,inactivo,True,1,7,2026-08-19,intermitente,espejo_real
+STU-0064,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Raul Morales Torres,2015-07-13,11,2026-05-12,,activo,True,7,14,2026-10-21,comprometido,espejo_real
+STU-0065,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Alejandro Torres Morales,2015-07-21,11,2026-09-21,,activo,False,13,13,2026-10-21,comprometido,espejo_real
+STU-0066,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Emiliano Ruiz Diaz,2016-09-16,10,2026-08-03,,activo,True,4,8,2026-10-21,intermitente,espejo_real
+STU-0067,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Renata Gutierrez Torres,2014-04-04,12,2026-05-12,,activo,True,21,21,2026-10-21,moroso,espejo_real
+STU-0068,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Jimena Jimenez Rodriguez,2015-04-21,11,2026-05-19,,activo,True,8,24,2026-10-21,comprometido,espejo_real
+STU-0069,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Rodrigo Romero Gomez,2015-06-14,11,2026-05-10,,activo,True,44,44,2026-10-21,intermitente,espejo_real
+STU-0070,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Carlos Hernandez Torres,2016-12-02,10,2026-05-09,,beca,False,17,17,2026-10-21,comprometido,espejo_real
+STU-0071,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Eduardo Ruiz Castillo,2014-01-18,12,2026-05-13,2026-06-26,inactivo,True,0,5,2026-06-22,en_fuga,espejo_real
+STU-0072,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Alejandro Torres Gonzalez,2015-08-11,11,2026-05-13,2026-10-03,inactivo,True,0,5,2026-09-28,en_fuga,espejo_real
+STU-0073,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Emiliano Ruiz Torres,2015-03-19,11,2026-09-18,2026-10-20,inactivo,True,0,2,2026-10-14,en_fuga,espejo_real
+STU-0074,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Luis Castillo Morales,2016-09-04,10,2026-05-19,,activo,False,20,20,2026-10-21,intermitente,espejo_real
+STU-0075,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Fernanda Castillo Torres,2015-11-19,11,2026-05-22,,activo,True,22,22,2026-10-21,comprometido,espejo_real
+STU-0076,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Samuel Gomez Castillo,2015-03-26,11,2026-05-14,2026-09-07,inactivo,True,0,11,2026-08-26,en_fuga,espejo_real
+STU-0077,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Rodrigo Mendoza Lopez,2016-07-07,10,2026-05-09,,activo,True,2,20,2026-10-21,intermitente,espejo_real
+STU-0078,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Valentina Cruz Mendoza,2014-01-10,12,2026-05-25,,activo,True,0,16,2026-10-19,intermitente,espejo_real
+STU-0079,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Natalia Aguilar Aguilar,2015-12-20,11,2026-05-15,2026-06-24,inactivo,False,0,3,2026-06-17,en_fuga,espejo_real
+STU-0080,SCH-0001,Master Fut MR,CAT-0004,Categoria 14/15,Miguel Rodriguez Gomez,2014-07-01,12,2026-05-13,,activo,True,5,20,2026-10-21,comprometido,espejo_real
+STU-0081,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Andrea Ramirez Rodriguez,2014-09-27,12,2026-05-19,2026-07-03,inactivo,True,0,2,2026-06-24,en_fuga,espejo_real
+STU-0082,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Matias Rodriguez Garcia,2012-09-26,14,2026-05-26,,activo,True,15,15,2026-10-21,comprometido,espejo_real
+STU-0083,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Ivan Vargas Hernandez,2013-02-15,13,2026-05-14,2026-06-23,inactivo,True,0,2,2026-06-17,intermitente,espejo_real
+STU-0084,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Miguel Ruiz Gonzalez,2013-01-13,13,2026-05-19,,activo,True,17,17,2026-10-21,comprometido,espejo_real
+STU-0085,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Paulina Hernandez Diaz,2012-07-24,14,2026-05-22,,beca,True,5,10,2026-10-21,comprometido,espejo_real
+STU-0086,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Angel Aguilar Lopez,2013-09-27,13,2026-06-01,,activo,False,17,17,2026-10-21,intermitente,espejo_real
+STU-0087,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Regina Torres Vazquez,2012-10-14,14,2026-08-04,2026-10-12,inactivo,True,0,4,2026-09-30,intermitente,espejo_real
+STU-0088,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Daniel Alvarez Gomez,2012-10-17,14,2026-05-09,,activo,True,1,16,2026-10-21,moroso,espejo_real
+STU-0089,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Isabella Alvarez Jimenez,2013-04-18,13,2026-06-28,,activo,True,5,20,2026-10-21,comprometido,espejo_real
+STU-0090,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Ricardo Romero Aguilar,2014-09-27,12,2026-05-22,,activo,False,0,15,2026-10-14,comprometido,espejo_real
+STU-0091,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Mariana Ruiz Lopez,2012-06-02,14,2026-05-14,,beca,True,20,20,2026-10-21,intermitente,espejo_real
+STU-0092,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Mariana Diaz Romero,2013-09-25,13,2026-05-26,2026-10-21,inactivo,True,0,10,2026-10-14,en_fuga,espejo_real
+STU-0093,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,David Vazquez Perez,2013-10-03,13,2026-05-20,,activo,True,7,16,2026-10-21,moroso,espejo_real
+STU-0094,SCH-0001,Master Fut MR,CAT-0005,Categoria 12/13,Pablo Ruiz Morales,2013-09-17,13,2026-05-26,2026-10-08,inactivo,True,0,19,2026-09-30,intermitente,espejo_real
+STU-0095,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Gabriel Sanchez Martinez,2012-06-05,14,2026-07-12,2026-09-18,inactivo,True,0,4,2026-09-03,en_fuga,espejo_real
+STU-0096,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Pablo Gomez Jimenez,2011-12-13,15,2026-05-17,,beca,True,4,7,2026-10-21,intermitente,espejo_real
+STU-0097,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Renata Ramirez Perez,2011-12-11,15,2026-05-26,2026-07-31,inactivo,True,0,9,2026-07-20,moroso,espejo_real
+STU-0098,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Eduardo Vazquez Alvarez,2010-11-09,16,2026-05-27,2026-08-03,inactivo,True,1,4,2026-07-29,en_fuga,espejo_real
+STU-0099,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Valentina Castillo Romero,2012-01-15,14,2026-05-21,2026-08-17,inactivo,True,0,10,2026-08-05,intermitente,espejo_real
+STU-0100,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Regina Diaz Ramirez,2011-03-15,15,2026-05-23,2026-07-02,inactivo,True,0,1,2026-06-29,en_fuga,espejo_real
+STU-0101,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Gabriel Vargas Flores,2010-11-15,16,2026-05-21,2026-09-30,inactivo,True,1,16,2026-09-28,intermitente,espejo_real
+STU-0102,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Sebastian Reyes Alvarez,2011-01-16,15,2026-08-14,,activo,True,21,21,2026-10-21,intermitente,espejo_real
+STU-0103,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Ximena Gomez Ruiz,2010-06-05,16,2026-09-14,,activo,True,14,14,2026-10-21,comprometido,espejo_real
+STU-0104,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Camila Flores Gomez,2011-03-11,15,2026-05-10,2026-07-25,inactivo,True,0,7,2026-07-15,moroso,espejo_real
+STU-0105,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Jesus Reyes Garcia,2011-08-10,15,2026-05-21,,activo,False,1,20,2026-10-21,intermitente,espejo_real
+STU-0106,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Hector Gonzalez Lopez,2011-05-17,15,2026-08-14,,activo,True,3,10,2026-10-21,moroso,espejo_real
+STU-0107,SCH-0001,Master Fut MR,CAT-0006,Categoria 10/11 +,Alejandro Vargas Ruiz,2011-12-02,15,2026-08-09,,activo,True,13,13,2026-10-21,intermitente,espejo_real
+STU-0108,SCH-0002,Alcones Rayados,CAT-0007,SUB16,Mateo Flores Mendoza,2018-01-12,8,2026-05-11,,activo,False,5,13,2026-10-21,comprometido,espejo_real
+STU-0109,SCH-0002,Alcones Rayados,CAT-0007,SUB16,Fernanda Romero Ruiz,2016-09-22,10,2026-08-17,2026-10-03,inactivo,False,1,5,2026-09-30,moroso,espejo_real
+STU-0110,SCH-0002,Alcones Rayados,CAT-0008,SUB-15,Hector Garcia Diaz,2017-01-02,9,2026-05-26,,activo,False,6,8,2026-10-21,intermitente,espejo_real
+STU-0111,SCH-0002,Alcones Rayados,CAT-0008,SUB-15,Jose Garcia Mendoza,2017-09-09,9,2026-05-18,,activo,False,1,20,2026-10-21,comprometido,espejo_real
+STU-0112,SCH-0002,Alcones Rayados,CAT-0009,SUB14,Andrea Sanchez Castillo,2015-01-25,11,2026-09-23,,pendiente,True,10,10,2026-10-21,comprometido,espejo_real
+STU-0113,SCH-0002,Alcones Rayados,CAT-0009,SUB14,Oscar Martinez Jimenez,2014-12-05,12,2026-06-24,,activo,True,14,14,2026-10-21,comprometido,espejo_real
+STU-0114,SCH-0002,Alcones Rayados,CAT-0010,Sub13,Sebastian Cruz Gutierrez,2013-11-24,13,2026-05-22,2026-09-21,inactivo,True,0,3,2026-09-09,en_fuga,espejo_real
+STU-0115,SCH-0002,Alcones Rayados,CAT-0010,Sub13,Pablo Vazquez Hernandez,2015-12-04,11,2026-05-22,2026-09-15,inactivo,True,0,10,2026-09-09,intermitente,espejo_real
+STU-0116,SCH-0002,Alcones Rayados,CAT-0011,Sub14,Valentina Ruiz Lopez,2013-07-28,13,2026-05-17,,activo,True,5,11,2026-10-21,comprometido,espejo_real
+STU-0117,SCH-0003,Gallos Verdes FC,CAT-0012,Sub-13,Renata Perez Reyes,2013-03-22,13,2026-05-25,,pendiente,True,17,17,2026-10-21,intermitente,espejo_real
+STU-0118,SCH-0003,Gallos Verdes FC,CAT-0012,Sub-13,Miguel Mendoza Reyes,2014-01-11,12,2026-05-12,,activo,True,1,8,2026-10-21,moroso,espejo_real
+STU-0119,SCH-0003,Gallos Verdes FC,CAT-0012,Sub-13,Jimena Gonzalez Aguilar,2015-05-26,11,2026-05-16,,activo,True,23,23,2026-10-21,comprometido,espejo_real
+STU-0120,SCH-0004,Demo Test Academy 2,CAT-0013,Sub-2014-2015,Adrian Cruz Jimenez,2015-11-16,11,2026-05-14,,activo,True,12,16,2026-10-21,comprometido,espejo_real
+STU-0121,SCH-0005,Academia Demo 2,CAT-0014,Categoria sub 122,Eduardo Gomez Ruiz,2015-11-11,11,2026-05-30,2026-09-29,inactivo,True,0,15,2026-09-21,intermitente,espejo_real
+STU-0122,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Alejandro Sanchez Romero,2018-06-15,8,2026-05-23,2026-08-29,inactivo,False,0,6,2026-08-10,intermitente,simulada
+STU-0123,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Ximena Diaz Mendoza,2018-02-23,8,2026-05-17,2026-08-07,inactivo,True,1,15,2026-08-05,intermitente,simulada
+STU-0124,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Juan Garcia Gonzalez,2018-07-26,8,2026-05-29,,activo,True,8,8,2026-10-21,comprometido,simulada
+STU-0125,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Miguel Vargas Lopez,2019-09-21,7,2026-05-26,,activo,True,20,20,2026-10-21,comprometido,simulada
+STU-0126,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Carlos Garcia Perez,2019-06-20,7,2026-05-07,,activo,False,22,22,2026-10-21,comprometido,simulada
+STU-0127,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Sebastian Perez Jimenez,2019-08-26,7,2026-06-07,,activo,True,18,18,2026-10-21,comprometido,simulada
+STU-0128,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Daniela Castillo Mendoza,2018-07-07,8,2026-08-26,,activo,True,1,17,2026-10-21,comprometido,simulada
+STU-0129,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Jimena Sanchez Medina,2018-11-15,8,2026-06-09,,beca,True,19,19,2026-10-21,comprometido,simulada
+STU-0130,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Matias Flores Alvarez,2019-10-05,7,2026-05-23,,pendiente,True,5,21,2026-10-21,comprometido,simulada
+STU-0131,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Valentina Mendoza Ortiz,2019-07-06,7,2026-05-27,2026-10-05,inactivo,False,0,18,2026-09-30,intermitente,simulada
+STU-0132,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Jesus Torres Perez,2019-07-12,7,2026-05-21,,beca,False,3,30,2026-10-21,comprometido,simulada
+STU-0133,SCH-0006,Gallos San Rafael,CAT-0015,Sub-8,Emiliano Reyes Lopez,2019-08-12,7,2026-05-24,,activo,True,0,14,2026-10-19,intermitente,simulada
+STU-0134,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Miguel Morales Lopez,2018-02-18,8,2026-05-08,,activo,False,4,17,2026-10-21,comprometido,simulada
+STU-0135,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Angel Ramirez Jimenez,2017-10-28,9,2026-07-31,2026-09-05,inactivo,False,0,2,2026-08-12,en_fuga,simulada
+STU-0136,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Sebastian Vazquez Romero,2017-03-21,9,2026-05-14,,beca,True,1,18,2026-10-21,intermitente,simulada
+STU-0137,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Ximena Reyes Lopez,2018-07-27,8,2026-05-08,,activo,True,2,9,2026-10-21,intermitente,simulada
+STU-0138,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Juan Morales Romero,2017-12-09,9,2026-05-27,2026-08-19,inactivo,True,0,6,2026-08-05,en_fuga,simulada
+STU-0139,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Daniela Gomez Medina,2017-02-09,9,2026-05-10,,beca,True,1,6,2026-10-21,en_fuga,simulada
+STU-0140,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Mateo Flores Vargas,2017-04-01,9,2026-08-16,,activo,True,1,5,2026-10-21,en_fuga,simulada
+STU-0141,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Miguel Hernandez Lopez,2016-04-12,10,2026-08-06,2026-09-19,inactivo,True,0,10,2026-09-14,en_fuga,simulada
+STU-0142,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Jimena Vargas Lopez,2018-12-05,8,2026-05-08,,activo,True,25,25,2026-10-21,intermitente,simulada
+STU-0143,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Samuel Jimenez Ruiz,2017-08-07,9,2026-05-25,,activo,True,18,18,2026-10-21,comprometido,simulada
+STU-0144,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Alejandro Torres Rodriguez,2016-05-03,10,2026-05-22,,activo,True,3,20,2026-10-21,comprometido,simulada
+STU-0145,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Mateo Rodriguez Rodriguez,2018-06-16,8,2026-07-04,,activo,True,0,6,2026-10-19,intermitente,simulada
+STU-0146,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Pablo Morales Aguilar,2017-12-25,9,2026-05-08,,activo,True,12,16,2026-10-21,intermitente,simulada
+STU-0147,SCH-0006,Gallos San Rafael,CAT-0016,Sub-10,Valentina Ruiz Morales,2017-08-26,9,2026-07-07,,activo,True,15,15,2026-10-21,comprometido,simulada
+STU-0148,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Daniela Ortiz Torres,2015-01-28,11,2026-08-06,,activo,False,0,6,2026-10-19,comprometido,simulada
+STU-0149,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Jimena Castillo Aguilar,2015-10-09,11,2026-05-09,,activo,True,1,18,2026-10-21,en_fuga,simulada
+STU-0150,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,David Medina Aguilar,2015-07-03,11,2026-05-10,,activo,True,22,22,2026-10-21,comprometido,simulada
+STU-0151,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Isabella Jimenez Vazquez,2015-06-26,11,2026-05-20,,activo,True,1,22,2026-10-21,intermitente,simulada
+STU-0152,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Carlos Sanchez Perez,2015-08-16,11,2026-08-31,,activo,True,19,19,2026-10-21,moroso,simulada
+STU-0153,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Daniel Lopez Ortiz,2016-10-01,10,2026-05-13,2026-09-12,inactivo,True,4,8,2026-09-09,en_fuga,simulada
+STU-0154,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Miguel Flores Gutierrez,2014-11-02,12,2026-09-21,,activo,True,2,4,2026-10-21,moroso,simulada
+STU-0155,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Paulina Medina Aguilar,2015-07-13,11,2026-05-16,2026-08-17,inactivo,True,0,6,2026-08-10,intermitente,simulada
+STU-0156,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Valentina Vazquez Torres,2015-04-12,11,2026-08-07,2026-09-12,inactivo,True,0,3,2026-09-02,intermitente,simulada
+STU-0157,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Alejandro Morales Flores,2016-02-13,10,2026-07-04,,activo,True,28,28,2026-10-21,comprometido,simulada
+STU-0158,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Natalia Cruz Alvarez,2016-03-11,10,2026-06-28,2026-08-26,inactivo,True,0,4,2026-08-17,en_fuga,simulada
+STU-0159,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Angel Morales Hernandez,2015-04-18,11,2026-05-09,,activo,True,8,11,2026-10-21,comprometido,simulada
+STU-0160,SCH-0006,Gallos San Rafael,CAT-0017,Sub-12,Matias Vargas Ruiz,2015-03-24,11,2026-09-11,,activo,True,7,7,2026-10-21,comprometido,simulada
+STU-0161,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Paulina Lopez Perez,2014-01-04,12,2026-05-27,2026-08-31,inactivo,True,0,13,2026-08-26,intermitente,simulada
+STU-0162,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Adrian Sanchez Vargas,2014-10-19,12,2026-05-26,,activo,True,5,11,2026-10-21,comprometido,simulada
+STU-0163,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Fernando Cruz Sanchez,2014-08-02,12,2026-05-08,,activo,True,0,10,2026-10-17,intermitente,simulada
+STU-0164,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Valentina Diaz Martinez,2013-04-18,13,2026-05-20,,activo,True,4,15,2026-10-21,comprometido,simulada
+STU-0165,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Ximena Ramirez Ramirez,2014-12-14,12,2026-08-18,,activo,True,12,12,2026-10-21,comprometido,simulada
+STU-0166,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Rodrigo Mendoza Gutierrez,2013-11-28,13,2026-06-16,,activo,True,3,6,2026-10-21,intermitente,simulada
+STU-0167,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Alejandro Reyes Morales,2014-04-20,12,2026-05-13,2026-09-11,inactivo,False,0,18,2026-09-07,moroso,simulada
+STU-0168,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Samuel Hernandez Reyes,2013-01-14,13,2026-07-10,,activo,True,18,18,2026-10-21,comprometido,simulada
+STU-0169,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Camila Mendoza Aguilar,2012-03-01,14,2026-05-20,,activo,True,1,27,2026-10-21,comprometido,simulada
+STU-0170,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Jimena Ortiz Ortiz,2012-02-08,14,2026-07-15,,activo,False,0,12,2026-10-19,intermitente,simulada
+STU-0171,SCH-0006,Gallos San Rafael,CAT-0018,Sub-14,Valentina Medina Lopez,2013-12-10,13,2026-05-16,,pendiente,True,18,18,2026-10-21,comprometido,simulada
+STU-0172,SCH-0006,Gallos San Rafael,CAT-0019,Sub-16,Alejandro Vazquez Torres,2010-04-25,16,2026-05-07,,beca,False,11,11,2026-10-21,comprometido,simulada
+STU-0173,SCH-0006,Gallos San Rafael,CAT-0019,Sub-16,Isabella Rodriguez Cruz,2010-02-05,16,2026-07-09,2026-10-11,inactivo,True,0,8,2026-10-05,moroso,simulada
+STU-0174,SCH-0006,Gallos San Rafael,CAT-0019,Sub-16,Ximena Medina Rodriguez,2011-03-04,15,2026-08-26,,activo,False,18,18,2026-10-21,comprometido,simulada
+STU-0175,SCH-0006,Gallos San Rafael,CAT-0019,Sub-16,Paulina Diaz Gonzalez,2010-10-10,16,2026-05-10,,activo,False,1,34,2026-10-21,intermitente,simulada
+STU-0176,SCH-0006,Gallos San Rafael,CAT-0019,Sub-16,Daniel Torres Perez,2012-05-13,14,2026-05-26,2026-08-09,inactivo,True,0,11,2026-08-05,intermitente,simulada
+STU-0177,SCH-0006,Gallos San Rafael,CAT-0019,Sub-16,David Vargas Garcia,2011-05-03,15,2026-07-08,,activo,True,1,11,2026-10-21,comprometido,simulada
+STU-0178,SCH-0006,Gallos San Rafael,CAT-0019,Sub-16,Daniel Castillo Ramirez,2010-09-08,16,2026-05-12,,beca,True,10,18,2026-10-21,comprometido,simulada
+STU-0179,SCH-0006,Gallos San Rafael,CAT-0019,Sub-16,Jesus Gutierrez Castillo,2010-02-26,16,2026-05-14,,activo,True,4,9,2026-10-21,intermitente,simulada
+STU-0180,SCH-0006,Gallos San Rafael,CAT-0019,Sub-16,Hector Lopez Aguilar,2010-08-24,16,2026-05-18,,activo,True,21,21,2026-10-21,intermitente,simulada
+STU-0181,SCH-0006,Gallos San Rafael,CAT-0019,Sub-16,Pablo Torres Gutierrez,2011-08-03,15,2026-05-27,,activo,False,2,8,2026-10-21,en_fuga,simulada
+STU-0182,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Mateo Romero Aguilar,2022-02-22,4,2026-09-13,2026-10-19,inactivo,True,1,4,2026-10-14,en_fuga,simulada
+STU-0183,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Isabella Torres Aguilar,2021-10-14,5,2026-05-24,2026-07-07,inactivo,True,0,3,2026-06-17,moroso,simulada
+STU-0184,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Ximena Alvarez Martinez,2021-04-01,5,2026-05-24,2026-09-02,inactivo,True,0,7,2026-08-24,en_fuga,simulada
+STU-0185,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Diego Aguilar Alvarez,2021-06-18,5,2026-07-28,2026-09-17,inactivo,True,0,4,2026-09-09,moroso,simulada
+STU-0186,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Samuel Alvarez Ramirez,2021-03-06,5,2026-05-14,,beca,True,19,19,2026-10-21,comprometido,simulada
+STU-0187,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Emiliano Sanchez Jimenez,2020-04-24,6,2026-06-09,2026-09-11,inactivo,False,0,7,2026-09-07,intermitente,simulada
+STU-0188,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Fernando Perez Perez,2022-09-20,4,2026-05-13,,activo,True,9,14,2026-10-21,intermitente,simulada
+STU-0189,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Natalia Gutierrez Jimenez,2020-05-08,6,2026-05-11,2026-08-10,inactivo,False,0,14,2026-08-03,intermitente,simulada
+STU-0190,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Rodrigo Reyes Rodriguez,2021-02-22,5,2026-05-19,,activo,True,2,7,2026-10-21,intermitente,simulada
+STU-0191,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Regina Aguilar Gomez,2021-07-23,5,2026-06-12,2026-08-04,inactivo,False,0,3,2026-07-22,intermitente,simulada
+STU-0192,SCH-0007,Master Fut MR Aguascalientes,CAT-0020,Categoria 20/21,Ivan Ortiz Gutierrez,2021-07-23,5,2026-05-26,,activo,False,4,17,2026-10-21,comprometido,simulada
+STU-0193,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Gabriel Martinez Gomez,2019-09-01,7,2026-05-20,,activo,True,3,28,2026-10-21,intermitente,simulada
+STU-0194,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Sofia Reyes Romero,2019-09-10,7,2026-05-17,,pendiente,True,1,14,2026-10-21,intermitente,simulada
+STU-0195,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Miguel Aguilar Romero,2018-02-20,8,2026-05-14,,beca,False,20,20,2026-10-21,comprometido,simulada
+STU-0196,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Isabella Diaz Morales,2018-11-12,8,2026-05-08,,activo,False,16,19,2026-10-21,comprometido,simulada
+STU-0197,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Diego Romero Vargas,2019-03-24,7,2026-05-13,,activo,True,0,8,2026-10-19,intermitente,simulada
+STU-0198,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Valentina Sanchez Garcia,2019-10-09,7,2026-05-17,2026-10-18,inactivo,True,0,17,2026-10-12,intermitente,simulada
+STU-0199,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,David Rodriguez Vazquez,2019-06-06,7,2026-05-08,2026-08-24,inactivo,True,1,12,2026-08-19,moroso,simulada
+STU-0200,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Emiliano Diaz Medina,2019-05-06,7,2026-05-24,,beca,True,2,9,2026-10-21,en_fuga,simulada
+STU-0201,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Andres Martinez Mendoza,2019-05-02,7,2026-05-11,,activo,True,2,21,2026-10-21,comprometido,simulada
+STU-0202,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Ricardo Martinez Medina,2019-11-14,7,2026-05-10,,activo,False,5,18,2026-10-21,comprometido,simulada
+STU-0203,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Raul Vargas Vazquez,2019-01-26,7,2026-06-30,,activo,False,16,16,2026-10-21,moroso,simulada
+STU-0204,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Matias Flores Vazquez,2018-10-15,8,2026-05-09,,activo,True,1,14,2026-10-21,intermitente,simulada
+STU-0205,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Regina Ramirez Cruz,2019-03-19,7,2026-05-29,2026-10-05,inactivo,True,2,8,2026-09-30,comprometido,simulada
+STU-0206,SCH-0007,Master Fut MR Aguascalientes,CAT-0021,Categoria 18/19,Daniela Perez Aguilar,2018-09-07,8,2026-06-13,,activo,True,4,13,2026-10-21,intermitente,simulada
+STU-0207,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Juan Castillo Gonzalez,2017-12-04,9,2026-05-14,2026-08-04,inactivo,True,0,10,2026-07-27,en_fuga,simulada
+STU-0208,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Gabriel Jimenez Mendoza,2018-12-15,8,2026-06-19,,activo,True,38,38,2026-10-21,intermitente,simulada
+STU-0209,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Ximena Gomez Gonzalez,2016-09-24,10,2026-05-15,,activo,True,24,24,2026-10-21,comprometido,simulada
+STU-0210,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Jimena Morales Perez,2016-10-18,10,2026-05-22,,activo,True,0,7,2026-10-19,moroso,simulada
+STU-0211,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Mariana Aguilar Ortiz,2017-05-14,9,2026-05-21,2026-07-12,inactivo,True,1,4,2026-07-08,en_fuga,simulada
+STU-0212,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Paulina Mendoza Ortiz,2016-12-12,10,2026-05-25,,activo,True,9,14,2026-10-21,comprometido,simulada
+STU-0213,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Daniel Mendoza Flores,2018-11-21,8,2026-05-13,,activo,True,2,12,2026-10-21,intermitente,simulada
+STU-0214,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Raul Garcia Lopez,2017-05-02,9,2026-05-13,2026-08-30,inactivo,True,0,8,2026-08-22,moroso,simulada
+STU-0215,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Oscar Romero Ortiz,2018-07-28,8,2026-05-29,,activo,True,28,28,2026-10-21,comprometido,simulada
+STU-0216,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Santiago Jimenez Jimenez,2017-07-28,9,2026-05-12,,activo,True,5,16,2026-10-21,comprometido,simulada
+STU-0217,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Pablo Vargas Medina,2017-09-17,9,2026-07-25,,activo,True,20,20,2026-10-21,comprometido,simulada
+STU-0218,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Valentina Ramirez Ortiz,2017-02-28,9,2026-05-18,,activo,True,0,14,2026-10-19,en_fuga,simulada
+STU-0219,SCH-0007,Master Fut MR Aguascalientes,CAT-0022,Categoria 16/17,Oscar Cruz Torres,2017-07-11,9,2026-05-08,,activo,True,0,12,2026-10-19,comprometido,simulada
+STU-0220,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Emiliano Vargas Reyes,2014-11-11,12,2026-08-28,,activo,True,2,17,2026-10-21,intermitente,simulada
+STU-0221,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Jimena Reyes Torres,2014-09-23,12,2026-06-16,,activo,True,2,7,2026-10-21,intermitente,simulada
+STU-0222,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Rodrigo Medina Ramirez,2016-08-15,10,2026-06-13,2026-07-24,inactivo,True,2,4,2026-07-22,moroso,simulada
+STU-0223,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Daniela Lopez Vargas,2016-08-28,10,2026-05-10,,activo,True,0,18,2026-10-19,comprometido,simulada
+STU-0224,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Paulina Martinez Martinez,2014-01-19,12,2026-05-16,,activo,True,0,7,2026-10-15,en_fuga,simulada
+STU-0225,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Carlos Aguilar Vazquez,2015-01-17,11,2026-05-24,2026-07-27,inactivo,False,0,8,2026-07-01,intermitente,simulada
+STU-0226,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Natalia Vargas Vargas,2015-08-27,11,2026-08-17,,activo,True,8,10,2026-10-21,intermitente,simulada
+STU-0227,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Leonardo Torres Vargas,2015-07-11,11,2026-06-25,2026-08-18,inactivo,False,0,6,2026-08-10,intermitente,simulada
+STU-0228,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Sebastian Ramirez Ruiz,2015-11-22,11,2026-05-24,,activo,True,1,12,2026-10-21,comprometido,simulada
+STU-0229,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Pablo Rodriguez Flores,2015-07-11,11,2026-05-19,,activo,True,23,23,2026-10-21,comprometido,simulada
+STU-0230,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Carlos Vazquez Sanchez,2015-07-09,11,2026-07-17,,activo,True,9,10,2026-10-21,intermitente,simulada
+STU-0231,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Natalia Vazquez Ortiz,2015-11-04,11,2026-06-23,,beca,True,0,20,2026-10-19,moroso,simulada
+STU-0232,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Ximena Martinez Gonzalez,2015-05-22,11,2026-05-12,,activo,True,0,14,2026-10-19,intermitente,simulada
+STU-0233,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Camila Aguilar Rodriguez,2015-02-08,11,2026-05-07,2026-06-18,inactivo,False,0,2,2026-06-10,en_fuga,simulada
+STU-0234,SCH-0007,Master Fut MR Aguascalientes,CAT-0023,Categoria 14/15,Regina Mendoza Ramirez,2016-09-01,10,2026-05-13,,pendiente,False,3,5,2026-10-21,en_fuga,simulada
+STU-0235,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Regina Lopez Vazquez,2014-05-28,12,2026-09-08,,activo,True,3,10,2026-10-21,comprometido,simulada
+STU-0236,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Eduardo Vargas Ortiz,2013-03-16,13,2026-05-11,2026-06-23,inactivo,False,0,4,2026-06-15,en_fuga,simulada
+STU-0237,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Jimena Medina Jimenez,2012-05-07,14,2026-08-21,,beca,True,5,7,2026-10-21,moroso,simulada
+STU-0238,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Jose Lopez Romero,2013-03-21,13,2026-05-27,,activo,True,18,18,2026-10-21,intermitente,simulada
+STU-0239,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Hector Hernandez Vargas,2014-05-23,12,2026-06-24,,activo,True,26,26,2026-10-21,comprometido,simulada
+STU-0240,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Hector Vargas Morales,2013-01-11,13,2026-05-25,,activo,True,16,16,2026-10-21,comprometido,simulada
+STU-0241,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Andrea Sanchez Flores,2012-06-10,14,2026-05-15,2026-07-21,inactivo,False,0,6,2026-07-13,intermitente,simulada
+STU-0242,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Adrian Vargas Aguilar,2013-11-04,13,2026-05-17,,activo,False,0,15,2026-10-19,en_fuga,simulada
+STU-0243,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Sofia Gonzalez Ramirez,2013-09-24,13,2026-05-27,,activo,False,18,18,2026-10-21,moroso,simulada
+STU-0244,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Andres Castillo Castillo,2014-01-16,12,2026-07-14,,beca,True,3,5,2026-10-21,en_fuga,simulada
+STU-0245,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Mariana Lopez Ortiz,2012-12-06,14,2026-09-15,,activo,True,12,12,2026-10-21,comprometido,simulada
+STU-0246,SCH-0007,Master Fut MR Aguascalientes,CAT-0024,Categoria 12/13,Mateo Romero Reyes,2012-06-11,14,2026-08-04,2026-10-13,inactivo,True,0,4,2026-09-16,en_fuga,simulada
+STU-0247,SCH-0007,Master Fut MR Aguascalientes,CAT-0025,Categoria 10/11,Raul Mendoza Cruz,2011-08-28,15,2026-05-27,,activo,True,7,8,2026-10-21,intermitente,simulada
+STU-0248,SCH-0007,Master Fut MR Aguascalientes,CAT-0025,Categoria 10/11,David Romero Gutierrez,2011-10-13,15,2026-05-07,,activo,True,4,11,2026-10-21,comprometido,simulada
+STU-0249,SCH-0007,Master Fut MR Aguascalientes,CAT-0025,Categoria 10/11,Ximena Gonzalez Morales,2010-11-28,16,2026-05-12,,activo,True,8,12,2026-10-21,moroso,simulada
+STU-0250,SCH-0007,Master Fut MR Aguascalientes,CAT-0025,Categoria 10/11,Ximena Morales Ortiz,2012-10-19,14,2026-05-20,2026-06-30,inactivo,True,0,1,2026-06-24,intermitente,simulada
+STU-0251,SCH-0007,Master Fut MR Aguascalientes,CAT-0025,Categoria 10/11,Leonardo Torres Reyes,2011-09-13,15,2026-05-20,,activo,True,14,15,2026-10-21,intermitente,simulada
+STU-0252,SCH-0007,Master Fut MR Aguascalientes,CAT-0025,Categoria 10/11,Eduardo Aguilar Castillo,2010-07-11,16,2026-05-24,,activo,True,2,14,2026-10-21,comprometido,simulada
+STU-0253,SCH-0007,Master Fut MR Aguascalientes,CAT-0025,Categoria 10/11,Mariana Martinez Hernandez,2011-05-15,15,2026-05-24,,activo,True,2,10,2026-10-21,intermitente,simulada
+STU-0254,SCH-0007,Master Fut MR Aguascalientes,CAT-0025,Categoria 10/11,Valentina Hernandez Jimenez,2010-10-06,16,2026-08-10,,activo,True,3,9,2026-10-21,moroso,simulada
+STU-0255,SCH-0007,Master Fut MR Aguascalientes,CAT-0025,Categoria 10/11,Santiago Jimenez Flores,2011-11-21,15,2026-05-13,2026-08-07,inactivo,True,0,8,2026-07-08,moroso,simulada
+STU-0256,SCH-0007,Master Fut MR Aguascalientes,CAT-0025,Categoria 10/11,David Ortiz Gonzalez,2010-02-15,16,2026-05-13,2026-06-13,inactivo,True,0,5,2026-06-01,en_fuga,simulada
