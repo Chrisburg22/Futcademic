@@ -17,11 +17,13 @@ import {
 import {
   IconAlertCircle,
   IconArrowsMaximize,
+  IconEye,
   IconMessageChatbot,
   IconRefresh,
   IconX,
 } from '@tabler/icons-react';
 import { useChat } from '../../hooks/useChat';
+import { screenContextLabel } from '../../lib/chatScreen';
 import { MessageBubble, StreamingBubble, UserBubble } from './MessageBubble';
 import { ToolActivity } from './ToolActivity';
 import { ConfirmationCard } from './ConfirmationCard';
@@ -56,6 +58,7 @@ export function ChatWidget() {
 
   const hasPending = !!chat.pendingActions?.length;
   const hasContent = chat.messages.length > 0 || !!chat.liveUserText;
+  const contextLabel = screenContextLabel(chat.screenContext);
 
   return (
     <Affix
@@ -106,6 +109,15 @@ export function ChatWidget() {
             </Group>
           </Group>
           <Divider />
+
+          {contextLabel && (
+            <Group px="sm" py={6} gap={6} wrap="nowrap" style={{ flexShrink: 0 }}>
+              <IconEye size={12} opacity={0.5} />
+              <Text size="xs" c="dimmed" truncate>
+                Viendo: {contextLabel}
+              </Text>
+            </Group>
+          )}
 
           <ScrollArea style={{ flex: 1 }} viewportRef={viewportRef} p="sm">
             <Stack gap="sm" pb="xs">

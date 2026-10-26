@@ -20,6 +20,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { CategoryAttendanceHistory } from '../../components/attendance/CategoryAttendanceHistory';
+import { useRegisterChatScreen } from '../../contexts/ChatScreenContext';
 
 export function CategoryDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,12 @@ export function CategoryDetailPage() {
 
   const { data: students = [], isLoading: loadingStudents } = useGetStudents(id);
   const { data: events = [], isLoading: loadingEvents } = useGetEvents({ category_id: id });
+
+  useRegisterChatScreen(
+    category
+      ? { screen: 'Ficha de la categoría', entity: { type: 'categoría', id, name: category.name } }
+      : null
+  );
 
   if (loadingCategory) return <LoadingState />;
   if (!category) return <EmptyState description="Categoría no encontrada." />;
