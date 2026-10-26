@@ -2,12 +2,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Container,
-  Paper,
   TextInput,
   PasswordInput,
   Button,
-  Title,
   Text,
   Stack,
   Anchor,
@@ -16,16 +13,18 @@ import {
 import { useForm } from '@mantine/form';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import axios from 'axios';
+import { AuthLayout } from '../../components/auth/AuthLayout';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 export function RegisterPage() {
-  const navigate = useRouter();
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const form = useForm({
+    validateInputOnBlur: true,
     initialValues: {
       schoolName: '',
       fullName: '',
@@ -46,7 +45,7 @@ export function RegisterPage() {
     try {
       await axios.post(`${API_URL}/auth/register`, values);
       setSuccess(true);
-      setTimeout(() => navigate.push('/login'), 1500);
+      setTimeout(() => router.push('/login'), 1500);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.response?.data?.message || 'Error al registrar');
     } finally {
@@ -55,61 +54,73 @@ export function RegisterPage() {
   };
 
   return (
-    <Container size={460} my={60}>
-      <Stack gap="xs" align="center" mb="lg">
-        <Title order={2}>Registrar academia</Title>
-        <Text c="dimmed" size="sm">
-          Crea tu cuenta de administrador
+    <AuthLayout
+      title="Registra tu academia"
+      subtitle="Crea tu cuenta de administrador. Después podrás invitar a tu equipo."
+      footer={
+        <Text fz="sm" ta="center" c="dimmed">
+          ¿Ya tienes cuenta?{' '}
+          <Anchor component={Link} href="/login" fw={500}>
+            Inicia sesión
+          </Anchor>
         </Text>
-      </Stack>
-      <Paper withBorder shadow="sm" p="xl" radius="md">
-        <form onSubmit={form.onSubmit(onSubmit)}>
-          <Stack>
-            {error && (
-              <Alert color="red" icon={<IconAlertCircle size={16} />}>
-                {error}
-              </Alert>
-            )}
-            {success && (
-              <Alert color="green" icon={<IconCheck size={16} />}>
-                Academia creada. Redirigiendo...
-              </Alert>
-            )}
-            <TextInput
-              label="Nombre de la academia"
-              required
-              {...form.getInputProps('schoolName')}
-            />
-            <TextInput
-              label="Tu nombre completo"
-              required
-              {...form.getInputProps('fullName')}
-            />
-            <TextInput
-              label="Correo"
-              type="email"
-              required
-              autoComplete="email"
-              {...form.getInputProps('email')}
-            />
-            <PasswordInput
-              label="Contraseña"
-              required
-              autoComplete="new-password"
-              {...form.getInputProps('password')}
-            />
-            <Button type="submit" loading={submitting} fullWidth>
-              Crear academia
-            </Button>
-            <Text size="sm" ta="center">
-              ¿Ya tienes cuenta?{' '}
-              <Anchor component={Link} href="/login">
-                Inicia sesión
-              </Anchor>
-            </Text>
-          </Stack>
-        </form>
-      </Paper>
-    </Container>
+      }
+    >
+      <form onSubmit={form.onSubmit(onSubmit)} noValidate>
+        <Stack gap="md">
+          {error && (
+            <Alert color="red" icon={<IconAlertCircle size={16} />} role="alert">
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert color="green" icon={<IconCheck size={16} />} role="status">
+              Academia creada. Redirigiendo...
+            </Alert>
+          )}
+          <TextInput
+            label="Nombre de la academia"
+            placeholder="Club Deportivo Los Pinos"
+            autoFocus
+            size="md"
+            required
+            withAsterisk={false}
+            {...form.getInputProps('schoolName')}
+          />
+          <TextInput
+            label="Tu nombre completo"
+            placeholder="Nombre y apellidos"
+            autoComplete="name"
+            size="md"
+            required
+            withAsterisk={false}
+            {...form.getInputProps('fullName')}
+          />
+          <TextInput
+            label="Correo"
+            placeholder="tu@correo.com"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            size="md"
+            required
+            withAsterisk={false}
+            {...form.getInputProps('email')}
+          />
+          <PasswordInput
+            label="Contraseña"
+            description="Al menos 6 caracteres."
+            autoComplete="new-password"
+            size="md"
+            required
+            withAsterisk={false}
+            {...form.getInputProps('password')}
+          />
+          <Button type="submit" loading={submitting} size="md" fullWidth mt="xs">
+            Crear academia
+          </Button>
+        </Stack>
+      </form>
+    </AuthLayout>
   );
 }

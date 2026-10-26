@@ -8,6 +8,7 @@ import '@mantine/charts/styles.css';
 import '@/styles/globals.css';
 
 import { Providers } from '@/components/providers/Providers';
+import { AuthLinkRedirect } from '@/components/auth/AuthLinkRedirect';
 
 export const metadata: Metadata = {
   title: 'Futcademic',
@@ -23,7 +24,10 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: 'Futcademic',
-    statusBarStyle: 'black-translucent',
+    // "default" reserva la barra de estado para el sistema. Con
+    // "black-translucent" el webview arranca en y=0 y el header del AppShell
+    // queda escondido debajo del reloj en la PWA instalada.
+    statusBarStyle: 'default',
   },
 };
 
@@ -41,7 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <AuthLinkRedirect>{children}</AuthLinkRedirect>
+        </Providers>
       </body>
     </html>
   );
