@@ -1,4 +1,4 @@
-import { useState, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { ActionIcon, Button, List, Modal, Stack, Text, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -34,8 +34,14 @@ export type InstallMode = 'prompt' | 'ios' | 'manual' | 'none';
 export function useInstallMode(): InstallMode {
   const prompt = useSyncExternalStore(subscribeToInstallPrompt, getInstallPrompt, () => null);
   const [installed] = useState(isStandalone);
+  const [mounted, setMounted] = useState(false);
 
-  if (installed) return 'none';
+  // `isIos()`, `isSafari()` e `isStandalone()` dependen del navegador: en SSR
+  // no existen y renderizar distinto en cliente provoca un hydration mismatch
+  // que puede borrar lo que el usuario ya había escrito.
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted || installed) return 'none';
   if (prompt) return 'prompt';
   if (isIos()) return 'ios';
   if (isDesktopInstallable()) return 'manual';

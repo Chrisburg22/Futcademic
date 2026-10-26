@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Box, Paper, Stack, Text, UnstyledButton } from '@mantine/core';
 
 export type QuickAction = {
@@ -19,7 +20,7 @@ export type QuickAction = {
  * duplicados por el código.
  */
 export function QuickActionsDock({ actions }: { actions: QuickAction[] }) {
-  const { pathname } = useLocation();
+  const pathname = usePathname();
   const visible = actions.length > 0;
 
   // Marca el body mientras el dock existe: el contenido reserva hueco abajo y
@@ -68,7 +69,7 @@ export function QuickActionsDock({ actions }: { actions: QuickAction[] }) {
             <UnstyledButton
               key={a.to}
               component={Link}
-              to={a.to}
+              href={a.to}
               aria-label={a.label}
               aria-current={active ? 'page' : undefined}
               style={{

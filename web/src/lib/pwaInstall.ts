@@ -3,9 +3,9 @@
  *
  * El navegador dispara `beforeinstallprompt` muy pronto, normalmente antes de
  * que React monte nada. Por eso el listener se registra aquí, a nivel de
- * módulo (importado desde main.tsx), y no dentro de un componente: si se
- * espera al primer render, el evento ya pasó y el botón de instalar no
- * aparece nunca.
+ * módulo (importado desde `components/providers/Providers.tsx`), y no dentro de
+ * un componente: si se espera al primer render, el evento ya pasó y el botón de
+ * instalar no aparece nunca.
  */
 
 export type InstallPromptEvent = Event & {

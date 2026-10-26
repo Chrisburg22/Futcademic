@@ -12,8 +12,8 @@ export default defineConfig({
   testDir: './e2e',
   // e2e/smoke/ golpea PRODUCCIÓN y crea academias reales. Vive en
   // playwright.smoke.config.ts y solo se ejecuta a propósito.
-  // pwa.spec.ts necesita el build de producción (el SW no existe en `vite dev`):
-  // vive en playwright.pwa.config.ts.
+  // pwa.spec.ts requiere service worker; la PWA está diferida en la migración a
+  // Next (ver playwright.pwa.config.ts).
   testIgnore: ['smoke/**', 'pwa.spec.ts'],
   fullyParallel: false,
   workers: 1,
@@ -27,9 +27,14 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'npm run dev -- --mode test --host 127.0.0.1 --port 5173',
+    command: 'npm run dev -- -H 127.0.0.1',
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: true,
-    timeout: 120_000,
+    timeout: 180_000,
+    env: {
+      NEXT_PUBLIC_API_URL: 'http://localhost:3000/api',
+      NEXT_PUBLIC_SUPABASE_URL: 'https://stub.supabase.co',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
+    },
   },
 });

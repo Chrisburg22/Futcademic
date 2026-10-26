@@ -3,9 +3,12 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Harness de PWA.
  *
- * A diferencia de `playwright.config.ts` (que corre contra `vite dev`), aquí
- * hace falta un **build de producción** servido por `vite preview`: el service
- * worker solo se genera en build (`devOptions.enabled: false`).
+ * ⚠️ DORMIDO: la PWA se difirió durante la migración a Next.js. Este config
+ * todavía asume `vite preview` y un service worker generado por Vite, así que
+ * no se puede ejecutar hasta reimplementar la PWA (Serwist) en `app/`.
+ *
+ * A diferencia de `playwright.config.ts` (que corre contra `next dev`), aquí
+ * hace falta un build de producción: el service worker solo existe en build.
  *
  * El backend sigue mockeado con `page.route` + `context.route` (ver
  * e2e/helpers.ts). El mock a nivel de contexto es imprescindible: las peticiones

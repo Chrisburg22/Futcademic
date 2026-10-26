@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import {
   ActionIcon,
   Affix,
+  Alert,
+  Button,
   Center,
   Divider,
   Group,
@@ -12,12 +14,19 @@ import {
   Stack,
   Text,
 } from '@mantine/core';
-import { IconArrowsMaximize, IconMessageChatbot, IconX } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconArrowsMaximize,
+  IconMessageChatbot,
+  IconRefresh,
+  IconX,
+} from '@tabler/icons-react';
 import { useChat } from '../../hooks/useChat';
 import { MessageBubble, StreamingBubble, UserBubble } from './MessageBubble';
 import { ToolActivity } from './ToolActivity';
 import { ConfirmationCard } from './ConfirmationCard';
 import { ChatInput } from './ChatInput';
+import { ChatSuggestions } from './ChatSuggestions';
 
 /**
  * Bola flotante presente en toda la app admin (montada en AppShell). Abre un
@@ -28,16 +37,23 @@ import { ChatInput } from './ChatInput';
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const chat = useChat();
-  const navigate = useNavigate();
+  const navigate = useRouter();
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const el = viewportRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [open, chat.messages, chat.streamingText, chat.activeTool, chat.pendingActions, chat.liveUserText]);
+  }, [
+    open,
+    chat.messages,
+    chat.streamingText,
+    chat.activeTool,
+    chat.pendingActions,
+    chat.liveUserText,
+    chat.error,
+  ]);
 
-  const inputDisabled = chat.isStreaming || !!chat.pendingActions;
   const hasPending = !!chat.pendingActions?.length;
   const hasContent = chat.messages.length > 0 || !!chat.liveUserText;
 
@@ -72,7 +88,7 @@ export function ChatWidget() {
                 variant="subtle"
                 color="gray"
                 size="sm"
-                onClick={() => navigate('/admin/chat')}
+                onClick={() => navigate.push('/admin/chat')}
                 aria-label="Ver todas las conversaciones"
                 title="Ver todas las conversaciones"
               >
@@ -98,13 +114,27 @@ export function ChatWidget() {
                   <Loader size="sm" />
                 </Center>
               ) : !hasContent ? (
-                <Text c="dimmed" size="sm" ta="center" py="xl">
-                  Pide lo que necesites: pagos, alumnos,
-                  <br />
-                  eventos, asistencias…
-                </Text>
+                <Stack gap="sm">
+                  <Stack gap={2} align="center">
+                    <IconMessageChatbot size={28} opacity={0.3} />
+                    <Text fw={600} size="sm">
+                      ¿Qué necesitas de la academia?
+                    </Text>
+                    <Text c="dimmed" size="xs" ta="center">
+                      Antes de tocar dinero o personas, te pediré confirmación.
+                    </Text>
+                  </Stack>
+                  <ChatSuggestions onPick={chat.sendMessage} compact />
+                </Stack>
               ) : (
-                chat.messages.map((m) => <MessageBubble key={m.id} message={m} />)
+                chat.messages.map((m) => (
+                  <MessageBubble
+                    key={m.id}
+                    message={m}
+                    feedback={chat.feedback[m.id]}
+                    onFeedback={chat.sendFeedback}
+                  />
+                ))
               )}
 
               {chat.liveUserText && <UserBubble text={chat.liveUserText} />}
@@ -114,6 +144,42 @@ export function ChatWidget() {
                 <Group px="xs">
                   <Loader size="xs" type="dots" />
                 </Group>
+              )}
+
+              {chat.error && (
+                <Alert
+                  color="red"
+                  variant="light"
+                  icon={<IconAlertCircle size={16} />}
+                  p="xs"
+                  title={
+                    <Text size="xs" fw={600}>
+                      No se pudo completar la respuesta
+                    </Text>
+                  }
+                >
+                  <Text size="xs">{chat.error}</Text>
+                  {!chat.canRetry && (
+                    <Text size="xs" c="dimmed" mt={4}>
+                      La acción pudo haberse aplicado. Verifícala antes de repetirla.
+                    </Text>
+                  )}
+                  <Group gap={4} mt={6}>
+                    {chat.canRetry && (
+                      <Button
+                        size="compact-xs"
+                        leftSection={<IconRefresh size={12} />}
+                        onClick={chat.retry}
+                        disabled={chat.isStreaming}
+                      >
+                        Reintentar
+                      </Button>
+                    )}
+                    <Button size="compact-xs" variant="subtle" color="gray" onClick={chat.dismissError}>
+                      Descartar
+                    </Button>
+                  </Group>
+                </Alert>
               )}
 
               {chat.pendingActions && chat.pendingActions.length > 0 && (
@@ -130,7 +196,9 @@ export function ChatWidget() {
           <Group p="xs" style={{ flexShrink: 0 }}>
             <ChatInput
               onSend={chat.sendMessage}
-              disabled={inputDisabled}
+              onStop={chat.stop}
+              streaming={chat.isStreaming}
+              disabled={!!chat.pendingActions}
               placeholder={chat.pendingActions ? 'Confirma o cancela la acción…' : undefined}
             />
           </Group>

@@ -7,7 +7,7 @@ import type { Page, Route } from '@playwright/test';
  * localStorage under `sb-<ref>-auth-token`) and talks to the Express backend via
  * axios. For E2E we:
  *   1. Seed a fake supabase session into localStorage so `getSession()` resolves
- *      offline (VITE_SUPABASE_URL=https://stub.supabase.co → ref "stub").
+ *      offline (NEXT_PUBLIC_SUPABASE_URL=https://stub.supabase.co → ref "stub").
  *   2. Intercept `**\/rest/v1/**` (the AuthContext profile query) and `**\/auth/v1/**`.
  *   3. Intercept `**\/api/**` (the backend) with per-resource fixtures.
  */
@@ -129,7 +129,7 @@ export async function mockApi(page: Page, fx: ApiFixtures) {
   const notifications: any[] = JSON.parse(JSON.stringify(fx.notifications ?? []));
 
   // Scope to the backend origin only — a bare `**/api/**` would also swallow the
-  // vite module request for `/src/api/axios.ts` and crash the app.
+  // app's own requests and crash the page.
   await page.route('http://localhost:3000/api/**', async (route: Route) => {
     const req = route.request();
     const method = req.method();

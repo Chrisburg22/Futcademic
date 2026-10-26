@@ -43,7 +43,7 @@ test('asistencia page imports and calls useCheckAchievements', async ({ page }) 
   // Verify at the source level that AttendancePage imports the hook.
   // This is a structural test: the integration was added in Fase 5.
   const fs = await import('fs');
-  const code = fs.readFileSync('src/pages/AttendancePage.tsx', 'utf-8');
+  const code = fs.readFileSync('src/screens/AttendancePage.tsx', 'utf-8');
   expect(code).toContain('useCheckAchievements');
   expect(code).toContain('checkAchievements.mutate');
 });

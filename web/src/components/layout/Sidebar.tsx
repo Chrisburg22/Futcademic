@@ -1,4 +1,5 @@
-import { NavLink as RouterLink, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { NavLink, ScrollArea, Stack, Text, Divider } from '@mantine/core';
 import {
   IconHome,
@@ -114,7 +115,7 @@ const settingsItems: Item[] = [
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { profile } = useAuth();
   const role = profile?.role;
-  const location = useLocation();
+  const pathname = usePathname();
 
   const visible = (items: Item[]) =>
     items.filter((i) => !i.roles || (role && i.roles.includes(role)));
@@ -123,11 +124,11 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     visible(items).map((i) => (
       <NavLink
         key={i.to}
-        component={RouterLink}
-        to={i.to}
+        component={Link}
+        href={i.to}
         label={i.label}
         leftSection={i.icon}
-        active={location.pathname === i.to}
+        active={pathname === i.to}
         onClick={onNavigate}
       />
     ));

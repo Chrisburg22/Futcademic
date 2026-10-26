@@ -1,4 +1,7 @@
-import { Navigate, useLocation } from 'react-router-dom';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 
 /** Dónde tiene que aterrizar cada tipo de enlace de Supabase. */
 const DESTINATION: Record<string, string> = {
@@ -18,26 +21,34 @@ const DESTINATION: Record<string, string> = {
  *
  * El tipo viaja en la query (`?type=recovery`) o en el hash
  * (`#access_token=...&type=recovery`), según la plantilla del correo.
+ *
+ * En App Router la navegación no puede ocurrir durante el render y el hash no
+ * lo expone `useSearchParams`, así que la decisión se toma en un efecto leyendo
+ * la URL del navegador. Mientras tanto se pinta el contenido normal: el
+ * redirect ocurre antes de que el usuario llegue a interactuar.
  */
 export function AuthLinkRedirect({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [redirecting, setRedirecting] = useState(false);
 
-  const query = new URLSearchParams(location.search);
-  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
-  const type = query.get('type') || hash.get('type');
-  const hasToken =
-    query.has('token_hash') || hash.has('access_token') || query.has('error_description');
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 
-  const destination = type ? DESTINATION[type] : undefined;
+    const type = query.get('type') || hash.get('type');
+    const hasToken =
+      query.has('token_hash') || hash.has('access_token') || query.has('error_description');
 
-  if (destination && hasToken && location.pathname !== destination) {
-    return (
-      <Navigate
-        to={{ pathname: destination, search: location.search, hash: location.hash }}
-        replace
-      />
-    );
-  }
+    const destination = type ? DESTINATION[type] : undefined;
+    if (!destination || !hasToken || pathname === destination) return;
+
+    setRedirecting(true);
+    const search = window.location.search;
+    router.replace(`${destination}${search}${window.location.hash}`);
+  }, [pathname, router]);
+
+  if (redirecting) return null;
 
   return <>{children}</>;
 }

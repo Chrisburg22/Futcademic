@@ -43,3 +43,10 @@ backend/
 .claude/
 futcademic-manual/
 videos/
+# Datos personales de menores (hoja de asistencia de Serratos): NUNCA subir al repo
+scripts/serratos_src/
+scripts/serratos_data.json
+scripts/serratos_data_filtrado.json
+scripts/serratos_excluidos.txt
+scripts/serratos_descartes_calidad.txt
+scripts/carga/

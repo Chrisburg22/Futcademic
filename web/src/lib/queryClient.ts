@@ -18,8 +18,20 @@ export const queryClient = new QueryClient({
   },
 });
 
+// En el servidor no hay localStorage. El persister se crea igualmente con un
+// almacenamiento no-op para que el árbol de providers sea idéntico en SSR y en
+// el cliente (evita errores de hidratación).
+const serverStorage: Storage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+  clear: () => {},
+  key: () => null,
+  length: 0,
+};
+
 export const queryPersister = createSyncStoragePersister({
-  storage: window.localStorage,
+  storage: typeof window !== 'undefined' ? window.localStorage : serverStorage,
   key: PERSIST_KEY,
   // localStorage ronda los 5 MB: si la caché no cabe, se descarta en vez de
   // reventar con QuotaExceededError.
