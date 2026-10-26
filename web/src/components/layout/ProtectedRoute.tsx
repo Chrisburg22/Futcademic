@@ -1,5 +1,7 @@
-import { Navigate, useLocation } from 'react-router-dom';
+'use client';
+
 import { Center, Loader } from '@mantine/core';
+import { Redirect } from '../navigation/Redirect';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Role } from '../../types';
 
@@ -11,7 +13,6 @@ export function ProtectedRoute({
   roles?: Role[];
 }) {
   const { session, profile, isLoading } = useAuth();
-  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -22,11 +23,11 @@ export function ProtectedRoute({
   }
 
   if (!session) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Redirect to="/login" />;
   }
 
   if (roles && profile && !roles.includes(profile.role)) {
-    return <Navigate to="/" replace />;
+    return <Redirect to="/" />;
   }
 
   return <>{children}</>;

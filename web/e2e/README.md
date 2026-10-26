@@ -5,9 +5,9 @@ record a **video** of it. Runs fully offline against a **mocked backend**.
 
 ## How it works
 
-- `playwright.config.ts` boots the app with `vite --mode test` (loads `.env.test`,
-  which points Supabase at a stub host so nothing real is contacted). Video is
-  recorded for every test (`video: 'on'`).
+- `playwright.config.ts` boots the app with `next dev` (port 5173) and injects
+  stub Supabase env vars through `webServer.env`, so nothing real is contacted.
+  Video is recorded for every test (`video: 'on'`).
 - `helpers.ts` mocks everything:
   - `loginAs(page, { profile, api, goto })` drives the **real** login form against a
     mocked GoTrue `/auth/v1/token`, so `auth-js` persists the session itself.
@@ -15,8 +15,8 @@ record a **video** of it. Runs fully offline against a **mocked backend**.
   - The Express backend (`http://localhost:3000/api/**`) is dispatched per-resource
     from the `api` fixtures (notifications are stateful so mutations reflect).
   - ⚠️ The API route is scoped to the backend origin on purpose — a bare
-    `**/api/**` would also intercept vite's `/src/api/axios.ts` module and crash
-    the app.
+    `**/api/**` would also intercept the app's own module/asset requests and
+    crash the page.
 
 ## Run
 
@@ -25,6 +25,9 @@ npm run test:e2e                 # all phases
 npx playwright test e2e/fase0.spec.ts
 bash e2e/make-video.sh fase0     # -> e2e/artifacts/fase0.mp4 (concatenated clips)
 ```
+
+`pwa.spec.ts` and `playwright.pwa.config.ts` are dormant while the PWA is
+deferred (there is no service worker in the Next build yet).
 
 ## Per-phase convention
 

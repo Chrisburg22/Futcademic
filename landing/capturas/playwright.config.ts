@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Generador de capturas del landing.
  *
- * Levanta el panel web (`../web`) en modo dev con Supabase y el backend
+ * Levanta el panel web (`../web`) con un build de producción y el backend
  * apuntando a hosts stub, y lo recorre con el mismo arnés de mocks que usa
  * `web/e2e` (`page.route`). No toca ningún servicio real: las capturas salen
  * del producto de verdad con datos de demostración.
@@ -27,10 +27,13 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
+    // El panel web es Next.js. Se sirve un build de producción (`next start`)
+    // para que las capturas no incluyan el indicador de desarrollo de Next.
+    // Las variables NEXT_PUBLIC_* se inlinean en build: hay que pasarlas aquí.
     command:
-      'VITE_SUPABASE_URL=https://stub.supabase.co VITE_SUPABASE_ANON_KEY=stub-anon-key VITE_API_URL=http://localhost:3000/api npm --prefix ../../web run dev -- --host 127.0.0.1 --port 5174',
+      'cd ../../web && NEXT_PUBLIC_SUPABASE_URL=https://stub.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=stub-anon-key NEXT_PUBLIC_API_URL=http://localhost:3000/api npx next build && NEXT_PUBLIC_SUPABASE_URL=https://stub.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=stub-anon-key NEXT_PUBLIC_API_URL=http://localhost:3000/api npx next start -H 127.0.0.1 -p 5174',
     url: 'http://127.0.0.1:5174',
     reuseExistingServer: true,
-    timeout: 120_000,
+    timeout: 300_000,
   },
 });

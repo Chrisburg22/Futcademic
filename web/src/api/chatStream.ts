@@ -3,7 +3,7 @@ import { supabase } from '../config/supabase';
 // Cliente SSE del chat IA. EventSource no soporta POST ni el header
 // Authorization, así que usamos fetch + ReadableStream y parseamos SSE a mano.
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 export interface PendingAction {
   tool_use_id: string;

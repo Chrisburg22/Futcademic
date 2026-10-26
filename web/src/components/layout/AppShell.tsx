@@ -1,4 +1,3 @@
-import { Outlet } from 'react-router-dom';
 import {
   AppShell as MantineAppShell,
   Burger,
@@ -20,18 +19,18 @@ import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../contexts/AuthContext';
 import { ChatProvider } from '../../contexts/ChatContext';
 import { ChatWidget } from '../chat/ChatWidget';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 
-export function AppShell() {
+export function AppShell({ children }: { children: React.ReactNode }) {
   const [opened, { toggle, close }] = useDisclosure();
   const { profile, signOut } = useAuth();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { online } = useNetwork();
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/login', { replace: true });
+    router.replace('/login');
   };
 
   const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
@@ -100,7 +99,7 @@ export function AppShell() {
                 </Menu.Label>
                 <Menu.Item
                   leftSection={<IconUser size={14} />}
-                  onClick={() => navigate('/settings/edit-profile')}
+                  onClick={() => router.push('/settings/edit-profile')}
                 >
                   Mi perfil
                 </Menu.Item>
@@ -122,7 +121,7 @@ export function AppShell() {
       </MantineAppShell.Navbar>
 
       <MantineAppShell.Main>
-        <Outlet />
+        {children}
       </MantineAppShell.Main>
 
       {isAdmin && <ChatWidget />}

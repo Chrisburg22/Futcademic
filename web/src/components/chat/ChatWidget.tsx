@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import {
   ActionIcon,
   Affix,
@@ -28,7 +28,7 @@ import { ChatInput } from './ChatInput';
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const chat = useChat();
-  const navigate = useNavigate();
+  const navigate = useRouter();
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export function ChatWidget() {
                 variant="subtle"
                 color="gray"
                 size="sm"
-                onClick={() => navigate('/admin/chat')}
+                onClick={() => navigate.push('/admin/chat')}
                 aria-label="Ver todas las conversaciones"
                 title="Ver todas las conversaciones"
               >

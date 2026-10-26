@@ -1,12 +1,15 @@
-import { Navigate, useLocation } from 'react-router-dom';
+'use client';
+
+import { usePathname } from 'next/navigation';
+import { Redirect } from '../navigation/Redirect';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { profile } = useAuth();
-  const location = useLocation();
+  const pathname = usePathname();
 
-  if (profile?.must_change_password && location.pathname !== '/change-password') {
-    return <Navigate to="/change-password" replace />;
+  if (profile?.must_change_password && pathname !== '/change-password') {
+    return <Redirect to="/change-password" />;
   }
 
   const needsOnboarding =
@@ -14,8 +17,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     !profile.must_change_password &&
     !(profile as any).onboarded_at &&
     ['profesor', 'padre', 'alumno'].includes(profile.role);
-  if (needsOnboarding && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />;
+  if (needsOnboarding && pathname !== '/onboarding') {
+    return <Redirect to="/onboarding" />;
   }
 
   return <>{children}</>;

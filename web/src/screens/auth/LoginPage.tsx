@@ -1,0 +1,107 @@
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Redirect } from '@/components/navigation/Redirect';
+import {
+  Container,
+  Paper,
+  TextInput,
+  PasswordInput,
+  Button,
+  Title,
+  Text,
+  Stack,
+  Anchor,
+  Alert,
+  Divider,
+  Center,
+} from '@mantine/core';
+import { useForm } from '@mantine/form';
+import { IconAlertCircle } from '@tabler/icons-react';
+import { supabase } from '../../config/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { InstallButton } from '../../components/pwa/InstallButton';
+
+export function LoginPage() {
+  const { session, isLoading } = useAuth();
+  const navigate = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const form = useForm({
+    initialValues: { email: '', password: '' },
+    validate: {
+      email: (v) => (/^\S+@\S+$/.test(v) ? null : 'Correo inválido'),
+      password: (v) => (v.length >= 6 ? null : 'Mínimo 6 caracteres'),
+    },
+  });
+
+  if (!isLoading && session) return <Redirect to="/" />;
+
+  const onSubmit = async (values: typeof form.values) => {
+    setSubmitting(true);
+    setError(null);
+    const { error } = await supabase.auth.signInWithPassword(values);
+    setSubmitting(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    navigate.replace('/');
+  };
+
+  return (
+    <Container size={420} my={80}>
+      <Stack gap="xs" align="center" mb="lg">
+        <Title order={2}>Futcademic</Title>
+        <Text c="dimmed" size="sm">
+          Inicia sesión para continuar
+        </Text>
+      </Stack>
+      <Paper withBorder shadow="sm" p="xl" radius="md">
+        <form onSubmit={form.onSubmit(onSubmit)}>
+          <Stack>
+            {error && (
+              <Alert color="red" icon={<IconAlertCircle size={16} />}>
+                {error}
+              </Alert>
+            )}
+            <TextInput
+              label="Correo"
+              placeholder="tu@correo.com"
+              autoComplete="email"
+              required
+              {...form.getInputProps('email')}
+            />
+            <PasswordInput
+              label="Contraseña"
+              autoComplete="current-password"
+              required
+              {...form.getInputProps('password')}
+            />
+            <Button type="submit" loading={submitting} fullWidth>
+              Entrar
+            </Button>
+            <Text size="sm" ta="center">
+              ¿No tienes cuenta?{' '}
+              <Anchor component={Link} href="/register">
+                Registra tu academia
+              </Anchor>
+            </Text>
+            <Text size="sm" ta="center">
+              <Anchor component={Link} href="/student-login">
+                Acceso alumno
+              </Anchor>
+            </Text>
+          </Stack>
+        </form>
+        {/* Instalar sin necesidad de iniciar sesión: muchos padres y alumnos
+            llegan aquí desde el móvil y es el mejor momento para ofrecerlo. */}
+        <Divider my="lg" label="¿La usas a diario?" labelPosition="center" />
+        <Center>
+          <InstallButton />
+        </Center>
+      </Paper>
+    </Container>
+  );
+}
