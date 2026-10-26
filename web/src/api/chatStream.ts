@@ -9,6 +9,9 @@ export interface PendingAction {
   tool_use_id: string;
   name: string;
   label: string;
+  /** Frase humana resuelta en el servidor (nombres y montos reales). */
+  summary?: string;
+  impact?: string;
   input: Record<string, unknown>;
 }
 

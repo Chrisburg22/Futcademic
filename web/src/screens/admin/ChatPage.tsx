@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import {
   ActionIcon,
+  Alert,
   Button,
   Center,
   Divider,
@@ -14,18 +15,19 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { IconMessageChatbot, IconPlus, IconTrash } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconMessageChatbot,
+  IconPlus,
+  IconRefresh,
+  IconTrash,
+} from '@tabler/icons-react';
 import { useChat } from '../../hooks/useChat';
 import { MessageBubble, StreamingBubble, UserBubble } from '../../components/chat/MessageBubble';
 import { ToolActivity } from '../../components/chat/ToolActivity';
 import { ConfirmationCard } from '../../components/chat/ConfirmationCard';
 import { ChatInput } from '../../components/chat/ChatInput';
-
-const SUGGESTIONS = [
-  '¿Cómo va la academia este mes?',
-  '¿Quién debe la mensualidad?',
-  '¿Qué entrenamientos hay hoy?',
-];
+import { ChatSuggestions } from '../../components/chat/ChatSuggestions';
 
 export function ChatPage() {
   const chat = useChat();
@@ -35,9 +37,14 @@ export function ChatPage() {
   useEffect(() => {
     const el = viewportRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [chat.messages, chat.streamingText, chat.activeTool, chat.pendingActions, chat.liveUserText]);
-
-  const inputDisabled = chat.isStreaming || !!chat.pendingActions;
+  }, [
+    chat.messages,
+    chat.streamingText,
+    chat.activeTool,
+    chat.pendingActions,
+    chat.liveUserText,
+    chat.error,
+  ]);
 
   return (
     <Flex gap="md" h="calc(100vh - 120px)">
@@ -106,24 +113,27 @@ export function ChatPage() {
               </Center>
             ) : chat.messages.length === 0 && !chat.liveUserText ? (
               <Center py="xl">
-                <Stack align="center" gap="sm">
+                <Stack align="center" gap="md" w="100%">
                   <IconMessageChatbot size={40} opacity={0.3} />
-                  <Text c="dimmed" size="sm" ta="center">
-                    Pide lo que necesites: consultar pagos, crear alumnos,
-                    <br />
-                    programar eventos, registrar asistencias…
-                  </Text>
-                  <Group gap="xs">
-                    {SUGGESTIONS.map((s) => (
-                      <Button key={s} size="compact-xs" variant="light" onClick={() => chat.sendMessage(s)}>
-                        {s}
-                      </Button>
-                    ))}
-                  </Group>
+                  <Stack gap={4} align="center">
+                    <Text fw={600}>¿Qué necesitas de la academia?</Text>
+                    <Text c="dimmed" size="sm" ta="center">
+                      Pregunta o da una orden en tus palabras. Antes de tocar dinero o
+                      personas, el asistente te pedirá confirmación.
+                    </Text>
+                  </Stack>
+                  <ChatSuggestions onPick={chat.sendMessage} />
                 </Stack>
               </Center>
             ) : (
-              chat.messages.map((m) => <MessageBubble key={m.id} message={m} />)
+              chat.messages.map((m) => (
+                <MessageBubble
+                  key={m.id}
+                  message={m}
+                  feedback={chat.feedback[m.id]}
+                  onFeedback={chat.sendFeedback}
+                />
+              ))
             )}
 
             {chat.liveUserText && <UserBubble text={chat.liveUserText} />}
@@ -133,6 +143,37 @@ export function ChatPage() {
               <Group px="sm">
                 <Loader size="xs" type="dots" />
               </Group>
+            )}
+
+            {chat.error && (
+              <Alert
+                color="red"
+                variant="light"
+                icon={<IconAlertCircle size={18} />}
+                title="El asistente no pudo completar la respuesta"
+              >
+                <Text size="sm">{chat.error}</Text>
+                {!chat.canRetry && (
+                  <Text size="xs" c="dimmed" mt={4}>
+                    La acción pudo haberse aplicado. Verifícala antes de repetirla.
+                  </Text>
+                )}
+                <Group gap="xs" mt="sm">
+                  {chat.canRetry && (
+                    <Button
+                      size="compact-xs"
+                      leftSection={<IconRefresh size={14} />}
+                      onClick={chat.retry}
+                      disabled={chat.isStreaming}
+                    >
+                      Reintentar
+                    </Button>
+                  )}
+                  <Button size="compact-xs" variant="subtle" color="gray" onClick={chat.dismissError}>
+                    Descartar
+                  </Button>
+                </Group>
+              </Alert>
             )}
 
             {chat.pendingActions && chat.pendingActions.length > 0 && (
@@ -148,9 +189,15 @@ export function ChatPage() {
         <Divider my="sm" />
         <ChatInput
           onSend={chat.sendMessage}
-          disabled={inputDisabled}
+          onStop={chat.stop}
+          streaming={chat.isStreaming}
+          disabled={!!chat.pendingActions}
           placeholder={
-            chat.pendingActions ? 'Confirma o cancela la acción pendiente…' : undefined
+            chat.pendingActions
+              ? 'Confirma o cancela la acción pendiente…'
+              : chat.isStreaming
+                ? 'El asistente está respondiendo…'
+                : undefined
           }
         />
       </Paper>
