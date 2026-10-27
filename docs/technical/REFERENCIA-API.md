@@ -155,6 +155,281 @@ Lista alumnos eliminados (solo admin).
 
 ---
 
+## Endpoints del Expediente del Alumno
+
+El *expediente* es el archivo de inscripción: consentimiento informado firmado,
+identificación del tutor y el checklist estándar de documentos. Un expediente
+incompleto **nunca** bloquea entrenamientos, pagos ni el estado del alumno; solo
+bloquea la descarga del paquete para liga/copa.
+
+Documentos obligatorios: `acta_nacimiento`, `curp`, `identificacion_tutor_frente`,
+`identificacion_tutor_reverso`, `comprobante_domicilio`, `certificado_medico`,
+`foto_alumno`. `otro` es opcional.
+
+### GET /students/:id/expediente
+Devuelve el estado calculado del expediente, el consentimiento activo, URLs
+firmadas de los documentos (válidas 5 minutos) y la plantilla de consentimiento
+activa.
+
+Roles: `super_admin`, `admin`, `profesor`, `padre`, `alumno` (con alcance por
+fila: un padre solo ve a sus hijos y un alumno solo su propia ficha).
+
+**Respuesta:**
+```json
+{
+  "student_id": "uuid",
+  "status": "incompleto",
+  "has_consent": false,
+  "present_documents": 2,
+  "validated_documents": 1,
+  "missing_documents": 5,
+  "consent": null,
+  "documents": [
+    {
+      "id": "uuid",
+      "doc_type": "curp",
+      "owner_type": "alumno",
+      "status": "validado",
+      "signed_url": "https://..."
+    }
+  ],
+  "checklist": [
+    { "type": "curp", "label": "CURP", "owner_type": "alumno", "required": true }
+  ],
+  "consent_template": { "version": "2026-10-v1", "body_md": "..." },
+  "can_download_package": false
+}
+```
+
+Valores de estado: `sin_tutor` (alumno histórico sin tutor vinculado),
+`incompleto`, `en_revision`, `completo`.
+
+`missing_documents` cuenta los documentos obligatorios que aún no están
+validados (un documento cargado pero `pendiente` también cuenta como faltante).
+
+### POST /students/:id/consent
+Captura el consentimiento informado. **No** es una firma electrónica
+certificada: guarda las casillas, el nombre escrito, la fecha y hora, la IP, el
+dispositivo, la versión del texto y su hash, y archiva un PDF como constancia.
+
+**Cuerpo de la petición:**
+```json
+{
+  "guardian_name": "María Pérez",
+  "guardian_relationship": "madre",
+  "guardian_email": "maria@email.com",
+  "guardian_phone": "555-5678",
+  "accepted_data": true,
+  "accepted_participation": true,
+  "accepted_medical": true,
+  "accepted_image": false
+}
+```
+
+### GET /students/:id/consent.pdf
+Descarga el PDF archivado del consentimiento. Mismo alcance por fila que el
+expediente.
+
+### POST /students/:id/documents
+Sube un documento (`multipart/form-data`): `file`, `doc_type`, `owner_type`
+(`alumno` | `tutor`), `expires_at` (opcional). Máximo 10 MB. Se valida por magic
+bytes: PDF, JPEG, PNG, WEBP, HEIC, HEIF. Los archivos viven en el bucket privado
+`enrollment-documents`.
+
+### PATCH /students/:id/documents/:docId
+Revisa un documento.
+
+**Cuerpo de la petición:**
+```json
+{ "status": "validado", "rejection_reason": null, "expires_at": null }
+```
+
+`rejection_reason` es obligatorio cuando `status` es `rechazado`.
+
+### DELETE /students/:id/documents/:docId
+Elimina el registro y el archivo almacenado. Requiere `admin`, `super_admin` o un
+profesor con `can_manage_students`.
+
+### GET /students/:id/documents/:docId/url
+Devuelve `{ "url": "..." }`, una URL firmada válida 300 segundos. Cada acceso se
+registra en `enrollment_access_log`.
+
+### POST /students/:id/documents/reuse-tutor
+Copia la identificación validada del tutor (frente y reverso) de un hermano a
+este alumno. Los archivos no se duplican: los nuevos registros apuntan a los
+mismos objetos almacenados.
+
+**Respuesta:** `{ "copied": 2 }`
+
+### GET /students/:id/tutor-documents/availability
+`{ "available": true }` cuando un hermano ya tiene una identificación de tutor
+validada que se puede reutilizar.
+
+### GET /students/:id/expediente/package
+Descarga un ZIP con la carátula, el PDF del consentimiento y los siete documentos
+validados. Solo `admin`/`super_admin`. Devuelve `409` si el expediente no está
+`completo`.
+
+---
+
+## Endpoints de Inscripción
+
+Inscripción remota mediante un link de un solo uso, limitado a una categoría. El
+token es opaco: solo resuelve la escuela, la categoría, la invitación y su
+borrador. Nunca expone a otros alumnos ni a otras familias.
+
+Las invitaciones vencen a los 7 días por defecto (1–30), se pueden revocar y son
+de un solo uso. Al enviar se crea una **solicitud pendiente**, no un alumno: un
+admin debe aprobarla. El token en claro solo se guarda como hash, así que un link
+perdido debe regenerarse.
+
+> El orden de las rutas importa: las rutas de administración
+> (`/enrollment/invitations`, `/enrollment/applications`,
+> `/enrollment/consent-template`) se declaran antes de `/enrollment/:token`; de
+> lo contrario se interpretarían como tokens.
+
+### GET /enrollment/:token
+**Público** (autorizado por el token, sin JWT). Devuelve solo la academia, la
+categoría, el estado de la invitación, el borrador editable, los documentos
+cargados, el checklist y el texto de la plantilla de consentimiento.
+
+```json
+{
+  "academy": { "name": "Academia Halcones", "logo_url": null },
+  "category": { "name": "Sub-12", "color": "#1c7ed6", "birth_years": ["2014-2015"] },
+  "invitation": {
+    "status": "activa",
+    "expires_at": "2026-11-02T18:00:00Z",
+    "editable": true,
+    "can_download_consent": false
+  },
+  "application": null,
+  "terminal": false,
+  "form": { "fields": { "student_full_name": "" }, "category_mismatch": false },
+  "documents": [],
+  "consent_template": { "version": "2026-10-v1", "body_md": "..." },
+  "checklist": []
+}
+```
+
+Devuelve `404` para tokens desconocidos y `410` cuando el link expiró, fue
+revocado o ya se usó.
+
+### PUT /enrollment/:token/draft
+Guarda el borrador sin enviarlo. Acepta los campos del alumno y del tutor.
+Devuelve `409` cuando la solicitud ya fue enviada.
+
+### POST /enrollment/:token/documents
+Sube un documento del borrador (`multipart/form-data`, mismas reglas de
+validación que el expediente del alumno).
+
+### POST /enrollment/:token/submit
+Envía la solicitud. Requiere los datos del alumno, nombre/correo/celular y
+parentesco del tutor, el consentimiento y la identificación del tutor (frente y
+reverso). Los documentos del alumno pueden quedar pendientes.
+
+```json
+{
+  "fields": {
+    "student_full_name": "Diego Ramos",
+    "student_birth_date": "2015-03-04",
+    "guardian_email": "ana@email.com",
+    "guardian_phone": "5551234567"
+  },
+  "consent": {
+    "guardian_name": "Ana Ramos",
+    "guardian_relationship": "madre",
+    "accepted_data": true,
+    "accepted_participation": true,
+    "accepted_medical": true,
+    "accepted_image": false
+  }
+}
+```
+
+### GET /enrollment/:token/consent.pdf
+**Público.** Descarga el PDF del consentimiento una vez enviada la solicitud.
+
+### GET /enrollment/invitations
+Lista las invitaciones con un `status` derivado: `activa`, `expirada`,
+`revocada`, `usada`. Nunca se devuelve el hash del token ni la URL.
+
+### POST /enrollment/invitations
+Crea un link.
+
+```json
+{ "category_id": "uuid", "expires_in_days": 7, "note": "Papá de Diego" }
+```
+
+**Respuesta (la única vez que se devuelve la URL):**
+```json
+{
+  "id": "uuid",
+  "url": "https://app.example.com/inscripcion/tok_...",
+  "expires_at": "2026-11-02T18:00:00Z",
+  "category": { "name": "Sub-12" }
+}
+```
+
+### DELETE /enrollment/invitations/:id
+Revoca una invitación activa. Solo `admin`/`super_admin`.
+
+### GET /enrollment/applications
+Lista las solicitudes. Filtros opcionales `status` y `category_id`. Roles:
+`super_admin`, `admin`, `profesor`.
+
+### GET /enrollment/applications/:id
+Detalle completo de la solicitud: datos del alumno y del tutor, consentimiento con
+URL firmada del PDF, documentos con URLs firmadas, documentos de tutor
+reutilizables de un hermano, checklist e historial de revisión.
+
+### POST /enrollment/applications/:id/approve
+Aprueba y crea al alumno. Requiere el consentimiento y la identificación del tutor
+(frente y reverso). Se puede corregir `category_id`; `validate_tutor_docs: true`
+marca la identificación del tutor como validada en el mismo paso.
+
+```json
+{ "category_id": "uuid", "validate_tutor_docs": true }
+```
+
+**Respuesta:**
+```json
+{
+  "student_id": "uuid",
+  "guardian_reused": false,
+  "guardian_email_sent": true,
+  "credentials": { "username": "diego.ramos", "temp_password": "..." }
+}
+```
+
+La aprobación usa el mismo `createStudentRecord` que el wizard presencial, mueve
+el consentimiento y los documentos de la solicitud al alumno y conserva
+`application.student_id` como vínculo entre ambos registros.
+
+### POST /enrollment/applications/:id/reject
+Rechaza con motivo obligatorio. Después se puede reabrir el link.
+
+```json
+{ "reason": "La identificación está borrosa." }
+```
+
+### POST /enrollment/applications/:id/reopen
+Reabre una solicitud rechazada: la invitación vuelve a `borrador` y su vigencia se
+extiende 7 días.
+
+**Respuesta:** `{ "expires_at": "..." }`
+
+### PATCH /enrollment/applications/:id/documents/:docId
+Valida o rechaza un documento antes de aprobar. `rejection_reason` es obligatorio
+para `rechazado`. Devuelve `409` si la solicitud ya fue aprobada (en ese caso se
+usa el expediente del alumno).
+
+### GET /enrollment/consent-template
+Plantilla de consentimiento activa de la escuela (`version`, `body_md`,
+`body_hash`).
+
+---
+
 ## Endpoints de Asistencias
 
 ### GET /attendances/category/:categoryId

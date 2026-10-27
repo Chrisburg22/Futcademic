@@ -29,6 +29,19 @@ schools (1) -----> (N) venues
 schools (1) -----> (N) profile_information
 schools (1) -----> (N) deleted_students
 schools (1) -----> (N) teacher_permissions
+schools (1) -----> (N) consent_templates
+schools (1) -----> (N) enrollment_invitations
+schools (1) -----> (N) enrollment_applications
+schools (1) -----> (N) enrollment_consents
+schools (1) -----> (N) enrollment_documents
+schools (1) -----> (N) enrollment_access_log
+
+enrollment_invitations (1) -----> (1) enrollment_applications
+enrollment_applications (1) -----> (0..1) enrollment_consents
+enrollment_applications (1) -----> (N) enrollment_documents
+enrollment_applications (1) -----> (0..1) students (tras aprobar)
+students (1) -----> (0..1) enrollment_consents
+students (1) -----> (N) enrollment_documents
 
 categories (1) -----> (N) students
 categories (1) -----> (N) category_teachers
@@ -126,6 +139,8 @@ Alumnos inscritos en la academia.
 | birth_date | DATE | NOT NULL | Fecha de nacimiento del alumno |
 | uniform_delivered | BOOLEAN | DEFAULT FALSE | Si se entregó el uniforme |
 | status | VARCHAR(20) | CHECK IN ('activo','beca','pendiente','inactivo'), DEFAULT 'activo' | Estado de inscripción |
+| curp | TEXT | | CURP del alumno (opcional, indexada por escuela) |
+| guardian_relationship | TEXT | | Parentesco del tutor vinculado (`madre`, `padre`, `tutor_legal`, `abuelo`, `otro`) |
 | created_at | TIMESTAMP WITH TIME ZONE | DEFAULT NOW() | Marca de tiempo de creación del registro |
 
 **Política RLS:** Los usuarios solo pueden ver alumnos de la misma escuela. Los padres solo ven a sus propios hijos (`parent_id = auth.uid()`).
@@ -333,6 +348,205 @@ Permisos granulares por profesor.
 
 ---
 
+### 15. consent_templates
+Textos de consentimiento informado versionados. Una fila con `school_id = NULL` es
+la plantilla global.
+
+| Columna | Tipo | Restricciones | Descripción |
+|---------|------|---------------|-------------|
+| id | UUID | PK, DEFAULT gen_random_uuid() | ID único del registro |
+| school_id | UUID | FK → schools(id), NULL | NULL para la plantilla global |
+| version | TEXT | NOT NULL | Etiqueta de versión (ej. `2026-10-v1`) |
+| body_md | TEXT | NOT NULL | Texto del consentimiento en Markdown |
+| body_hash | TEXT | | Hash del texto mostrado; se guarda con cada firma |
+| active | BOOLEAN | NOT NULL, DEFAULT TRUE | Solo una plantilla activa por ámbito |
+| created_by | UUID | FK → users(id) | Quién la publicó |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de creación |
+
+**Restricciones únicas:** una plantilla global activa (`school_id IS NULL AND
+active`) y una plantilla activa por escuela (`school_id IS NOT NULL AND active`).
+**Política RLS:** lectura para usuarios autenticados de la escuela; escritura vía
+clave de servicio.
+
+---
+
+### 16. enrollment_invitations
+Links de inscripción de un solo uso, limitados a una categoría.
+
+| Columna | Tipo | Restricciones | Descripción |
+|---------|------|---------------|-------------|
+| id | UUID | PK, DEFAULT gen_random_uuid() | ID único del registro |
+| school_id | UUID | FK → schools(id), NOT NULL | Asociación de tenant |
+| category_id | UUID | FK → categories(id), NOT NULL | Categoría a la que se invita |
+| token_hash | TEXT | UNIQUE, NOT NULL | SHA-256 del token opaco (nunca el token) |
+| created_by | UUID | FK → users(id) | Admin que generó el link |
+| expires_at | TIMESTAMPTZ | NOT NULL | Vigencia (7 días por defecto, 1–30 permitidos) |
+| used_at | TIMESTAMPTZ | | Se marca al enviar la solicitud |
+| revoked_at | TIMESTAMPTZ | | Se marca cuando un admin revoca el link |
+| application_id | UUID | | Solicitud vinculada al abrirse |
+| note | TEXT | | Nota interna (ej. "Papá de Diego") |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de creación |
+
+**Estado derivado:** `activa`, `expirada`, `revocada`, `usada`.
+**Política RLS:** solo admin/super_admin de la escuela puede listar o revocar.
+
+---
+
+### 17. enrollment_applications
+Solicitudes pendientes creadas desde un link remoto. Solo se convierten en alumno
+cuando un admin las aprueba.
+
+| Columna | Tipo | Restricciones | Descripción |
+|---------|------|---------------|-------------|
+| id | UUID | PK, DEFAULT gen_random_uuid() | ID único del registro |
+| school_id | UUID | FK → schools(id), NOT NULL | Asociación de tenant |
+| invitation_id | UUID | UNIQUE, FK → enrollment_invitations(id), NOT NULL | Link de origen |
+| category_id | UUID | FK → categories(id), NOT NULL | Categoría solicitada |
+| original_category_id | UUID | FK → categories(id) | Categoría antes de una corrección del admin |
+| status | TEXT | CHECK IN ('borrador','enviada','en_revision','aprobada','rechazada'), DEFAULT 'borrador' | Estado de la solicitud |
+| student_full_name | TEXT | | Nombre del alumno |
+| student_birth_date | DATE | | Fecha de nacimiento |
+| student_curp | TEXT | | CURP del alumno |
+| student_phone | TEXT | | Teléfono del alumno |
+| student_address | TEXT | | Domicilio del alumno |
+| emergency_contact_name | TEXT | | Contacto de emergencia |
+| emergency_contact_phone | TEXT | | Teléfono de emergencia |
+| medical_notes | TEXT | | Alergias / condiciones |
+| guardian_full_name | TEXT | | Nombre del tutor |
+| guardian_relationship | TEXT | | Parentesco del tutor |
+| guardian_email | TEXT | | Correo del tutor (obligatorio en el formulario) |
+| guardian_phone | TEXT | | Celular del tutor (obligatorio en el formulario) |
+| guardian_address | TEXT | | Domicilio del tutor |
+| guardian_user_id | UUID | FK → users(id) | Cuenta de tutor existente, si coincide |
+| submitted_at | TIMESTAMPTZ | | Fecha de envío |
+| submitted_ip | INET | | IP de envío |
+| submitted_user_agent | TEXT | | Dispositivo de envío |
+| reviewed_by | UUID | FK → users(id) | Admin que aprobó/rechazó |
+| reviewed_at | TIMESTAMPTZ | | Fecha de revisión |
+| rejection_reason | TEXT | | Motivo mostrado a la familia |
+| student_id | UUID | FK → students(id) | Alumno creado/vinculado tras aprobar |
+| category_mismatch | BOOLEAN | NOT NULL, DEFAULT FALSE | Fecha fuera de los años de la categoría |
+| reopen_count | INTEGER | NOT NULL, DEFAULT 0 | Veces que se reabrió el link |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de creación |
+| updated_at | TIMESTAMPTZ | DEFAULT NOW() | Última actualización |
+
+**Política RLS:** admin/profesor de la escuela pueden leer; solo admin/super_admin
+puede aprobar, rechazar o reabrir.
+
+---
+
+### 18. enrollment_consents
+Consentimiento informado firmado. No es una firma electrónica certificada: guarda
+la evidencia (casillas, nombre escrito, fecha y hora, IP, dispositivo, versión y
+hash del texto) más el PDF archivado.
+
+| Columna | Tipo | Restricciones | Descripción |
+|---------|------|---------------|-------------|
+| id | UUID | PK, DEFAULT gen_random_uuid() | ID único del registro |
+| school_id | UUID | FK → schools(id), NOT NULL | Asociación de tenant |
+| application_id | UUID | UNIQUE, FK → enrollment_applications(id) | Dueño mientras está pendiente |
+| student_id | UUID | FK → students(id) | Dueño tras la aprobación |
+| guardian_name | TEXT | NOT NULL | Nombre escrito (firma) |
+| guardian_relationship | TEXT | | Parentesco con el alumno |
+| consent_version | TEXT | NOT NULL | Versión de la plantilla aceptada |
+| text_hash | TEXT | NOT NULL | Hash del texto exacto mostrado |
+| accepted_data | BOOLEAN | NOT NULL, DEFAULT FALSE | Autorización de datos personales |
+| accepted_participation | BOOLEAN | NOT NULL, DEFAULT FALSE | Entrenamientos/partidos/traslados |
+| accepted_medical | BOOLEAN | NOT NULL, DEFAULT FALSE | Atención médica de urgencia |
+| accepted_image | BOOLEAN | NOT NULL, DEFAULT FALSE | Uso de imagen (opcional) |
+| accepted_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de aceptación |
+| ip | INET | | IP de aceptación |
+| user_agent | TEXT | | Dispositivo de aceptación |
+| pdf_path | TEXT | | Ruta del PDF archivado |
+| captured_by | UUID | FK → users(id) | Personal que lo capturó presencialmente |
+| revoked_at | TIMESTAMPTZ | | Fecha de revocación |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de creación |
+
+**Restricciones:** exactamente un dueño (`application_id` XOR `student_id`) y un
+solo consentimiento activo por alumno (`student_id IS NOT NULL AND revoked_at IS
+NULL`).
+**Política RLS:** admin/profesor de la escuela pueden leer y capturar.
+
+---
+
+### 19. enrollment_documents
+Documentos subidos desde el link remoto o el wizard presencial.
+
+| Columna | Tipo | Restricciones | Descripción |
+|---------|------|---------------|-------------|
+| id | UUID | PK, DEFAULT gen_random_uuid() | ID único del registro |
+| school_id | UUID | FK → schools(id), NOT NULL | Asociación de tenant |
+| application_id | UUID | FK → enrollment_applications(id) | Dueño mientras está pendiente |
+| student_id | UUID | FK → students(id) | Dueño tras la aprobación |
+| owner_type | TEXT | CHECK IN ('alumno','tutor'), NOT NULL | A quién pertenece |
+| doc_type | TEXT | NOT NULL | Clave del catálogo (`acta_nacimiento`, `curp`, `identificacion_tutor_frente`, …) |
+| file_path | TEXT | NOT NULL | Ruta del objeto en el bucket privado |
+| file_name | TEXT | | Nombre original del archivo |
+| mime_type | TEXT | | Tipo MIME validado |
+| size_bytes | BIGINT | | Tamaño del archivo |
+| file_hash | TEXT | | SHA-256 para deduplicar |
+| status | TEXT | CHECK IN ('pendiente','validado','rechazado','vencido'), DEFAULT 'pendiente' | Estado de revisión |
+| expires_at | DATE | | Vencimiento opcional (ej. certificado médico) |
+| uploaded_by | UUID | FK → users(id) | Quién subió (personal) |
+| uploaded_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de carga |
+| verified_by | UUID | FK → users(id) | Quién revisó |
+| verified_at | TIMESTAMPTZ | | Fecha de revisión |
+| rejection_reason | TEXT | | Motivo mostrado a la familia |
+| reused_from | UUID | FK → enrollment_documents(id) | Documento de hermano reutilizado |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha de creación |
+
+**Restricciones:** exactamente un dueño (`application_id` XOR `student_id`) y una
+fila por `(dueño, owner_type, doc_type)`.
+**Política RLS:** admin/profesor con `can_manage_students`; padres/alumnos pueden
+leer los propios.
+
+---
+
+### 20. enrollment_access_log
+Bitácora de accesos al link y acciones sobre documentos (descargas, validaciones,
+aprobaciones).
+
+| Columna | Tipo | Restricciones | Descripción |
+|---------|------|---------------|-------------|
+| id | UUID | PK, DEFAULT gen_random_uuid() | ID único del registro |
+| school_id | UUID | FK → schools(id), NOT NULL | Asociación de tenant |
+| invitation_id | UUID | FK → enrollment_invitations(id) | Link relacionado |
+| user_id | UUID | FK → users(id) | Usuario del personal, si está autenticado |
+| action | TEXT | NOT NULL | Ej. `view_application`, `validate_document`, `approve_application` |
+| entity_type | TEXT | | `application`, `document`, `consent`, … |
+| entity_id | UUID | | Registro afectado |
+| ip | INET | | IP de la petición |
+| user_agent | TEXT | | Dispositivo de la petición |
+| metadata | JSONB | | Contexto adicional |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Fecha y hora |
+
+**Política RLS:** solo admin/super_admin.
+
+---
+
+### 21. student_expediente_status (vista)
+Vista de solo lectura que calcula el estado del expediente de cada alumno en vez de
+guardar una columna redundante:
+
+- `sin_tutor` — el alumno no tiene tutor vinculado (alumnos históricos conservados
+  tal cual).
+- `incompleto` — falta el consentimiento o al menos un documento obligatorio.
+- `en_revision` — todos los documentos obligatorios están cargados pero no todos
+  validados, o falta el consentimiento.
+- `completo` — consentimiento firmado y los siete documentos obligatorios
+  validados.
+
+Incluye `student_id`, `school_id`, `status`, `present_documents`,
+`validated_documents` y `missing_documents` (arreglo de claves obligatorias que
+aún no están validadas). La
+lista de alumnos funciona sin la vista si la migración aún no se aplicó.
+
+**Almacenamiento:** la migración también crea el bucket privado
+`enrollment-documents` (límite 10 MB, PDF/JPEG/PNG/WEBP/HEIC/HEIF). La API solo
+expone URLs firmadas de 300 segundos.
+
+---
+
 ## Políticas de Row Level Security (RLS)
 
 Todas las tablas tienen RLS habilitado. La política base de aislamiento de tenant:
@@ -343,6 +557,12 @@ FOR ALL USING (school_id = (SELECT school_id FROM public.users WHERE id = auth.u
 ```
 
 **Excepción:** El rol `super_admin` omite RLS vía clave de rol de servicio en backend.
+
+**Excepciones del expediente:** `consent_templates` es legible por cualquier
+usuario autenticado de la escuela (el link público la lee con la clave de
+servicio), y las rutas públicas de inscripción no pasan por RLS: usan la clave de
+servicio después de resolver el token opaco, y cada consulta se limita al
+`school_id` embebido en ese token.
 
 ---
 
@@ -366,4 +586,11 @@ CREATE INDEX idx_events_school_id ON events(school_id);
 CREATE INDEX idx_events_category_id ON events(category_id);
 CREATE INDEX idx_trainings_event_id ON trainings(event_id);
 CREATE INDEX idx_trainings_date ON trainings(date);
+
+-- Expediente de inscripción
+CREATE INDEX idx_enrollment_invitations_school ON enrollment_invitations(school_id, created_at DESC);
+CREATE INDEX idx_enrollment_applications_school_status ON enrollment_applications(school_id, status, created_at DESC);
+CREATE INDEX idx_enrollment_documents_student ON enrollment_documents(student_id) WHERE student_id IS NOT NULL;
+CREATE INDEX idx_enrollment_documents_application ON enrollment_documents(application_id) WHERE application_id IS NOT NULL;
+CREATE INDEX idx_students_school_curp ON students(school_id, curp) WHERE curp IS NOT NULL;
 ```
