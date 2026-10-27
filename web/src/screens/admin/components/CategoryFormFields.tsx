@@ -1,4 +1,5 @@
 import {
+  Autocomplete,
   ColorInput,
   Group,
   MultiSelect,
@@ -9,7 +10,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import type { UseFormReturnType } from '@mantine/form';
-import { ANIOS_NACIMIENTO, COLORES_CATEGORIA, ESTADOS_CATEGORIA } from '../../../lib/categories';
+import { ANIOS_SUGERIDOS, COLORES_CATEGORIA, ESTADOS_CATEGORIA } from '../../../lib/categories';
 import type { CategoryStatus } from '../../../types';
 
 export interface CategoryFormValues {
@@ -17,7 +18,6 @@ export interface CategoryFormValues {
   description: string;
   color: string;
   birth_year: string;
-  birth_year_end: string;
   teacher_ids: string[];
   monthly_fee: number | string;
   max_students: number | string;
@@ -29,7 +29,6 @@ export const valoresInicialesCategoria = (): CategoryFormValues => ({
   description: '',
   color: COLORES_CATEGORIA[0],
   birth_year: String(new Date().getFullYear() - 10),
-  birth_year_end: '',
   teacher_ids: [],
   monthly_fee: 0,
   max_students: '',
@@ -48,12 +47,11 @@ export const validacionIdentidad = {
     if (limpio.length > 60) return 'Máximo 60 caracteres';
     return null;
   },
-  birth_year: (valor: string) => (valor ? null : 'Elige el año de nacimiento'),
-  birth_year_end: (valor: string, valores: CategoryFormValues) => {
-    if (!valor) return null;
-    return Number(valor) < Number(valores.birth_year)
-      ? 'El año final no puede ser anterior al inicial'
-      : null;
+  birth_year: (valor: string) => {
+    const limpio = (valor || '').trim();
+    if (!limpio) return 'Indica la generación';
+    if (limpio.length > 40) return 'Máximo 40 caracteres';
+    return null;
   },
   color: (valor: string) =>
     !valor || /^#[0-9a-fA-F]{6}$/.test(valor) ? null : 'Usa un color en formato #RRGGBB',
@@ -73,8 +71,7 @@ export const aPayloadCategoria = (valores: CategoryFormValues) => ({
   name: valores.name.trim(),
   description: valores.description.trim() || null,
   color: valores.color || null,
-  birth_year: Number(valores.birth_year),
-  birth_year_end: valores.birth_year_end ? Number(valores.birth_year_end) : null,
+  birth_year: valores.birth_year.trim(),
   teacher_ids: valores.teacher_ids,
   monthly_fee: valores.monthly_fee === '' ? 0 : Number(valores.monthly_fee),
   max_students: valores.max_students === '' ? null : Number(valores.max_students),
@@ -97,24 +94,16 @@ export function CamposIdentidad({ form }: Pick<Props, 'form'>) {
         data-autofocus
         {...form.getInputProps('name')}
       />
-      <Group grow align="flex-start">
-        <Select
-          label="Año de nacimiento"
-          description="El año principal de la generación"
-          data={ANIOS_NACIMIENTO}
-          searchable
-          required
-          {...form.getInputProps('birth_year')}
-        />
-        <Select
-          label="Hasta (opcional)"
-          description="Si la categoría junta dos generaciones"
-          data={ANIOS_NACIMIENTO}
-          searchable
-          clearable
-          {...form.getInputProps('birth_year_end')}
-        />
-      </Group>
+      {/* Texto libre a propósito: la academia agrupa generaciones ("2014-2015")
+          y usa grupos sin año ("Porteros"). Los años solo son sugerencias. */}
+      <Autocomplete
+        label="Generación"
+        description="Un año, un rango o un grupo. Ej.: 2015, 2014-2015, Porteros"
+        placeholder="2015"
+        data={ANIOS_SUGERIDOS}
+        required
+        {...form.getInputProps('birth_year')}
+      />
       <ColorInput
         label="Color"
         description="Identifica la categoría en listados y calendarios"

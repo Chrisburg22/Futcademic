@@ -17,8 +17,8 @@ export const categoryKeys = {
 export interface CategoryPayload {
   name: string;
   status?: CategoryStatus;
-  birth_year: number;
-  birth_year_end?: number | null;
+  /** Etiqueta de la generación: un año, un rango o un grupo. */
+  birth_year: string;
   description?: string | null;
   color?: string | null;
   monthly_fee?: number | null;

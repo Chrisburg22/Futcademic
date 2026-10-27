@@ -619,8 +619,10 @@ Elimina un evento y todas sus sesiones de entrenamiento.
 
 ## Endpoints de Categorías
 
-Una categoría es el equipo de una generación. `birth_year` es el año ancla;
-`birth_year_end` solo se usa cuando la categoría junta dos generaciones.
+Una categoría es el equipo de una generación. `birth_year` es una **etiqueta
+de texto**, no un número: un año suelto (`"2015"`), un rango (`"2014-2015"`,
+`"2012-2013-2014"`) o un grupo sin año (`"Porteros"`), tal como lo escribe la
+academia. Es único por escuela.
 
 No hay borrado duro: `students`, `events`, `trainings` y `attendances` apuntan a
 la categoría sin `ON DELETE`, así que las categorías se archivan.
@@ -655,8 +657,7 @@ Crea una nueva categoría.
 ```json
 {
   "name": "U-12",
-  "birth_year": 2013,
-  "birth_year_end": 2012,
+  "birth_year": "2012-2013",
   "description": "Generación mixta",
   "color": "#1971c2",
   "monthly_fee": 500,
@@ -665,9 +666,9 @@ Crea una nueva categoría.
 }
 ```
 
-Se validan `name` (2-60 caracteres), `birth_year` (entero), `color`
-(`#RRGGBB`), `monthly_fee` (>= 0) y `max_students` (>= 1). Un nombre repetido
-dentro de la escuela devuelve **409**.
+Se validan `name` (2-60 caracteres), `birth_year` (1-40 caracteres), `color`
+(`#RRGGBB`), `monthly_fee` (>= 0) y `max_students` (>= 1). Repetir una
+generación dentro de la escuela devuelve **409**.
 
 ### POST /categories/full
 El mismo cuerpo más un horario recurrente; además genera los entrenamientos.

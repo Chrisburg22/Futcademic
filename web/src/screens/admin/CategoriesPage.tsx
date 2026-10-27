@@ -31,6 +31,7 @@ import {
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import {
+  useGetCategories,
   useGetCategoriesPaged,
   useGetMyCategories,
   useUpdateCategory,
@@ -43,9 +44,8 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 import {
-  ANIOS_NACIMIENTO,
   ESTADOS_CATEGORIA,
-  formatearAnios,
+  formatearGeneracion,
   formatearMensualidad,
   formatearOcupacion,
   mensajeDeError,
@@ -92,7 +92,7 @@ export function CategoriesPage() {
   const filtros = {
     search: busquedaDebounced || undefined,
     status: estado,
-    birth_year: anio ? Number(anio) : null,
+    birth_year: anio,
     teacher_id: profesor,
     sort: orden as any,
     order: orden === 'name' ? ('asc' as const) : ('desc' as const),
@@ -110,6 +110,17 @@ export function CategoriesPage() {
   const cargando = soloMias ? mias.isLoading : listaPaginada.isLoading;
 
   const { data: teachers = [] } = useGetTeachers();
+
+  // Las generaciones del filtro salen de los datos, no de una lista de años:
+  // la academia usa rangos ("2014-2015") y grupos sin año ("Porteros").
+  const { data: todasLasCategorias = [] } = useGetCategories(!soloMias);
+  const generaciones = useMemo(
+    () =>
+      Array.from(
+        new Set(todasLasCategorias.map((c) => c.birth_year).filter(Boolean)),
+      ).sort((a, b) => b.localeCompare(a)),
+    [todasLasCategorias],
+  );
   const actualizar = useUpdateCategory();
   const cambiarEstado = useUpdateCategoryStatus();
   const [wizardAbierto, { open: abrirWizard, close: cerrarWizard }] = useDisclosure(false);
@@ -148,8 +159,7 @@ export function CategoriesPage() {
       name: categoria.name,
       description: categoria.description || '',
       color: categoria.color || '#198d4b',
-      birth_year: String(categoria.birth_year),
-      birth_year_end: categoria.birth_year_end ? String(categoria.birth_year_end) : '',
+      birth_year: categoria.birth_year || '',
       teacher_ids: (categoria.all_teachers || []).map((t) => t.id),
       monthly_fee: categoria.monthly_fee ?? 0,
       max_students: categoria.max_students ?? '',
@@ -274,9 +284,9 @@ export function CategoriesPage() {
               style={{ flex: '0 1 150px' }}
             />
             <Select
-              label="Año"
-              placeholder="Todos"
-              data={ANIOS_NACIMIENTO}
+              label="Generación"
+              placeholder="Todas"
+              data={generaciones}
               value={anio}
               onChange={alCambiarFiltro(setAnio)}
               searchable
@@ -390,7 +400,7 @@ export function CategoriesPage() {
                         </Group>
                       </Table.Td>
                       <Table.Td>
-                        <Badge variant="light">{formatearAnios(c)}</Badge>
+                        <Badge variant="light">{formatearGeneracion(c)}</Badge>
                       </Table.Td>
                       <Table.Td>{formatearOcupacion(c)}</Table.Td>
                       <Table.Td>

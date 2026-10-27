@@ -32,9 +32,11 @@ export interface Category {
   school_id: string;
   name: string;
   description?: string | null;
-  /** Año ancla. Con `birth_year_end` forma un rango (2015-2016). */
-  birth_year: number;
-  birth_year_end?: number | null;
+  /**
+   * Etiqueta de la generación: un año ("2015"), un rango ("2014-2015") o un
+   * grupo sin año ("Porteros"). La columna es `text`, no un número.
+   */
+  birth_year: string;
   color?: string | null;
   monthly_fee?: number | null;
   max_students?: number | null;
@@ -67,7 +69,7 @@ export interface CategoryDetail extends Category {
 export interface CategoryFilters {
   search?: string;
   status?: CategoryStatus | 'all';
-  birth_year?: number | null;
+  birth_year?: string | null;
   teacher_id?: string | null;
   sort?: 'birth_year' | 'name' | 'created_at' | 'monthly_fee';
   order?: 'asc' | 'desc';

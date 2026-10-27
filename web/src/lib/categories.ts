@@ -37,19 +37,17 @@ export const ESTADOS_CATEGORIA: Record<
   },
 };
 
-/** Años disponibles en los selectores: de este año hacia atrás. */
-export const ANIOS_NACIMIENTO = Array.from({ length: 25 }, (_, i) =>
+/** Años que se ofrecen como sugerencia; el campo acepta cualquier texto. */
+export const ANIOS_SUGERIDOS = Array.from({ length: 25 }, (_, i) =>
   String(new Date().getFullYear() - i),
 );
 
-/** "2015" o "2015-2016", según tenga año final. */
-export const formatearAnios = (categoria?: Pick<Category, 'birth_year' | 'birth_year_end'> | null) => {
-  if (!categoria?.birth_year) return '—';
-  const { birth_year, birth_year_end } = categoria;
-  return birth_year_end && birth_year_end !== birth_year
-    ? `${birth_year}-${birth_year_end}`
-    : String(birth_year);
-};
+/**
+ * La generación tal como la escribió la academia: un año ("2015"), un rango
+ * ("2014-2015") o un grupo sin año ("Porteros").
+ */
+export const formatearGeneracion = (categoria?: Pick<Category, 'birth_year'> | null) =>
+  categoria?.birth_year?.trim() || '—';
 
 export const formatearMensualidad = (monto?: number | null) =>
   monto == null ? '—' : `$${Number(monto).toLocaleString('es-MX')}`;

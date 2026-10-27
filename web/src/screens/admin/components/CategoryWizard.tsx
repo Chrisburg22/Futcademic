@@ -19,7 +19,7 @@ import { notifications } from '@mantine/notifications';
 import { IconCalendarPlus, IconInfoCircle } from '@tabler/icons-react';
 import { useCreateCategory, useCreateFullCategory } from '../../../hooks/useCategories';
 import { useGetVenues } from '../../../hooks/useVenues';
-import { formatearAnios, formatearMensualidad, mensajeDeError } from '../../../lib/categories';
+import { formatearGeneracion, formatearMensualidad, mensajeDeError } from '../../../lib/categories';
 import {
   CamposEquipo,
   CamposIdentidad,
@@ -218,12 +218,9 @@ export function CategoryWizard({ opened, onClose, teachers }: Props) {
               >
                 {form.values.name || 'Sin nombre'}
               </Badge>
-              <Badge variant="light">{formatearAnios({
-                birth_year: Number(form.values.birth_year),
-                birth_year_end: form.values.birth_year_end
-                  ? Number(form.values.birth_year_end)
-                  : null,
-              })}</Badge>
+              <Badge variant="light">
+                {formatearGeneracion({ birth_year: form.values.birth_year })}
+              </Badge>
               <Badge variant="light" color="teal">
                 {formatearMensualidad(Number(form.values.monthly_fee || 0))}
               </Badge>

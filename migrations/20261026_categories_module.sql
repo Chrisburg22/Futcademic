@@ -1,9 +1,13 @@
--- MIGRACIÓN: Módulo Categorías (ciclo de vida, rango de años, aforo)
+-- MIGRACIÓN: Módulo Categorías (ciclo de vida y aforo)
 -- Fecha: 2026-10-26
+--
+-- OJO con `categories.birth_year`: es `text`, no `integer`. Guarda la etiqueta
+-- de la generación tal como la escribe la academia: un año ("2015"), un rango
+-- ("2014-2015", "2012-2013-2014") o un grupo sin año ("Porteros"). Por eso no
+-- hay columna de año final ni CHECK de rango.
 
 -- 1. Columnas nuevas
 ALTER TABLE public.categories
-  ADD COLUMN IF NOT EXISTS birth_year_end integer,
   ADD COLUMN IF NOT EXISTS status character varying NOT NULL DEFAULT 'activa',
   ADD COLUMN IF NOT EXISTS description text,
   ADD COLUMN IF NOT EXISTS max_students integer,
@@ -26,14 +30,6 @@ BEGIN
   END IF;
 
   IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'categories_birth_year_range_check'
-  ) THEN
-    ALTER TABLE public.categories
-      ADD CONSTRAINT categories_birth_year_range_check
-      CHECK (birth_year_end IS NULL OR birth_year_end >= birth_year);
-  END IF;
-
-  IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'categories_max_students_check'
   ) THEN
     ALTER TABLE public.categories
@@ -51,6 +47,10 @@ CREATE INDEX IF NOT EXISTS categories_school_birth_year_idx
 
 -- Dos categorías vivas no pueden compartir nombre dentro de la misma escuela.
 -- Las archivadas quedan fuera para poder reutilizar el nombre en una temporada nueva.
+--
+-- Esto es ADEMÁS de `categories_school_id_birth_year_key`, el UNIQUE sobre
+-- (school_id, birth_year) que ya existe en la base y es el que de verdad
+-- dispara el 23505 al repetir una generación.
 --
 -- Si la base ya tiene nombres duplicados el índice no se puede crear; en ese
 -- caso la migración avisa y sigue, y la unicidad queda cubierta por la
@@ -83,8 +83,7 @@ CREATE INDEX IF NOT EXISTS category_teachers_category_idx
   ON public.category_teachers (category_id);
 
 -- 7. Comentarios de ayuda
-COMMENT ON COLUMN public.categories.birth_year IS 'Año de nacimiento ancla de la categoría; se usa para ordenar el listado.';
-COMMENT ON COLUMN public.categories.birth_year_end IS 'Año final cuando la categoría agrupa varias generaciones (2015-2016). NULL si es un solo año.';
+COMMENT ON COLUMN public.categories.birth_year IS 'Etiqueta de la generación: un año ("2015"), un rango ("2014-2015") o un grupo ("Porteros"). Es text, no integer.';
 COMMENT ON COLUMN public.categories.status IS 'Ciclo de vida: activa | inactiva | archivada. No se borran categorías con historial, se archivan.';
 COMMENT ON COLUMN public.categories.description IS 'Nota breve visible en el listado y el detalle.';
 COMMENT ON COLUMN public.categories.max_students IS 'Aforo máximo de alumnos; NULL = sin límite.';

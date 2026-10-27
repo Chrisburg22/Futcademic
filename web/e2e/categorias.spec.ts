@@ -12,8 +12,7 @@ const CATEGORIES = [
     school_id: 'school-1',
     name: 'Sub-12',
     description: 'Generación mixta',
-    birth_year: 2013,
-    birth_year_end: 2012,
+    birth_year: '2012-2013',
     color: '#1971c2',
     monthly_fee: 500,
     max_students: 20,
@@ -31,7 +30,7 @@ const CATEGORIES = [
     id: 'cat2',
     school_id: 'school-1',
     name: 'Sub-8',
-    birth_year: 2017,
+    birth_year: '2017',
     color: '#e8590c',
     monthly_fee: 400,
     status: 'activa',
@@ -43,7 +42,7 @@ const CATEGORIES = [
     id: 'cat3',
     school_id: 'school-1',
     name: 'Sub-20 (temporada pasada)',
-    birth_year: 2005,
+    birth_year: 'Porteros',
     status: 'archivada',
     students_count: 3,
     coaches_count: 0,
@@ -78,9 +77,8 @@ test('la lista muestra plantel, entrenadores, mensualidad y estado', async ({ pa
 
   const fila = page.getByRole('row', { name: /Sub-12/ });
   await expect(fila).toBeVisible();
-  // Rango de años: antes el campo era un MultiSelect que mandaba "2012-2013"
-  // a una columna integer y el insert fallaba.
-  await expect(fila.getByText('2013-2012')).toBeVisible();
+  // La generación se muestra tal como la escribió la academia.
+  await expect(fila.getByText('2012-2013')).toBeVisible();
   await expect(fila.getByText('12/20')).toBeVisible();
   await expect(fila.getByText('$500')).toBeVisible();
   await expect(fila.getByText('Activa')).toBeVisible();
@@ -127,6 +125,7 @@ test('el asistente crea una categoría con horario', async ({ page }) => {
   const modal = page.getByRole('dialog');
 
   await modal.getByLabel('Nombre').fill('Sub-14');
+  await modal.getByLabel('Generación').fill('2011-2012');
   await modal.getByRole('button', { name: 'Continuar' }).click();
 
   await modal.getByLabel('Entrenadores').click();
@@ -140,6 +139,20 @@ test('el asistente crea una categoría con horario', async ({ page }) => {
 
   await modal.getByRole('button', { name: 'Crear categoría' }).click();
   await expect(page.getByText(/Categoría creada con 12 entrenamientos/)).toBeVisible();
+});
+
+test('editar conserva la generación aunque no sea un año', async ({ page }) => {
+  await loginAs(page, { api: API, goto: '/admin/categories' });
+
+  // Con filtros por defecto las archivadas no salen, así que pedimos todas.
+  await page.getByRole('textbox', { name: 'Estado' }).click();
+  await page.getByRole('option', { name: 'Todas' }).click();
+
+  await page.getByRole('row', { name: /Porteros/ }).getByRole('button', { name: 'Editar' }).click();
+
+  // El campo antes era un Select de años sueltos: "Porteros" no coincidía con
+  // ninguna opción, salía vacío y al guardar se perdía la etiqueta.
+  await expect(page.getByRole('dialog').getByLabel('Generación')).toHaveValue('Porteros');
 });
 
 test('archivar pide confirmación explícita', async ({ page }) => {

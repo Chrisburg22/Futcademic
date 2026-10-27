@@ -614,8 +614,10 @@ Delete an event and all its training sessions.
 
 ## Category Endpoints
 
-A category is the team for a birth-year generation. `birth_year` is the anchor
-year; `birth_year_end` is only set when the category spans two generations.
+A category is the team for a generation. `birth_year` is a **text label**, not
+a number: a single year (`"2015"`), a range (`"2014-2015"`, `"2012-2013-2014"`)
+or a group with no year at all (`"Porteros"`), exactly as the academy writes it.
+It is unique per school.
 
 There is no hard delete: `students`, `events`, `trainings` and `attendances`
 reference a category without `ON DELETE`, so categories are archived instead.
@@ -650,8 +652,7 @@ Create a new category.
 ```json
 {
   "name": "U-12",
-  "birth_year": 2013,
-  "birth_year_end": 2012,
+  "birth_year": "2012-2013",
   "description": "Mixed generation",
   "color": "#1971c2",
   "monthly_fee": 500,
@@ -660,9 +661,9 @@ Create a new category.
 }
 ```
 
-`name` (2-60 chars), `birth_year` (integer), `color` (`#RRGGBB`),
-`monthly_fee` (>= 0) and `max_students` (>= 1) are validated. A duplicate name
-within the school returns **409**.
+`name` (2-60 chars), `birth_year` (1-40 chars), `color` (`#RRGGBB`),
+`monthly_fee` (>= 0) and `max_students` (>= 1) are validated. Repeating a
+generation within the school returns **409**.
 
 ### POST /categories/full
 Same body plus a recurring schedule; also generates the training sessions.

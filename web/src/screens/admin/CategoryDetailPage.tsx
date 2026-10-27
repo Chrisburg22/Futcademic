@@ -34,7 +34,7 @@ import { CategorySummary } from '../../components/categories/CategorySummary';
 import { useRegisterChatScreen } from '../../contexts/ChatScreenContext';
 import {
   ESTADOS_CATEGORIA,
-  formatearAnios,
+  formatearGeneracion,
   formatearMensualidad,
   mensajeDeError,
 } from '../../lib/categories';
@@ -115,7 +115,7 @@ export function CategoryDetailPage() {
     <>
       <PageHeader
         title={category.name}
-        description={`Años ${formatearAnios(category)} · ${meta.label}`}
+        description={`Generación ${formatearGeneracion(category)} · ${meta.label}`}
         actions={
           <>
             <Button
@@ -216,7 +216,7 @@ export function CategoryDetailPage() {
           <CategorySummary
             nombre={category.name}
             color={category.color}
-            anios={formatearAnios(category)}
+            anios={formatearGeneracion(category)}
             descripcion={category.description}
             jugadores={category.students_count ?? 0}
             entrenadores={(category.all_teachers || []).map((t) => ({
