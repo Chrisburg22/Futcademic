@@ -7,6 +7,7 @@ import {
   Group,
   Stack,
   Text,
+  ThemeIcon,
 } from '@mantine/core';
 import { IconAlertTriangle, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import type { PendingAction } from '../../api/chatStream';
@@ -177,12 +178,16 @@ export function ConfirmationCard({
       withBorder
       radius="md"
       p="md"
-      bg="yellow.0"
+      bg="var(--mantine-color-yellow-light)"
       style={{ borderColor: 'var(--mantine-color-yellow-4)' }}
+      role="group"
+      aria-label="Confirmación de acciones del asistente"
     >
       <Stack gap="sm">
-        <Group gap="xs">
-          <IconAlertTriangle size={18} color="var(--mantine-color-yellow-8)" />
+        <Group gap="xs" wrap="nowrap">
+          <ThemeIcon size={28} radius="md" variant="light" color="yellow" aria-hidden>
+            <IconAlertTriangle size={16} />
+          </ThemeIcon>
           <Text fw={600} size="sm">
             {multiple
               ? `El asistente quiere ejecutar ${actions.length} acciones`
@@ -203,12 +208,12 @@ export function ConfirmationCard({
         </Text>
 
         <Group justify="flex-end" gap="sm">
-          <Button variant="default" size="xs" onClick={() => onRespond(false)} disabled={disabled}>
+          <Button variant="default" size="md" onClick={() => onRespond(false)} disabled={disabled}>
             Cancelar
           </Button>
           <Button
             color={destructive ? 'red' : 'blue'}
-            size="xs"
+            size="md"
             onClick={() => onRespond(true)}
             disabled={disabled}
           >

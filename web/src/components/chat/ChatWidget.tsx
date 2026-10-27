@@ -1,34 +1,29 @@
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   ActionIcon,
   Affix,
-  Alert,
-  Button,
-  Center,
+  Badge,
   Divider,
   Group,
-  Loader,
   Paper,
-  ScrollArea,
   Stack,
   Text,
+  ThemeIcon,
+  Tooltip,
 } from '@mantine/core';
 import {
-  IconAlertCircle,
   IconArrowsMaximize,
   IconEye,
   IconMessageChatbot,
-  IconRefresh,
+  IconPlus,
   IconX,
 } from '@tabler/icons-react';
 import { useChat } from '../../hooks/useChat';
 import { screenContextLabel } from '../../lib/chatScreen';
-import { MessageBubble, StreamingBubble, UserBubble } from './MessageBubble';
-import { ToolActivity } from './ToolActivity';
-import { ConfirmationCard } from './ConfirmationCard';
+import { ChatTranscript } from './ChatTranscript';
 import { ChatInput } from './ChatInput';
-import { ChatSuggestions } from './ChatSuggestions';
+import classes from './chat.module.css';
 
 /**
  * Bola flotante presente en toda la app admin (montada en AppShell). Abre un
@@ -40,169 +35,120 @@ export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const chat = useChat();
   const navigate = useRouter();
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
+  // Cerrar con Escape es el gesto esperado en cualquier panel flotante.
   useEffect(() => {
     if (!open) return;
-    const el = viewportRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [
-    open,
-    chat.messages,
-    chat.streamingText,
-    chat.activeTool,
-    chat.pendingActions,
-    chat.liveUserText,
-    chat.error,
-  ]);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open]);
 
-  const hasPending = !!chat.pendingActions?.length;
-  const hasContent = chat.messages.length > 0 || !!chat.liveUserText;
+  // En la página del asistente el widget sobra y tapaba la conversación.
+  if (pathname === '/admin/chat') return null;
+
+  const pendingCount = chat.pendingActions?.length ?? 0;
+  const hasPending = pendingCount > 0;
   const contextLabel = screenContextLabel(chat.screenContext);
+  const status = chat.isStreaming
+    ? 'Respondiendo…'
+    : hasPending
+      ? 'Esperando tu confirmación'
+      : 'Pregunta lo que necesites';
 
   return (
     <Affix
       position={{
         // Se aparta del dock de accesos rápidos y de la barra de gestos.
-        bottom: 'calc(20px + var(--quick-dock-height, 0px) + env(safe-area-inset-bottom, 0px))',
-        right: 20,
+        bottom: 'calc(16px + var(--quick-dock-height, 0px) + env(safe-area-inset-bottom, 0px))',
+        right: 16,
       }}
       zIndex={300}
     >
       {open ? (
         <Paper
           withBorder
-          shadow="lg"
-          radius="md"
-          w={{ base: 'calc(100vw - 32px)', xs: 380 }}
-          h={540}
-          maw={380}
-          style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+          shadow="xl"
+          radius="lg"
+          w={{ base: 'calc(100vw - 32px)', xs: 400 }}
+          maw={400}
+          h="min(78dvh, 600px)"
+          className={classes.widgetPanel}
+          style={{ maxHeight: 'calc(100dvh - 32px - var(--quick-dock-height, 0px))' }}
         >
-          <Group justify="space-between" px="sm" py="xs" style={{ flexShrink: 0 }}>
-            <Group gap="xs">
-              <IconMessageChatbot size={20} />
-              <Text fw={600} size="sm">
-                Asistente IA
-              </Text>
+          <Group justify="space-between" wrap="nowrap" gap="xs" px="sm" py="xs">
+            <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+              <ThemeIcon size={36} radius="xl" variant="light" color="futcamedic" aria-hidden>
+                <IconMessageChatbot size={20} />
+              </ThemeIcon>
+              <Stack gap={0} style={{ minWidth: 0 }}>
+                <Text fw={700} size="sm" lh={1.2}>
+                  Asistente IA
+                </Text>
+                <Text size="10px" c="dimmed" lh={1.2} truncate>
+                  {status}
+                </Text>
+              </Stack>
             </Group>
-            <Group gap={4}>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="sm"
-                onClick={() => navigate.push('/admin/chat')}
-                aria-label="Ver todas las conversaciones"
-                title="Ver todas las conversaciones"
-              >
-                <IconArrowsMaximize size={16} />
-              </ActionIcon>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="sm"
-                onClick={() => setOpen(false)}
-                aria-label="Cerrar asistente"
-              >
-                <IconX size={16} />
-              </ActionIcon>
+
+            <Group gap={2} wrap="nowrap" style={{ flexShrink: 0 }}>
+              <Tooltip label="Nueva conversación" withArrow>
+                <ActionIcon
+                  size={36}
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => chat.selectConversation(null)}
+                  aria-label="Nueva conversación"
+                >
+                  <IconPlus size={17} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Abrir en pantalla completa" withArrow>
+                <ActionIcon
+                  size={36}
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => navigate.push('/admin/chat')}
+                  aria-label="Abrir en pantalla completa"
+                >
+                  <IconArrowsMaximize size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Cerrar (Esc)" withArrow>
+                <ActionIcon
+                  size={36}
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => setOpen(false)}
+                  aria-label="Cerrar asistente"
+                >
+                  <IconX size={17} />
+                </ActionIcon>
+              </Tooltip>
             </Group>
           </Group>
+
           <Divider />
 
           {contextLabel && (
-            <Group px="sm" py={6} gap={6} wrap="nowrap" style={{ flexShrink: 0 }}>
-              <IconEye size={12} opacity={0.5} />
+            <Group
+              px="sm"
+              py={6}
+              gap={6}
+              wrap="nowrap"
+              className={classes.contextStrip}
+            >
+              <IconEye size={13} style={{ opacity: 0.6, flexShrink: 0 }} />
               <Text size="xs" c="dimmed" truncate>
                 Viendo: {contextLabel}
               </Text>
             </Group>
           )}
 
-          <ScrollArea style={{ flex: 1 }} viewportRef={viewportRef} p="sm">
-            <Stack gap="sm" pb="xs">
-              {chat.messagesLoading ? (
-                <Center py="xl">
-                  <Loader size="sm" />
-                </Center>
-              ) : !hasContent ? (
-                <Stack gap="sm">
-                  <Stack gap={2} align="center">
-                    <IconMessageChatbot size={28} opacity={0.3} />
-                    <Text fw={600} size="sm">
-                      ¿Qué necesitas de la academia?
-                    </Text>
-                    <Text c="dimmed" size="xs" ta="center">
-                      Antes de tocar dinero o personas, te pediré confirmación.
-                    </Text>
-                  </Stack>
-                  <ChatSuggestions onPick={chat.sendMessage} compact />
-                </Stack>
-              ) : (
-                chat.messages.map((m) => (
-                  <MessageBubble
-                    key={m.id}
-                    message={m}
-                    feedback={chat.feedback[m.id]}
-                    onFeedback={chat.sendFeedback}
-                  />
-                ))
-              )}
-
-              {chat.liveUserText && <UserBubble text={chat.liveUserText} />}
-              {chat.streamingText && <StreamingBubble text={chat.streamingText} />}
-              {chat.activeTool && <ToolActivity label={chat.activeTool} />}
-              {chat.isStreaming && !chat.streamingText && !chat.activeTool && (
-                <Group px="xs">
-                  <Loader size="xs" type="dots" />
-                </Group>
-              )}
-
-              {chat.error && (
-                <Alert
-                  color="red"
-                  variant="light"
-                  icon={<IconAlertCircle size={16} />}
-                  p="xs"
-                  title={
-                    <Text size="xs" fw={600}>
-                      No se pudo completar la respuesta
-                    </Text>
-                  }
-                >
-                  <Text size="xs">{chat.error}</Text>
-                  {!chat.canRetry && (
-                    <Text size="xs" c="dimmed" mt={4}>
-                      La acción pudo haberse aplicado. Verifícala antes de repetirla.
-                    </Text>
-                  )}
-                  <Group gap={4} mt={6}>
-                    {chat.canRetry && (
-                      <Button
-                        size="compact-xs"
-                        leftSection={<IconRefresh size={12} />}
-                        onClick={chat.retry}
-                        disabled={chat.isStreaming}
-                      >
-                        Reintentar
-                      </Button>
-                    )}
-                    <Button size="compact-xs" variant="subtle" color="gray" onClick={chat.dismissError}>
-                      Descartar
-                    </Button>
-                  </Group>
-                </Alert>
-              )}
-
-              {chat.pendingActions && chat.pendingActions.length > 0 && (
-                <ConfirmationCard
-                  actions={chat.pendingActions}
-                  onRespond={chat.respondConfirmation}
-                  disabled={chat.isStreaming}
-                />
-              )}
-            </Stack>
-          </ScrollArea>
+          <ChatTranscript compact onPickSuggestion={chat.sendMessage} />
 
           <Divider />
           <Group p="xs" style={{ flexShrink: 0 }}>
@@ -211,35 +157,41 @@ export function ChatWidget() {
               onStop={chat.stop}
               streaming={chat.isStreaming}
               disabled={!!chat.pendingActions}
-              placeholder={chat.pendingActions ? 'Confirma o cancela la acción…' : undefined}
+              placeholder={
+                chat.pendingActions
+                  ? 'Confirma o cancela la acción…'
+                  : chat.isStreaming
+                    ? 'El asistente está respondiendo…'
+                    : undefined
+              }
             />
           </Group>
         </Paper>
       ) : (
-        <ActionIcon
-          size={56}
-          radius="xl"
-          variant="filled"
-          onClick={() => setOpen(true)}
-          aria-label="Abrir asistente IA"
-          pos="relative"
-        >
-          <IconMessageChatbot size={28} />
-          {hasPending && (
-            <span
-              style={{
-                position: 'absolute',
-                top: -2,
-                right: -2,
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                background: 'var(--mantine-color-red-6)',
-                border: '2px solid var(--mantine-color-body)',
-              }}
-            />
-          )}
-        </ActionIcon>
+        <Tooltip label="Asistente IA" position="left" withArrow>
+          <ActionIcon
+            size={58}
+            radius="xl"
+            variant="filled"
+            onClick={() => setOpen(true)}
+            className={classes.fab}
+            aria-label="Abrir asistente IA"
+            pos="relative"
+          >
+            <IconMessageChatbot size={28} />
+            {hasPending && (
+              <Badge
+                size="xs"
+                circle
+                color="red"
+                className={classes.fabBadge}
+                aria-hidden
+              >
+                {pendingCount}
+              </Badge>
+            )}
+          </ActionIcon>
+        </Tooltip>
       )}
     </Affix>
   );
