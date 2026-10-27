@@ -175,9 +175,11 @@ export function ChatSuggestions({
                 <Text size="sm" fw={600} lh={1.3}>
                   {s.title}
                 </Text>
-                <Text size="xs" c="dimmed" mt={2} lh={1.3}>
-                  {s.prompt}
-                </Text>
+                {s.prompt !== s.title && (
+                  <Text size="xs" c="dimmed" mt={2} lh={1.3}>
+                    {s.prompt}
+                  </Text>
+                )}
               </div>
             </Group>
           </Paper>
