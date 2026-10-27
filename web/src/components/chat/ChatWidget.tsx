@@ -73,13 +73,20 @@ export function ChatWidget() {
           withBorder
           shadow="xl"
           radius="lg"
-          w={{ base: 'calc(100vw - 32px)', xs: 400 }}
-          maw={400}
-          h="min(78dvh, 600px)"
+          w={{ base: 'calc(100vw - 24px)', xs: 420 }}
+          maw={420}
+          // El alto lo fija `.widgetPanel`: ocupa toda la sección por debajo
+          // del header y no un tope fijo que lo dejaba "a medias".
           className={classes.widgetPanel}
-          style={{ maxHeight: 'calc(100dvh - 32px - var(--quick-dock-height, 0px))' }}
         >
-          <Group justify="space-between" wrap="nowrap" gap="xs" px="sm" py="xs">
+          <Group
+            justify="space-between"
+            wrap="nowrap"
+            gap="xs"
+            px="sm"
+            py="xs"
+            style={{ flexShrink: 0 }}
+          >
             <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
               <ThemeIcon size={36} radius="xl" variant="light" color="futcamedic" aria-hidden>
                 <IconMessageChatbot size={20} />

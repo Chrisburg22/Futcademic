@@ -283,6 +283,8 @@
 .composer textarea {
   /* 16px evita el zoom automático de iOS al enfocar el campo. */
   font-size: 16px;
+  /* El alto lo calcula ChatInput según el contenido. */
+  resize: none;
 }
 
 @media (min-width: 48em) {
@@ -292,6 +294,7 @@
 }
 
 .composerArea {
+  flex-shrink: 0;
   border-top: 1px solid var(--mantine-color-default-border);
   background: var(--mantine-color-body);
 }
@@ -401,6 +404,17 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* Móvil: hoja casi completa, apartada del dock y de la barra de gestos. */
+  height: calc(
+    100dvh - 32px - var(--quick-dock-height, 0px) - env(safe-area-inset-bottom, 0px)
+  );
+}
+
+@media (min-width: 48em) {
+  .widgetPanel {
+    /* Escritorio: ocupa la sección entera, de debajo del header al borde. */
+    height: calc(100dvh - var(--app-shell-header-height, 60px) - 24px);
+  }
 }
 
 .fab {
@@ -433,8 +447,25 @@
 }
 
 .contextStrip {
+  flex-shrink: 0;
   border-bottom: 1px solid var(--mantine-color-default-border);
   background: var(--mantine-color-default-hover);
+}
+
+/* --- Dictado por voz ----------------------------------------------------- */
+
+.listening {
+  animation: chatMicPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes chatMicPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(224, 49, 49, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(224, 49, 49, 0);
+  }
 }
 
 /* --- Movimiento reducido ------------------------------------------------- */
@@ -460,7 +491,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .typing span,
-  .caret {
+  .caret,
+  .listening {
     animation: none;
   }
 

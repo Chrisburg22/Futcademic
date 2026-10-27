@@ -17,7 +17,7 @@ import { DateInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconPlus, IconEdit, IconShirt, IconTrash, IconEye } from '@tabler/icons-react';
+import { IconPlus, IconEdit, IconShirt, IconTrash, IconEye, IconLink } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/navigation';
@@ -29,6 +29,8 @@ import {
   useDeleteStudent,
 } from '../../hooks/useStudents';
 import { StudentWizard } from './components/StudentWizard';
+import { InviteStudentModal } from './components/InviteStudentModal';
+import { EnrollmentStatusBadge } from '../enrollment/labels';
 import { useGetCategories, useGetMyCategories } from '../../hooks/useCategories';
 import { useGetUsers } from '../../hooks/useUsers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -54,6 +56,7 @@ export function StudentsPage() {
   const deleteMut = useDeleteStudent();
 
   const [createOpen, { open: openCreate, close: closeCreate }] = useDisclosure(false);
+  const [inviteOpen, invite] = useDisclosure(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const editing = students.find((s: any) => s.id === editingId);
 
@@ -91,9 +94,18 @@ export function StudentsPage() {
       <PageHeader
         title="Alumnos"
         actions={
-          <Button leftSection={<IconPlus size={16} />} onClick={openCreate}>
-            Nuevo alumno
-          </Button>
+          <Group>
+            <Button
+              variant="light"
+              leftSection={<IconLink size={16} />}
+              onClick={invite.open}
+            >
+              Invitar alumno
+            </Button>
+            <Button leftSection={<IconPlus size={16} />} onClick={openCreate}>
+              Nuevo alumno
+            </Button>
+          </Group>
         }
       />
       <Card withBorder padding="md" radius="md" mb="md">
@@ -120,6 +132,7 @@ export function StudentsPage() {
                   <Table.Th>Alumno</Table.Th>
                   <Table.Th>Categoría</Table.Th>
                   <Table.Th>Status</Table.Th>
+                  <Table.Th>Expediente</Table.Th>
                   <Table.Th>Uniforme</Table.Th>
                   <Table.Th />
                 </Table.Tr>
@@ -170,6 +183,9 @@ export function StudentsPage() {
                           )
                         }
                       />
+                    </Table.Td>
+                    <Table.Td>
+                      <EnrollmentStatusBadge status={s.expediente_status} size="xs" />
                     </Table.Td>
                     <Table.Td>
                       <ActionIcon
@@ -289,6 +305,12 @@ export function StudentsPage() {
           </Stack>
         </form>
       </Modal>
+      <InviteStudentModal
+        opened={inviteOpen}
+        onClose={invite.close}
+        categories={categories}
+        defaultCategoryId={categoryFilter}
+      />
     </>
   );
 }

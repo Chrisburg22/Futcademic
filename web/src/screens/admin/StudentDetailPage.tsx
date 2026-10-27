@@ -27,6 +27,7 @@ import { useGetAttendancesByStudent } from '../../hooks/useAttendances';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { useRegisterChatScreen } from '../../contexts/ChatScreenContext';
+import { StudentExpediente } from './components/StudentExpediente';
 import dayjs from 'dayjs';
 
 function Stat({
@@ -189,6 +190,8 @@ export function StudentDetailPage() {
           </Group>
         </Card>
       )}
+
+      <StudentExpediente studentId={id} student={student} />
 
       <Card withBorder padding={0} radius="md">
         <Text fw={600} p="md" pb={0}>

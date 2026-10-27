@@ -77,7 +77,14 @@ export function ChatPage() {
             overflow: 'hidden',
           }}
         >
-          <Group justify="space-between" wrap="nowrap" gap="sm" px="md" py="sm">
+          <Group
+            justify="space-between"
+            wrap="nowrap"
+            gap="sm"
+            px="md"
+            py="sm"
+            style={{ flexShrink: 0 }}
+          >
             <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
               <ThemeIcon size={40} radius="md" variant="light" color="futcamedic" aria-hidden>
                 <IconMessageChatbot size={22} />

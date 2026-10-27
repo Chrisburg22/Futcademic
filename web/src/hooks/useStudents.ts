@@ -25,6 +25,13 @@ export const useCreateStudent = () => {
       birth_date: string;
       email: string;
       parent_id?: string | null;
+      curp?: string | null;
+      guardian_relationship?: string | null;
+      phone?: string | null;
+      address?: string | null;
+      emergency_contact_name?: string | null;
+      emergency_contact_phone?: string | null;
+      medical_notes?: string | null;
     }) => (await api.post('/students', payload)).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['students'] }),
   });
