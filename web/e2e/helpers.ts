@@ -30,6 +30,8 @@ export interface ApiFixtures {
   notifications?: any[];
   students?: any[];
   categories?: any[];
+  /** Respuesta de `GET /categories/:id`; si falta se arma desde `categories`. */
+  categoryDetail?: any;
   teachers?: any[];
   users?: any[];
   payments?: any[];
@@ -136,8 +138,13 @@ export async function mockApi(page: Page, fx: ApiFixtures) {
     const url = new URL(req.url());
     const path = url.pathname.replace(/^\/api/, '');
 
-    const json = (body: unknown, status = 200) =>
-      route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+    const json = (body: unknown, status = 200, headers?: Record<string, string>) =>
+      route.fulfill({
+        status,
+        contentType: 'application/json',
+        headers,
+        body: JSON.stringify(body),
+      });
 
     // --- Notifications (stateful so mutations reflect on refetch) ---
     if (path === '/notifications' && method === 'GET') return json(notifications);
@@ -166,7 +173,38 @@ export async function mockApi(page: Page, fx: ApiFixtures) {
       if (path.startsWith('/students/')) return json(fx.extra?.[path] ?? {});
       if (path.startsWith('/users')) return json(fx.teachers ?? fx.users ?? []);
       if (path === '/categories/mine') return json(fx.categories ?? []);
-      if (path.startsWith('/categories')) return json(fx.categories ?? []);
+
+      // `GET /categories/:id` devuelve UNA categoría con métricas; sin esta rama
+      // el detalle recibiría el array entero de la lista.
+      const categoriaMatch = path.match(/^\/categories\/([^/]+)$/);
+      if (categoriaMatch) {
+        const encontrada =
+          fx.categoryDetail ??
+          (fx.categories ?? []).find((c: any) => c.id === categoriaMatch[1]);
+        if (!encontrada) return json({ error: 'Categoría no encontrada.' }, 404);
+        return json({
+          students_count: 0,
+          sessions_count: 0,
+          upcoming_sessions_count: 0,
+          schedule: [],
+          ...encontrada,
+        });
+      }
+
+      if (path.startsWith('/categories')) {
+        const buscado = (url.searchParams.get('search') || '').toLowerCase();
+        const estado = url.searchParams.get('status');
+        let lista = fx.categories ?? [];
+        if (buscado) {
+          lista = lista.filter((c: any) => (c.name || '').toLowerCase().includes(buscado));
+        }
+        if (estado && estado !== 'all') {
+          lista = lista.filter((c: any) => (c.status ?? 'activa') === estado);
+        } else if (!estado) {
+          lista = lista.filter((c: any) => (c.status ?? 'activa') !== 'archivada');
+        }
+        return json(lista, 200, { 'x-total-count': String(lista.length) });
+      }
       if (path === '/payments/pending') {
         // El backend devuelve un SOBRE, no un array plano
         // (payment.controller.ts:115-121). La fixture sigue siendo el array,

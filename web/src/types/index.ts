@@ -20,14 +20,59 @@ export interface AppUser {
   must_change_password?: boolean;
 }
 
+export type CategoryStatus = 'activa' | 'inactiva' | 'archivada';
+
+export interface CategoryTeacherRef {
+  id: string;
+  full_name?: string | null;
+}
+
 export interface Category {
   id: string;
-  name: string;
-  birth_year: number;
-  teacher_id?: string | null;
   school_id: string;
-  teacher?: AppUser | null;
+  name: string;
+  description?: string | null;
+  /** Año ancla. Con `birth_year_end` forma un rango (2015-2016). */
+  birth_year: number;
+  birth_year_end?: number | null;
+  color?: string | null;
+  monthly_fee?: number | null;
+  max_students?: number | null;
+  status: CategoryStatus;
+  archived_at?: string | null;
+  created_at?: string;
+  updated_at?: string | null;
+  /** El backend aplana el primer profesor a su nombre, no al objeto. */
+  teacher?: string | null;
+  teacher_id?: string | null;
+  all_teachers?: CategoryTeacherRef[];
+  coaches_count?: number;
+  students_count?: number;
   students?: Student[];
+}
+
+export interface CategoryScheduleSlot {
+  id: string;
+  name?: string | null;
+  start_time?: string | null;
+  venue?: string | null;
+}
+
+export interface CategoryDetail extends Category {
+  sessions_count: number;
+  upcoming_sessions_count: number;
+  schedule: CategoryScheduleSlot[];
+}
+
+export interface CategoryFilters {
+  search?: string;
+  status?: CategoryStatus | 'all';
+  birth_year?: number | null;
+  teacher_id?: string | null;
+  sort?: 'birth_year' | 'name' | 'created_at' | 'monthly_fee';
+  order?: 'asc' | 'desc';
+  page?: number;
+  per_page?: number;
 }
 
 export interface Student {

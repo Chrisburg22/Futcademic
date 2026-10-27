@@ -344,11 +344,34 @@ Delete an event and all its training sessions.
 
 ## Category Endpoints
 
+A category is the team for a birth-year generation. `birth_year` is the anchor
+year; `birth_year_end` is only set when the category spans two generations.
+
+There is no hard delete: `students`, `events`, `trainings` and `attendances`
+reference a category without `ON DELETE`, so categories are archived instead.
+
+Write access: `super_admin` and `admin` always; `profesor` only with
+`teacher_permissions.can_manage_categories`, and only on their own categories.
+
 ### GET /categories
-List all categories with assigned teacher.
+List categories, scoped by role: admins see the whole school, a teacher sees
+the ones assigned to them, a parent sees their children's, a student their own.
+
+**Query params:** `search`, `status` (`activa` | `inactiva` | `archivada` |
+`all`; archived are hidden by default), `birth_year`, `teacher_id`, `sort`
+(`birth_year` | `name` | `created_at` | `monthly_fee`), `order` (`asc` |
+`desc`), `page`, `per_page` (max 100).
+
+Returns a plain array; the total count travels in the `X-Total-Count` header.
+Each item carries `coaches_count`, `students_count`, `teacher` (name string),
+`teacher_id` and `all_teachers[]`.
 
 ### GET /categories/mine
 Get categories assigned to the current teacher.
+
+### GET /categories/:id
+Single category with `students_count`, `sessions_count`,
+`upcoming_sessions_count` and `schedule[]` (recurring training events).
 
 ### POST /categories
 Create a new category.
@@ -356,31 +379,54 @@ Create a new category.
 **Request Body:**
 ```json
 {
-  "birthYear": 2012,
-  "name": "U-12"
+  "name": "U-12",
+  "birth_year": 2013,
+  "birth_year_end": 2012,
+  "description": "Mixed generation",
+  "color": "#1971c2",
+  "monthly_fee": 500,
+  "max_students": 20,
+  "teacher_ids": ["uuid"]
 }
 ```
+
+`name` (2-60 chars), `birth_year` (integer), `color` (`#RRGGBB`),
+`monthly_fee` (>= 0) and `max_students` (>= 1) are validated. A duplicate name
+within the school returns **409**.
+
+### POST /categories/full
+Same body plus a recurring schedule; also generates the training sessions.
+
+**Extra fields:** `days` (numbers 0-6 with 0 = Sunday, or english names
+`monday`…`sunday`), `start_time` (`HH:MM`, required when `days` is set),
+`venue_id`, `recurrence_weeks` (1-52, default 12).
 
 ### PATCH /categories/:id
-Update category.
+Update a category. Partial: only the fields present in the body are written.
+
+### PATCH /categories/:id/status
+Archive, deactivate or restore. `super_admin` and `admin` only.
+
+**Request Body:**
+```json
+{ "status": "archivada" }
+```
+
+Archiving stamps `archived_at`; restoring clears it. The response includes
+`students_count` so the UI can warn about players still attached.
+
+### POST /categories/:id/teachers
+Assign a teacher to a category. Idempotent.
 
 **Request Body:**
 ```json
 {
-  "name": "U-12 Elite",
-  "birthYear": 2012
+  "teacher_id": "uuid"
 }
 ```
 
-### POST /categories/:id/assign
-Assign a teacher to a category.
-
-**Request Body:**
-```json
-{
-  "teacherId": "uuid"
-}
-```
+### DELETE /categories/:id/teachers/:teacherId
+Unassign a teacher from a category.
 
 ---
 

@@ -104,7 +104,7 @@ const API_FX = {
       color: '#3498db',
       birthYear: 2012,
       teammates: [{ id: 's2', full_name: 'Ana Torres' }],
-      teachers: [{ id: 't1', full_name: 'Prof. García' }],
+      teachers: [{ id: 't1', name: 'Prof. García', avatar: null, phone: null }],
       schedules: [],
     },
     '/users/teachers/t1': {

@@ -85,7 +85,7 @@ const adminItems: Item[] = [
     to: '/admin/categories',
     label: 'Categorías',
     icon: <IconCategory size={18} />,
-    roles: ['super_admin', 'admin'],
+    roles: ['super_admin', 'admin', 'profesor'],
   },
   {
     to: '/admin/events',

@@ -5,7 +5,7 @@ import { CategoriesPage } from '@/screens/admin/CategoriesPage';
 
 export default function Page() {
   return (
-    <ProtectedRoute roles={['super_admin', 'admin']}>
+    <ProtectedRoute roles={['super_admin', 'admin', 'profesor']}>
       <CategoriesPage />
     </ProtectedRoute>
   );

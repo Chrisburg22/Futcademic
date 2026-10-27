@@ -10,17 +10,71 @@ import {
   Modal,
   TextInput,
   ActionIcon,
+  Collapse,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { modals } from '@mantine/modals';
-import { IconPlus, IconUnlink } from '@tabler/icons-react';
-import { useGetMyChildren } from '../hooks/useStudents';
+import { IconChevronDown, IconChevronUp, IconPlus, IconUnlink } from '@tabler/icons-react';
+import { useGetMyChildren, useGetStudentTeam } from '../hooks/useStudents';
 import { useLinkChild, useUnlinkChild } from '../hooks/useParents';
 import { PageHeader } from '../components/common/PageHeader';
 import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
+import { CategorySummary } from '../components/categories/CategorySummary';
+
+/**
+ * Ficha de la categoría del hijo. Reutiliza `GET /students/:id/team`, el mismo
+ * endpoint que alimenta "Mi equipo" del alumno; el padre solo lo ve en lectura.
+ */
+function CategoriaDelHijo({ studentId }: { studentId: string }) {
+  const [abierto, { toggle }] = useDisclosure(false);
+  const { data: team, isLoading } = useGetStudentTeam(abierto ? studentId : undefined);
+
+  return (
+    <Stack gap="xs" mt="md">
+      <Button
+        variant="subtle"
+        size="compact-sm"
+        style={{ alignSelf: 'flex-start' }}
+        rightSection={abierto ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
+        onClick={toggle}
+      >
+        {abierto ? 'Ocultar categoría' : 'Ver categoría y horario'}
+      </Button>
+      <Collapse in={abierto}>
+        {isLoading ? (
+          <Text size="sm" c="dimmed">
+            Cargando categoría...
+          </Text>
+        ) : !team ? (
+          <Text size="sm" c="dimmed">
+            Todavía no está asignado a una categoría.
+          </Text>
+        ) : (
+          <CategorySummary
+            nombre={team.teamName || 'Categoría'}
+            color={team.color}
+            anios={team.birthYear ? String(team.birthYear) : undefined}
+            jugadores={team.totalTeammates}
+            entrenadores={(team.teachers || []).map((t: any) => ({
+              id: t.id,
+              nombre: t.name,
+              avatar: t.avatar,
+            }))}
+            horario={(team.schedules || []).map((s: any) => ({
+              id: s.id,
+              nombre: s.name,
+              hora: s.time,
+              cancha: s.venue,
+            }))}
+          />
+        )}
+      </Collapse>
+    </Stack>
+  );
+}
 
 export function ChildrenPage() {
   const { data: children = [], isLoading } = useGetMyChildren();
@@ -107,6 +161,7 @@ export function ChildrenPage() {
                   </ActionIcon>
                 </Group>
               </Group>
+              <CategoriaDelHijo studentId={c.id} />
             </Card>
           ))}
         </Stack>

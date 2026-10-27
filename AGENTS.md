@@ -49,7 +49,7 @@ Read `landing/README.md` and `landing/AGENTS.md` before touching it: all copy li
 
 `vault/` es una bóveda Obsidian con el mapa del proyecto para localizar código sin grepear todo el repo.
 
-- Empieza en `vault/00-Inicio/Boveda Futcademic.md`; para agentes, `vault/08-Agentes/Protocolo de busqueda.md`.
+- Empieza en `vault/00-Inicio/Indice completo.md`, que lista todas las notas con su tipo.
 - Las notas con `tipo: generado` (rutas de API, tablas, rutas web, hooks, índice) se construyen desde el código: **no editarlas a mano**.
 - Tras cambiar rutas, esquema, pantallas o hooks: `python3 scripts/vault/vault.py generar`.
 - Antes de cerrar un cambio: `python3 scripts/vault/vault.py verificar` (enlaces, fuentes y notas obsoletas).
