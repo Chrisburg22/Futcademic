@@ -3,14 +3,18 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react';
+import { usePathname } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { api } from '../api/axios';
 import { streamChat, type PendingAction, type SSEHandlers } from '../api/chatStream';
+import { screenFromPath, type ChatScreenContext } from '../lib/chatScreen';
+import { useRegisteredChatScreen } from './ChatScreenContext';
 
 export interface ContentBlock {
   type: string;
@@ -65,6 +69,8 @@ interface ChatContextValue {
   error: string | null;
   /** false cuando reintentar podría duplicar una acción sensible ya aplicada. */
   canRetry: boolean;
+  /** Dónde está el admin: se envía con cada mensaje para resolver "este alumno". */
+  screenContext: ChatScreenContext | null;
   dismissError: () => void;
   retry: () => void;
   stop: () => void;
@@ -92,6 +98,13 @@ interface LastRequest {
  */
 export function ChatProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
+  const pathname = usePathname();
+  const registeredScreen = useRegisteredChatScreen(pathname);
+  // La pantalla registrada manda; si no hay, la ruta da un contexto genérico.
+  const screenContext = useMemo(
+    () => registeredScreen ?? screenFromPath(pathname),
+    [registeredScreen, pathname]
+  );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [liveUserText, setLiveUserText] = useState<string | null>(null);
@@ -215,18 +228,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (!trimmed || isStreaming) return;
       setLiveUserText(trimmed);
       setPendingActions(null);
-      void runStream(`/chat/conversations/${activeId ?? 'new'}/messages`, { message: trimmed });
+      void runStream(`/chat/conversations/${activeId ?? 'new'}/messages`, {
+        message: trimmed,
+        ...(screenContext ? { context: screenContext } : {}),
+      });
     },
-    [activeId, isStreaming, runStream]
+    [activeId, isStreaming, runStream, screenContext]
   );
 
   const respondConfirmation = useCallback(
     (approved: boolean) => {
       if (!activeId || isStreaming) return;
       setPendingActions(null);
-      void runStream(`/chat/conversations/${activeId}/confirm`, { approved });
+      void runStream(`/chat/conversations/${activeId}/confirm`, {
+        approved,
+        ...(screenContext ? { context: screenContext } : {}),
+      });
     },
-    [activeId, isStreaming, runStream]
+    [activeId, isStreaming, runStream, screenContext]
   );
 
   /** Corta el turno en curso: el servidor deja de ejecutar herramientas. */
@@ -303,6 +322,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     pendingActions,
     error,
     canRetry,
+    screenContext,
     dismissError,
     retry,
     stop,

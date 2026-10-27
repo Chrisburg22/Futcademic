@@ -26,6 +26,7 @@ import {
 import { useGetAttendancesByStudent } from '../../hooks/useAttendances';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
+import { useRegisterChatScreen } from '../../contexts/ChatScreenContext';
 import dayjs from 'dayjs';
 
 function Stat({
@@ -65,6 +66,13 @@ export function StudentDetailPage() {
   const { data: stats } = useGetStudentStats(id);
   const { data: team } = useGetStudentTeam(id);
   const { data: attendances = [] } = useGetAttendancesByStudent(id);
+
+  // El asistente sabe de qué alumno habla aunque solo digas "este alumno".
+  useRegisterChatScreen(
+    student
+      ? { screen: 'Ficha del alumno', entity: { type: 'alumno', id, name: student.full_name ?? undefined } }
+      : null
+  );
 
   if (isLoading) return <LoadingState />;
   if (!student) return <Text>Alumno no encontrado</Text>;
