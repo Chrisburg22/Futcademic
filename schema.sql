@@ -34,14 +34,25 @@ CREATE TABLE public.attendances (
 CREATE TABLE public.categories (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   school_id uuid NOT NULL,
-  birth_year integer NOT NULL,
+  birth_year text NOT NULL,
   name character varying NOT NULL,
+  description text,
   color character varying,
   monthly_fee numeric DEFAULT 0,
+  max_students integer,
+  status character varying NOT NULL DEFAULT 'activa',
+  archived_at timestamp with time zone,
   created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT categories_pkey PRIMARY KEY (id),
-  CONSTRAINT categories_school_id_fkey FOREIGN KEY (school_id) REFERENCES public.schools(id)
+  CONSTRAINT categories_school_id_fkey FOREIGN KEY (school_id) REFERENCES public.schools(id),
+  CONSTRAINT categories_status_check CHECK (status IN ('activa', 'inactiva', 'archivada')),
+  CONSTRAINT categories_max_students_check CHECK (max_students IS NULL OR max_students > 0),
+  CONSTRAINT categories_school_id_birth_year_key UNIQUE (school_id, birth_year)
 );
+CREATE INDEX IF NOT EXISTS categories_school_status_idx ON public.categories (school_id, status);
+CREATE INDEX IF NOT EXISTS categories_school_birth_year_idx ON public.categories (school_id, birth_year DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS categories_school_name_uniq ON public.categories (school_id, lower(name)) WHERE status <> 'archivada';
 CREATE TABLE public.category_teachers (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   school_id uuid NOT NULL,
@@ -53,6 +64,8 @@ CREATE TABLE public.category_teachers (
   CONSTRAINT category_teachers_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
   CONSTRAINT category_teachers_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.users(id)
 );
+CREATE UNIQUE INDEX IF NOT EXISTS category_teachers_pair_uniq ON public.category_teachers (category_id, teacher_id);
+CREATE INDEX IF NOT EXISTS category_teachers_category_idx ON public.category_teachers (category_id);
 CREATE TABLE public.deleted_students (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   school_id uuid NOT NULL,

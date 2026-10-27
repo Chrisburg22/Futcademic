@@ -619,11 +619,36 @@ Elimina un evento y todas sus sesiones de entrenamiento.
 
 ## Endpoints de Categorías
 
+Una categoría es el equipo de una generación. `birth_year` es una **etiqueta
+de texto**, no un número: un año suelto (`"2015"`), un rango (`"2014-2015"`,
+`"2012-2013-2014"`) o un grupo sin año (`"Porteros"`), tal como lo escribe la
+academia. Es único por escuela.
+
+No hay borrado duro: `students`, `events`, `trainings` y `attendances` apuntan a
+la categoría sin `ON DELETE`, así que las categorías se archivan.
+
+Escritura: `super_admin` y `admin` siempre; `profesor` solo con
+`teacher_permissions.can_manage_categories`, y solo en sus propias categorías.
+
 ### GET /categories
-Lista todas las categorías con profesor asignado.
+Lista las categorías, acotadas por rol: los administradores ven toda la escuela,
+el profesor las suyas, el padre las de sus hijos y el alumno la suya.
+
+**Parámetros:** `search`, `status` (`activa` | `inactiva` | `archivada` |
+`all`; las archivadas se ocultan por defecto), `birth_year`, `teacher_id`,
+`sort` (`birth_year` | `name` | `created_at` | `monthly_fee`), `order` (`asc` |
+`desc`), `page`, `per_page` (máximo 100).
+
+Devuelve un array plano; el total viaja en la cabecera `X-Total-Count`. Cada
+elemento trae `coaches_count`, `students_count`, `teacher` (nombre),
+`teacher_id` y `all_teachers[]`.
 
 ### GET /categories/mine
-Obtiene categorías asignadas al profesor actual.
+Obtiene las categorías asignadas al profesor actual.
+
+### GET /categories/:id
+Una categoría con `students_count`, `sessions_count`,
+`upcoming_sessions_count` y `schedule[]` (eventos de entrenamiento recurrentes).
 
 ### POST /categories
 Crea una nueva categoría.
@@ -631,31 +656,53 @@ Crea una nueva categoría.
 **Cuerpo de la Solicitud:**
 ```json
 {
-  "birthYear": 2012,
-  "name": "U-12"
+  "name": "U-12",
+  "birth_year": "2012-2013",
+  "description": "Generación mixta",
+  "color": "#1971c2",
+  "monthly_fee": 500,
+  "max_students": 20,
+  "teacher_ids": ["uuid"]
 }
 ```
+
+Se validan `name` (2-60 caracteres), `birth_year` (1-40 caracteres), `color`
+(`#RRGGBB`), `monthly_fee` (>= 0) y `max_students` (>= 1). Repetir una
+generación dentro de la escuela devuelve **409**.
+
+### POST /categories/full
+El mismo cuerpo más un horario recurrente; además genera los entrenamientos.
+
+**Campos extra:** `days` (números 0-6, con 0 = domingo, o nombres en inglés
+`monday`…`sunday`), `start_time` (`HH:MM`, obligatorio si hay `days`),
+`venue_id`, `recurrence_weeks` (1-52, por defecto 12).
 
 ### PATCH /categories/:id
-Actualiza categoría.
+Actualiza una categoría. Es parcial: solo se escriben los campos presentes.
+
+### PATCH /categories/:id/status
+Archiva, desactiva o restaura. Solo `super_admin` y `admin`.
+
+**Cuerpo de la Solicitud:**
+```json
+{ "status": "archivada" }
+```
+
+Archivar sella `archived_at`; restaurar lo limpia. La respuesta incluye
+`students_count` para que la UI avise de los jugadores que siguen asociados.
+
+### POST /categories/:id/teachers
+Asigna un profesor a una categoría. Es idempotente.
 
 **Cuerpo de la Solicitud:**
 ```json
 {
-  "name": "U-12 Elite",
-  "birthYear": 2012
+  "teacher_id": "uuid"
 }
 ```
 
-### POST /categories/:id/assign
-Asigna un profesor a una categoría.
-
-**Cuerpo de la Solicitud:**
-```json
-{
-  "teacherId": "uuid"
-}
-```
+### DELETE /categories/:id/teachers/:teacherId
+Quita un profesor de una categoría.
 
 ---
 

@@ -1,141 +1,247 @@
-import { useParams, useRouter } from 'next/navigation';
 import {
+  Badge,
+  Button,
   Card,
   Group,
+  SimpleGrid,
   Stack,
-  Table,
   Tabs,
   Text,
-  Badge,
-  Avatar,
-  ActionIcon,
-  Button,
 } from '@mantine/core';
-import { IconArrowLeft, IconEye } from '@tabler/icons-react';
+import { modals } from '@mantine/modals';
+import { notifications } from '@mantine/notifications';
+import {
+  IconArchive,
+  IconArchiveOff,
+  IconArrowLeft,
+  IconCalendarEvent,
+  IconClipboardList,
+  IconLayoutGrid,
+  IconUsers,
+  IconUserStar,
+} from '@tabler/icons-react';
 import dayjs from 'dayjs';
-import { useGetCategories } from '../../hooks/useCategories';
-import { useGetStudents } from '../../hooks/useStudents';
+import { useParams, useRouter } from 'next/navigation';
+import { useGetCategory, useUpdateCategoryStatus } from '../../hooks/useCategories';
 import { useGetEvents } from '../../hooks/useEvents';
+import { useGetMyPermissions } from '../../hooks/usePermissions';
+import { useAuth } from '../../contexts/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { CategoryAttendanceHistory } from '../../components/attendance/CategoryAttendanceHistory';
+import { CategorySummary } from '../../components/categories/CategorySummary';
 import { useRegisterChatScreen } from '../../contexts/ChatScreenContext';
+import {
+  ESTADOS_CATEGORIA,
+  formatearGeneracion,
+  formatearMensualidad,
+  mensajeDeError,
+} from '../../lib/categories';
+import {
+  CategoryCoachesPanel,
+  CategoryStudentsPanel,
+} from './components/CategoryMembersPanel';
+
+function Metrica({ valor, etiqueta }: { valor: string | number; etiqueta: string }) {
+  return (
+    <Card withBorder radius="md" padding="md">
+      <Text fz={28} fw={700} lh={1.1}>
+        {valor}
+      </Text>
+      <Text size="xs" c="dimmed" tt="uppercase" fw={600} mt={4}>
+        {etiqueta}
+      </Text>
+    </Card>
+  );
+}
 
 export function CategoryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useRouter();
-  const { data: categories = [], isLoading: loadingCategory } = useGetCategories();
-  const category = categories.find((c: any) => c.id === id);
+  const { profile } = useAuth();
+  const role = profile?.role;
+  const esAdmin = role === 'super_admin' || role === 'admin';
 
-  const { data: students = [], isLoading: loadingStudents } = useGetStudents(id);
-  const { data: events = [], isLoading: loadingEvents } = useGetEvents({ category_id: id });
+  const { data: permisos } = useGetMyPermissions(role === 'profesor');
+  const puedeGestionar = esAdmin || (role === 'profesor' && !!permisos?.can_manage_categories);
+
+  // Antes esta pantalla pedía TODAS las categorías y buscaba la suya en cliente.
+  const { data: category, isLoading, isError } = useGetCategory(id);
+  const { data: events = [], isLoading: cargandoEventos } = useGetEvents({ category_id: id });
+  const cambiarEstado = useUpdateCategoryStatus();
 
   useRegisterChatScreen(
     category
       ? { screen: 'Ficha de la categoría', entity: { type: 'categoría', id, name: category.name } }
-      : null
+      : null,
   );
 
-  if (loadingCategory) return <LoadingState />;
-  if (!category) return <EmptyState description="Categoría no encontrada." />;
+  if (isLoading) return <LoadingState />;
+  if (isError || !category) return <EmptyState description="Categoría no encontrada." />;
+
+  const meta = ESTADOS_CATEGORIA[category.status] || ESTADOS_CATEGORIA.activa;
+
+  const archivar = () =>
+    modals.openConfirmModal({
+      title: 'Archivar categoría',
+      children: (
+        <Text size="sm">
+          "{category.name}" saldrá del listado y de los selectores. El historial se conserva.
+        </Text>
+      ),
+      labels: { confirm: 'Archivar', cancel: 'Cancelar' },
+      confirmProps: { color: 'red' },
+      onConfirm: async () => {
+        try {
+          await cambiarEstado.mutateAsync({ id: category.id, status: 'archivada' });
+          notifications.show({ color: 'green', message: 'Categoría archivada' });
+        } catch (e: any) {
+          notifications.show({ color: 'red', message: mensajeDeError(e, 'Error al archivar') });
+        }
+      },
+    });
+
+  const restaurar = async () => {
+    try {
+      await cambiarEstado.mutateAsync({ id: category.id, status: 'activa' });
+      notifications.show({ color: 'green', message: 'Categoría restaurada' });
+    } catch (e: any) {
+      notifications.show({ color: 'red', message: mensajeDeError(e, 'Error al restaurar') });
+    }
+  };
 
   return (
     <>
       <PageHeader
         title={category.name}
-        description={`Año(s): ${category.birth_year || '—'}`}
+        description={`Generación ${formatearGeneracion(category)} · ${meta.label}`}
         actions={
-          <Button
-            variant="default"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={() => navigate.push('/admin/categories')}
-          >
-            Volver
-          </Button>
+          <>
+            <Button
+              variant="default"
+              leftSection={<IconArrowLeft size={16} />}
+              onClick={() => navigate.push('/admin/categories')}
+            >
+              Volver
+            </Button>
+            {esAdmin &&
+              (category.status === 'archivada' ? (
+                <Button
+                  variant="light"
+                  color="green"
+                  leftSection={<IconArchiveOff size={16} />}
+                  onClick={restaurar}
+                  loading={cambiarEstado.isPending}
+                >
+                  Restaurar
+                </Button>
+              ) : (
+                <Button
+                  variant="light"
+                  color="red"
+                  leftSection={<IconArchive size={16} />}
+                  onClick={archivar}
+                >
+                  Archivar
+                </Button>
+              ))}
+          </>
         }
       />
 
-      <Group mb="md" gap="xs">
-        <Badge variant="light">{students.length} alumnos</Badge>
-        {category.teacher?.full_name && (
-          <Badge variant="light" color="grape">
-            Prof. {category.teacher.full_name}
-          </Badge>
-        )}
-        {category.monthly_fee != null && (
-          <Badge variant="light" color="teal">
-            Mensualidad ${category.monthly_fee}
+      <Group mb="md" gap="xs" wrap="wrap">
+        <Badge
+          variant="light"
+          color={meta.color}
+          leftSection={
+            <span
+              aria-hidden
+              style={{
+                display: 'inline-block',
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                background: category.color || 'var(--mantine-color-gray-4)',
+              }}
+            />
+          }
+        >
+          {meta.label}
+        </Badge>
+        <Badge variant="light" color="teal">
+          Mensualidad {formatearMensualidad(category.monthly_fee)}
+        </Badge>
+        {category.max_students && (
+          <Badge variant="light" color="blue">
+            Aforo {category.max_students}
           </Badge>
         )}
       </Group>
 
-      <Tabs defaultValue="students">
+      <SimpleGrid cols={{ base: 2, sm: 4 }} mb="md">
+        <Metrica
+          valor={
+            category.max_students
+              ? `${category.students_count ?? 0}/${category.max_students}`
+              : category.students_count ?? 0
+          }
+          etiqueta="Jugadores"
+        />
+        <Metrica valor={category.coaches_count ?? 0} etiqueta="Entrenadores" />
+        <Metrica valor={category.sessions_count} etiqueta="Sesiones" />
+        <Metrica valor={category.upcoming_sessions_count} etiqueta="Próximas" />
+      </SimpleGrid>
+
+      <Tabs defaultValue="resumen">
         <Tabs.List>
-          <Tabs.Tab value="students">Alumnos</Tabs.Tab>
-          <Tabs.Tab value="agenda">Agenda</Tabs.Tab>
-          <Tabs.Tab value="attendance">Asistencias</Tabs.Tab>
+          <Tabs.Tab value="resumen" leftSection={<IconLayoutGrid size={16} />}>
+            Resumen
+          </Tabs.Tab>
+          <Tabs.Tab value="students" leftSection={<IconUsers size={16} />}>
+            Jugadores
+          </Tabs.Tab>
+          <Tabs.Tab value="coaches" leftSection={<IconUserStar size={16} />}>
+            Entrenadores
+          </Tabs.Tab>
+          <Tabs.Tab value="agenda" leftSection={<IconCalendarEvent size={16} />}>
+            Agenda
+          </Tabs.Tab>
+          <Tabs.Tab value="attendance" leftSection={<IconClipboardList size={16} />}>
+            Asistencias
+          </Tabs.Tab>
         </Tabs.List>
 
+        <Tabs.Panel value="resumen" pt="md">
+          <CategorySummary
+            nombre={category.name}
+            color={category.color}
+            anios={formatearGeneracion(category)}
+            descripcion={category.description}
+            jugadores={category.students_count ?? 0}
+            entrenadores={(category.all_teachers || []).map((t) => ({
+              id: t.id,
+              nombre: t.full_name,
+            }))}
+            horario={(category.schedule || []).map((s) => ({
+              id: s.id,
+              nombre: s.name,
+              hora: s.start_time,
+              cancha: s.venue,
+            }))}
+          />
+        </Tabs.Panel>
+
         <Tabs.Panel value="students" pt="md">
-          {loadingStudents ? (
-            <LoadingState />
-          ) : students.length === 0 ? (
-            <EmptyState description="Sin alumnos en esta categoría." />
-          ) : (
-            <Card withBorder padding={0} radius="md">
-              <Table.ScrollContainer minWidth={500}>
-                <Table verticalSpacing="sm">
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Alumno</Table.Th>
-                      <Table.Th>Status</Table.Th>
-                      <Table.Th />
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {students.map((s: any) => (
-                      <Table.Tr key={s.id}>
-                        <Table.Td>
-                          <Group gap="sm">
-                            <Avatar size="sm" radius="xl">
-                              {s.full_name?.[0]?.toUpperCase()}
-                            </Avatar>
-                            <div>
-                              <Text size="sm" fw={500}>
-                                {s.full_name}
-                              </Text>
-                              <Text size="xs" c="dimmed">
-                                {s.email}
-                              </Text>
-                            </div>
-                          </Group>
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge variant="light" tt="capitalize">
-                            {s.status || 'activo'}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          <ActionIcon
-                            variant="subtle"
-                            onClick={() => navigate.push(`/admin/students/${s.id}`)}
-                            aria-label="Ver detalle"
-                          >
-                            <IconEye size={16} />
-                          </ActionIcon>
-                        </Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </Table.ScrollContainer>
-            </Card>
-          )}
+          <CategoryStudentsPanel category={category} puedeGestionar={puedeGestionar} />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="coaches" pt="md">
+          <CategoryCoachesPanel category={category} puedeGestionar={puedeGestionar} />
         </Tabs.Panel>
 
         <Tabs.Panel value="agenda" pt="md">
-          {loadingEvents ? (
+          {cargandoEventos ? (
             <LoadingState />
           ) : events.length === 0 ? (
             <EmptyState description="Sin eventos para esta categoría." />

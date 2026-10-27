@@ -182,11 +182,17 @@ export function StudentDetailPage() {
             Profesores
           </Text>
           <Group gap="xs">
+            {/* `getStudentTeam` devuelve `name`, no `full_name`. */}
             {(team.teachers || []).map((t: any) => (
               <Badge key={t.id} variant="light" color="violet">
-                {t.full_name}
+                {t.name}
               </Badge>
             ))}
+            {(team.teachers || []).length === 0 && (
+              <Text size="sm" c="dimmed">
+                —
+              </Text>
+            )}
           </Group>
         </Card>
       )}

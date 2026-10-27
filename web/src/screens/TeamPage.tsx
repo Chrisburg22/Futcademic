@@ -1,10 +1,10 @@
-import { Card, Group, Stack, Text, Avatar, Badge } from '@mantine/core';
-import { IconUsers } from '@tabler/icons-react';
+import { Avatar, Card, Group, Stack, Text } from '@mantine/core';
 import { useAuth } from '../contexts/AuthContext';
 import { useGetStudentTeam } from '../hooks/useStudents';
 import { PageHeader } from '../components/common/PageHeader';
 import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
+import { CategorySummary } from '../components/categories/CategorySummary';
 
 export function TeamPage() {
   const { profile } = useAuth();
@@ -12,43 +12,42 @@ export function TeamPage() {
 
   return (
     <>
-      <PageHeader title="Mi equipo" />
+      <PageHeader title="Mi equipo" description="Tu categoría, entrenadores y horario" />
       {isLoading ? (
         <LoadingState />
       ) : !team ? (
         <EmptyState description="No estás asignado a un equipo." />
       ) : (
         <Stack>
-          <Card withBorder padding="lg" radius="md">
-            <Group gap="xs" mb="sm">
-              <IconUsers size={18} />
-              <Text fw={600} size="lg">
-                {team.teamName || 'Equipo'}
-              </Text>
-              {team.color && (
-                <div
-                  style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    backgroundColor: team.color,
-                  }}
-                />
-              )}
-            </Group>
-            {team.birthYear && (
-              <Text size="sm" c="dimmed" mb="sm">
-                Año {team.birthYear}
-              </Text>
-            )}
-          </Card>
+          {/* `getStudentTeam` devuelve los entrenadores como {id, name, avatar}
+              y los horarios como {name, time, venue}; antes esta pantalla leía
+              `full_name`, `day` y `start_time`, así que salían vacíos. */}
+          <CategorySummary
+            nombre={team.teamName || 'Equipo'}
+            color={team.color}
+            anios={team.birthYear ? String(team.birthYear) : undefined}
+            jugadores={team.totalTeammates}
+            entrenadores={(team.teachers || []).map((t: any) => ({
+              id: t.id,
+              nombre: t.name,
+              avatar: t.avatar,
+            }))}
+            horario={(team.schedules || []).map((s: any) => ({
+              id: s.id,
+              nombre: s.name,
+              hora: s.time,
+              cancha: s.venue,
+            }))}
+          />
 
           <Card withBorder padding="lg" radius="md">
             <Text fw={600} mb="xs">
               Compañeros
             </Text>
             {(team.teammates || []).length === 0 ? (
-              <Text size="sm" c="dimmed">Sin compañeros</Text>
+              <Text size="sm" c="dimmed">
+                Sin compañeros
+              </Text>
             ) : (
               <Stack gap="xs">
                 {team.teammates.map((t: any) => (
@@ -62,32 +61,6 @@ export function TeamPage() {
               </Stack>
             )}
           </Card>
-
-          <Card withBorder padding="lg" radius="md">
-            <Text fw={600} mb="xs">
-              Profesores
-            </Text>
-            <Group gap="xs">
-              {(team.teachers || []).map((t: any) => (
-                <Badge key={t.id} variant="light" color="violet">
-                  {t.full_name}
-                </Badge>
-              ))}
-            </Group>
-          </Card>
-
-          {(team.schedules || []).length > 0 && (
-            <Card withBorder padding="lg" radius="md">
-              <Text fw={600} mb="xs">Horarios</Text>
-              <Stack gap="xs">
-                {team.schedules.map((s: any, i: number) => (
-                  <Text key={i} size="sm">
-                    {s.day} — {s.start_time} {s.venue ? `(${s.venue})` : ''}
-                  </Text>
-                ))}
-              </Stack>
-            </Card>
-          )}
         </Stack>
       )}
     </>
