@@ -69,3 +69,33 @@ test('fuera de una ficha, la ruta da un contexto genérico', async ({ page }) =>
   await page.getByRole('button', { name: 'Abrir asistente IA' }).click();
   await expect(page.getByText('Viendo: Finanzas')).toBeVisible();
 });
+
+test('finanzas manda el mes que está seleccionado', async ({ page }) => {
+  await loginAs(page, { goto: '/finances' });
+  await expect(page.getByRole('heading', { name: 'Finanzas' })).toBeVisible();
+
+  let body: any = null;
+  await page.route('http://localhost:3000/api/chat/**', async (route) => {
+    body = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: SSE,
+    });
+  });
+
+  await page.getByRole('button', { name: 'Abrir asistente IA' }).click();
+  await page.getByPlaceholder('Escribe una orden o pregunta…').fill('¿Cuánto se cobró?');
+  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+
+  await expect.poll(() => body).not.toBeNull();
+  const now = new Date();
+  const mes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  expect(body.context).toEqual({
+    screen: 'Finanzas',
+    filters: [
+      { label: 'Mes', value: mes },
+      { label: 'Vista', value: 'pagos de alumnos' },
+    ],
+  });
+});

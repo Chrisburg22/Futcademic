@@ -31,6 +31,7 @@ import { useGetTeachers } from '../hooks/useUsers';
 import { PageHeader } from '../components/common/PageHeader';
 import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
+import { useRegisterChatScreen } from '../contexts/ChatScreenContext';
 
 const months = Array.from({ length: 12 }).map((_, i) => ({
   value: String(i + 1),
@@ -47,6 +48,27 @@ function AdminFinances() {
   const [month, setMonth] = useState<string | null>(String(new Date().getMonth() + 1));
   const [tab, setTab] = useState<string | null>('students');
   const [opened, { open, close }] = useDisclosure(false);
+
+  // El asistente ve el mes y la pestaña que el admin tiene delante, para que
+  // "¿cuánto se cobró?" no obligue a repetir el periodo. El valor va en
+  // formato máquina (YYYY-MM) para que la tool lo use tal cual.
+  useRegisterChatScreen({
+    screen: 'Finanzas',
+    filters: [
+      ...(month
+        ? [
+            {
+              label: 'Mes',
+              value: `${new Date().getFullYear()}-${String(month).padStart(2, '0')}`,
+            },
+          ]
+        : []),
+      {
+        label: 'Vista',
+        value: tab === 'teachers' ? 'pagos a profesores' : tab === 'pending' ? 'pendientes' : 'pagos de alumnos',
+      },
+    ],
+  });
 
   const filters = month
     ? { type: tab === 'teachers' ? ('pago_profesor' as const) : ('mensualidad' as const), month: Number(month) }
