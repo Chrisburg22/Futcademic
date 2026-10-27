@@ -170,6 +170,25 @@ export async function mockApi(page: Page, fx: ApiFixtures) {
       }
       if (path === '/students' || path.startsWith('/students?')) return json(fx.students ?? []);
       if (path === '/students/deleted') return json([]);
+      // El expediente se consulta en el detalle del alumno. Sin fixture
+      // explícita devolvemos un expediente vacío para que la sección pinte
+      // "incompleto" en vez de reventar con un objeto sin forma.
+      const expedienteMatch = path.match(/^\/students\/([^/]+)\/expediente$/);
+      if (expedienteMatch) {
+        return json({
+          student_id: expedienteMatch[1],
+          status: 'incompleto',
+          has_consent: false,
+          present_documents: 0,
+          validated_documents: 0,
+          missing_documents: 7,
+          consent: null,
+          documents: [],
+          checklist: [],
+          consent_template: null,
+          can_download_package: false,
+        });
+      }
       if (path.startsWith('/students/')) return json(fx.extra?.[path] ?? {});
       if (path.startsWith('/users')) return json(fx.teachers ?? fx.users ?? []);
       if (path === '/categories/mine') return json(fx.categories ?? []);

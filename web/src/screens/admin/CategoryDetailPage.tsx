@@ -31,6 +31,7 @@ import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { CategoryAttendanceHistory } from '../../components/attendance/CategoryAttendanceHistory';
 import { CategorySummary } from '../../components/categories/CategorySummary';
+import { useRegisterChatScreen } from '../../contexts/ChatScreenContext';
 import {
   ESTADOS_CATEGORIA,
   formatearAnios,
@@ -69,6 +70,12 @@ export function CategoryDetailPage() {
   const { data: category, isLoading, isError } = useGetCategory(id);
   const { data: events = [], isLoading: cargandoEventos } = useGetEvents({ category_id: id });
   const cambiarEstado = useUpdateCategoryStatus();
+
+  useRegisterChatScreen(
+    category
+      ? { screen: 'Ficha de la categoría', entity: { type: 'categoría', id, name: category.name } }
+      : null,
+  );
 
   if (isLoading) return <LoadingState />;
   if (isError || !category) return <EmptyState description="Categoría no encontrada." />;

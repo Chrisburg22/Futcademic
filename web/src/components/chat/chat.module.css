@@ -1,0 +1,508 @@
+/* ---------------------------------------------------------------------------
+ * Estilos compartidos por la página del asistente y el widget flotante.
+ *
+ * Todo se apoya en tokens de Mantine para sobrevivir al modo claro/oscuro:
+ * antes el texto del asistente se pintaba con `c="black"` y el fondo con
+ * `gray.0`, así que en tema oscuro quedaba ilegible.
+ * ------------------------------------------------------------------------- */
+
+/* --- Estructura ---------------------------------------------------------- */
+
+.root {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* --- Markdown ------------------------------------------------------------ */
+
+/* El modelo devuelve Markdown con encabezados y listas. Los estilos por
+ * defecto de TypographyStylesProvider metían márgenes enormes y rompían el
+ * ritmo de la burbuja: aquí el espaciado es compacto y las cabeceras bajan
+ * a un tamaño de etiqueta de sección. */
+.markdown {
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 48em) {
+  .markdown {
+    font-size: var(--mantine-font-size-sm);
+  }
+}
+
+.markdown > :first-child {
+  margin-top: 0;
+}
+
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown p {
+  margin: 0 0 0.5em;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  margin: 0.9em 0 0.3em;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.markdown h1 {
+  font-size: 1.05rem;
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 0.2em 0 0.6em;
+  padding-left: 1.35em;
+}
+
+.markdown li {
+  margin: 0.15em 0;
+}
+
+.markdown li > p {
+  margin: 0;
+}
+
+.markdown li::marker {
+  color: var(--mantine-color-dimmed);
+}
+
+.markdown strong {
+  font-weight: 700;
+}
+
+.markdown a {
+  color: var(--mantine-color-futcamedic-7);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown hr {
+  margin: 0.9em 0;
+  border: 0;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.markdown blockquote {
+  margin: 0.6em 0;
+  padding: 0.1em 0 0.1em 0.8em;
+  border-left: 3px solid var(--mantine-color-default-border);
+  color: var(--mantine-color-dimmed);
+}
+
+.markdown code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--mantine-color-default-hover);
+  font-size: 0.85em;
+}
+
+.markdown pre {
+  margin: 0.6em 0;
+  padding: 10px 12px;
+  border-radius: var(--mantine-radius-sm);
+  background: var(--mantine-color-default-hover);
+  overflow-x: auto;
+}
+
+.markdown pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85em;
+}
+
+/* En móvil una tabla de 4+ columnas se comprime hasta romper palabras: mejor
+ * desplazarla en horizontal dentro de su propio contenedor. */
+.tableBlock {
+  max-width: 100%;
+}
+
+.tableWrap {
+  margin: 0.6em 0 0;
+  overflow-x: auto;
+}
+
+.tableWrap:focus-visible {
+  outline: 2px solid var(--mantine-color-futcamedic-6);
+  outline-offset: 2px;
+  border-radius: var(--mantine-radius-xs);
+}
+
+.tableHint {
+  display: none;
+  margin-top: 2px;
+  color: var(--mantine-color-dimmed);
+  font-size: 11px;
+}
+
+@media (max-width: 48em) {
+  .markdown table {
+    min-width: 420px;
+  }
+
+  .tableHint {
+    display: block;
+  }
+}
+
+.markdown th,
+.markdown td {
+  padding: 4px 8px;
+  border: 1px solid var(--mantine-color-default-border);
+  text-align: left;
+}
+
+.markdown th {
+  background: var(--mantine-color-default-hover);
+  white-space: nowrap;
+}
+
+/* --- Burbujas y filas ---------------------------------------------------- */
+
+.assistantBubble {
+  width: fit-content;
+  max-width: 100%;
+  background: var(--mantine-color-body);
+  border: 1px solid var(--mantine-color-default-border);
+  box-shadow: var(--mantine-shadow-xs);
+}
+
+.userBubble {
+  max-width: min(85%, 560px);
+  background: linear-gradient(
+    145deg,
+    var(--mantine-color-futcamedic-7),
+    var(--mantine-color-futcamedic-8)
+  );
+  color: #fff;
+}
+
+.toolChip {
+  text-transform: none;
+  font-weight: 500;
+}
+
+.actions {
+  min-height: 36px;
+}
+
+/* En pantallas táctiles no existe hover: las acciones siempre visibles. */
+@media (hover: none) {
+  .actions {
+    opacity: 1;
+  }
+}
+
+/* --- Indicadores de escritura ------------------------------------------- */
+
+.typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 1.4em;
+}
+
+.typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mantine-color-dimmed);
+  animation: chatTyping 1.2s infinite ease-in-out;
+}
+
+.typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.caret {
+  display: inline-block;
+  width: 5px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: chatBlink 1s steps(1) infinite;
+}
+
+.toolPill {
+  width: fit-content;
+  padding: 6px 12px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 999px;
+  background: var(--mantine-color-default-hover);
+}
+
+/* --- Estado vacío -------------------------------------------------------- */
+
+.emptyIcon {
+  background: linear-gradient(
+    145deg,
+    var(--mantine-color-futcamedic-6),
+    var(--mantine-color-futcamedic-8)
+  );
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(6, 122, 61, 0.28);
+}
+
+/* --- Composer ------------------------------------------------------------ */
+
+.composer {
+  background: var(--mantine-color-body);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.composer:focus-within {
+  border-color: var(--mantine-color-futcamedic-6);
+  box-shadow: 0 0 0 3px var(--mantine-color-futcamedic-light);
+}
+
+.composer textarea {
+  /* 16px evita el zoom automático de iOS al enfocar el campo. */
+  font-size: 16px;
+  /* El alto lo calcula ChatInput según el contenido. */
+  resize: none;
+}
+
+@media (min-width: 48em) {
+  .composer textarea {
+    font-size: var(--mantine-font-size-sm);
+  }
+}
+
+.composerArea {
+  flex-shrink: 0;
+  border-top: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+}
+
+/* --- Lista de conversaciones -------------------------------------------- */
+
+.convRow {
+  border-radius: var(--mantine-radius-md);
+  padding: 2px;
+  transition: background-color 120ms ease;
+}
+
+.convRow:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.convRow[data-active='true'] {
+  background: var(--mantine-color-futcamedic-light);
+}
+
+.convMain {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  border-radius: var(--mantine-radius-sm);
+  text-align: left;
+  color: inherit;
+}
+
+.convMain:focus-visible {
+  outline: 2px solid var(--mantine-color-futcamedic-6);
+  outline-offset: -2px;
+}
+
+.convAction {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.convRow:hover .convAction,
+.convRow:focus-within .convAction,
+.convRow[data-active='true'] .convAction {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .convAction {
+    opacity: 1;
+  }
+}
+
+.convIcon {
+  flex-shrink: 0;
+  color: var(--mantine-color-dimmed);
+}
+
+.convRow[data-active='true'] .convIcon {
+  color: var(--mantine-color-futcamedic-7);
+}
+
+.suggestion {
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.suggestion:hover {
+  border-color: var(--mantine-color-futcamedic-5);
+  background: var(--mantine-color-futcamedic-light);
+  transform: translateY(-1px);
+}
+
+/* --- Ir al final --------------------------------------------------------- */
+
+.jumpButton {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  transform: translateX(-50%);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 999px;
+  background: var(--mantine-color-body);
+  box-shadow: var(--mantine-shadow-md);
+  color: var(--mantine-color-text);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+}
+
+.jumpButton:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+/* --- Widget flotante ----------------------------------------------------- */
+
+.widgetPanel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Móvil: hoja casi completa, apartada del dock y de la barra de gestos. */
+  height: calc(
+    100dvh - 32px - var(--quick-dock-height, 0px) - env(safe-area-inset-bottom, 0px)
+  );
+}
+
+@media (min-width: 48em) {
+  .widgetPanel {
+    /* Escritorio: ocupa la sección entera, de debajo del header al borde. */
+    height: calc(100dvh - var(--app-shell-header-height, 60px) - 24px);
+  }
+}
+
+.fab {
+  background: linear-gradient(
+    145deg,
+    var(--mantine-color-futcamedic-5),
+    var(--mantine-color-futcamedic-8)
+  );
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(6, 122, 61, 0.35);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(6, 122, 61, 0.4);
+}
+
+.fab:active {
+  transform: translateY(0);
+}
+
+.fabBadge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  pointer-events: none;
+}
+
+.contextStrip {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-default-hover);
+}
+
+/* --- Dictado por voz ----------------------------------------------------- */
+
+.listening {
+  animation: chatMicPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes chatMicPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(224, 49, 49, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(224, 49, 49, 0);
+  }
+}
+
+/* --- Movimiento reducido ------------------------------------------------- */
+
+@keyframes chatTyping {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes chatBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing span,
+  .caret,
+  .listening {
+    animation: none;
+  }
+
+  .fab,
+  .suggestion,
+  .composer {
+    transition: none;
+  }
+
+  .fab:hover {
+    transform: none;
+  }
+}

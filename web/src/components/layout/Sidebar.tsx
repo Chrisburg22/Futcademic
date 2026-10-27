@@ -16,6 +16,7 @@ import {
   IconTrophy,
   IconChartBar,
   IconMessageChatbot,
+  IconClipboardList,
 } from '@tabler/icons-react';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Role } from '../../types';
@@ -73,6 +74,12 @@ const adminItems: Item[] = [
     to: '/admin/students',
     label: 'Alumnos',
     icon: <IconSchool size={18} />,
+    roles: ['super_admin', 'admin', 'profesor'],
+  },
+  {
+    to: '/admin/enrollments',
+    label: 'Inscripciones',
+    icon: <IconClipboardList size={18} />,
     roles: ['super_admin', 'admin', 'profesor'],
   },
   {

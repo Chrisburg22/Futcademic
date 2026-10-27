@@ -21,6 +21,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import type { TeacherPermissions } from '../../types';
 import { useState, useEffect } from 'react';
+import { useRegisterChatScreen } from '../../contexts/ChatScreenContext';
 
 const PERM_LABELS: Record<keyof TeacherPermissions, string> = {
   can_take_attendance: 'Tomar asistencia',
@@ -38,6 +39,12 @@ export function TeacherDetailPage() {
   const { data: perms } = useGetTeacherPermissions(id);
   const updatePerms = useUpdateTeacherPermissions();
   const [local, setLocal] = useState<TeacherPermissions | null>(null);
+
+  useRegisterChatScreen(
+    teacher
+      ? { screen: 'Ficha del profesor', entity: { type: 'profesor', id, name: teacher.full_name ?? undefined } }
+      : null
+  );
 
   useEffect(() => {
     if (perms) setLocal(perms);

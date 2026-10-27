@@ -1,0 +1,31 @@
+.body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--mantine-color-dark-7);
+}
+.body h1 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.body h2 {
+  font-size: 14px;
+  margin: 16px 0 6px;
+}
+.body h3 {
+  font-size: 13px;
+  margin: 12px 0 4px;
+}
+.body p {
+  margin: 0 0 8px;
+}
+.body ul,
+.body ol {
+  margin: 0 0 8px 18px;
+  padding: 0;
+}
+.body li {
+  margin-bottom: 4px;
+}
+.body strong {
+  font-weight: 700;
+}
