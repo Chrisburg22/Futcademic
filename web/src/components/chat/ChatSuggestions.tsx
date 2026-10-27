@@ -8,6 +8,7 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 import { useGetAdminDashboard } from '../../hooks/useDashboard';
+import classes from './chat.module.css';
 
 interface AdminDashboard {
   activeStudents: number;
@@ -141,16 +142,18 @@ export function ChatSuggestions({
 
   if (compact) {
     return (
-      <Stack gap={6}>
+      <Stack gap={6} w="100%">
         {suggestions.map((s) => (
           <Button
             key={s.key}
             variant="light"
             color={s.color}
-            size="compact-sm"
+            size="sm"
+            radius="md"
             justify="flex-start"
             leftSection={s.icon}
             onClick={() => onPick(s.prompt)}
+            styles={{ label: { whiteSpace: 'normal', textAlign: 'left', lineHeight: 1.3 } }}
           >
             {s.title}
           </Button>
@@ -163,7 +166,7 @@ export function ChatSuggestions({
     <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" w="100%" maw={560}>
       {suggestions.map((s) => (
         <UnstyledButton key={s.key} onClick={() => onPick(s.prompt)}>
-          <Paper withBorder radius="md" p="sm" h="100%">
+          <Paper withBorder radius="md" p="sm" h="100%" className={classes.suggestion}>
             <Group wrap="nowrap" gap="sm" align="flex-start">
               <ThemeIcon variant="light" color={s.color} size={34} radius="md">
                 {s.icon}
