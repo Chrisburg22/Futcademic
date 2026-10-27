@@ -1,28 +1,39 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ActionIcon, Group, Paper, Text, Textarea, Tooltip } from '@mantine/core';
+import { ActionIcon, Box, Group, Paper, Progress, Text, Textarea, Tooltip } from '@mantine/core';
 import { IconMicrophone, IconPlayerStop, IconSend } from '@tabler/icons-react';
 import {
-  getSpeechRecognition,
+  analyzeAudio,
+  cleanTranscript,
+  DICTATION_DECODE_ERROR,
+  DICTATION_EMPTY_ERROR,
+  DICTATION_MODEL_ERROR,
+  DICTATION_NO_AUDIO_ERROR,
+  DICTATION_SHORT_ERROR,
+  DICTATION_TRANSCRIBE_ERROR,
+  DICTATION_UNKNOWN_ERROR,
+  decodeRecording,
+  isLocalDictationSupported,
   joinTranscript,
-  type SpeechRecognitionLike,
+  MAX_RECORDING_MS,
+  MIN_AUDIO_RMS,
+  MIN_AUDIO_SECONDS,
+  microphoneErrorMessage,
+  pickAudioMimeType,
 } from '../../lib/speech';
+import {
+  createLocalTranscriber,
+  DICTATION_ERROR_MODEL,
+  DICTATION_ERROR_WORKER,
+  type DictationProgress,
+  type LocalTranscriber,
+} from '../../lib/localSpeech';
 import classes from './chat.module.css';
 
-/** Mensaje humano para los errores que devuelve el reconocimiento de voz. */
-function speechErrorMessage(code: string): string {
-  switch (code) {
-    case 'not-allowed':
-    case 'service-not-allowed':
-      return 'Permite el micrófono para dictar.';
-    case 'audio-capture':
-      return 'No encontramos un micrófono conectado.';
-    case 'no-speech':
-      return 'No se escuchó nada. Intenta de nuevo.';
-    case 'network':
-      return 'El dictado necesita conexión a internet.';
-    default:
-      return 'No se pudo dictar. Intenta de nuevo.';
-  }
+type DictationStatus = 'idle' | 'requesting' | 'recording' | 'transcribing';
+
+function formatElapsed(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }
 
 export function ChatInput({
@@ -43,36 +54,55 @@ export function ChatInput({
   autoFocus?: boolean;
 }) {
   const [value, setValue] = useState('');
-  const [listening, setListening] = useState(false);
-  const [voiceReady, setVoiceReady] = useState(false);
+  const [dictation, setDictation] = useState<DictationStatus>('idle');
+  const [elapsed, setElapsed] = useState(0);
+  const [modelProgress, setModelProgress] = useState<number | null>(null);
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [dictationSupported, setDictationSupported] = useState(false);
 
-  // El reconocimiento vive fuera de React; los refs evitan que los callbacks
-  // del navegador se queden con una versión vieja del texto.
+  // El valor y el estado viven también en refs: los callbacks del grabador y
+  // del worker se crean una sola vez y no deben quedarse con datos viejos.
   const valueRef = useRef('');
-  const baseRef = useRef('');
-  const finalRef = useRef('');
-  const interimRef = useRef('');
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const dictationRef = useRef<DictationStatus>('idle');
+  const transcriberRef = useRef<LocalTranscriber | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<number | null>(null);
+  const limitRef = useRef<number | null>(null);
+  const startedAtRef = useRef(0);
+  /** Invalida resultados que llegan después de cancelar o desmontar. */
+  const tokenRef = useRef(0);
   const mountedRef = useRef(true);
   const composerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lastWidthRef = useRef(0);
 
-  // La API puede no existir (Firefox, Safari viejo): se comprueba tras montar
-  // para no romper la hidratación.
-  useEffect(() => {
-    // StrictMode monta, desmonta y vuelve a montar: el ref debe recuperarse.
-    mountedRef.current = true;
-    setVoiceReady(getSpeechRecognition() !== null);
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
   const writeValue = useCallback((next: string) => {
     valueRef.current = next;
     setValue(next);
+  }, []);
+
+  const changeDictation = useCallback((next: DictationStatus) => {
+    dictationRef.current = next;
+    setDictation(next);
+  }, []);
+
+  const clearTimers = useCallback(() => {
+    if (timerRef.current !== null) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (limitRef.current !== null) {
+      window.clearTimeout(limitRef.current);
+      limitRef.current = null;
+    }
+  }, []);
+
+  const stopStream = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
   }, []);
 
   /**
@@ -115,103 +145,267 @@ export function ChatInput({
     return () => observer.disconnect();
   }, [resizeTextarea]);
 
-  /** Corta el dictado sin dejar que el `onend` pise el texto ya enviado. */
-  const resetRecognition = useCallback(() => {
-    const recognition = recognitionRef.current;
-    if (!recognition) return;
-    recognition.onresult = null;
-    recognition.onerror = null;
-    recognition.onend = null;
-    recognition.abort();
-    recognitionRef.current = null;
-    interimRef.current = '';
-    setListening(false);
+  const handleProgress = useCallback((update: DictationProgress) => {
+    if (!mountedRef.current) return;
+    setModelProgress(update.ready ? null : update.progress);
   }, []);
 
-  useEffect(() => () => resetRecognition(), [resetRecognition]);
+  const cancelDictation = useCallback(() => {
+    tokenRef.current += 1;
+    clearTimers();
 
-  // Si el composer se bloquea (confirmación pendiente) o empieza una
-  // respuesta, el micrófono no debe seguir escuchando.
-  useEffect(() => {
-    if (disabled || streaming) resetRecognition();
-  }, [disabled, streaming, resetRecognition]);
-
-  const startDictation = () => {
-    const Recognition = getSpeechRecognition();
-    if (!Recognition) return;
-
-    setVoiceError(null);
-    baseRef.current = valueRef.current;
-    finalRef.current = '';
-    interimRef.current = '';
-
-    const recognition = new Recognition();
-    recognition.lang = 'es-MX';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    recognition.onresult = (event) => {
-      let finalChunk = '';
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const result = event.results[i];
-        const text = result[0]?.transcript ?? '';
-        if (result.isFinal) finalChunk += text;
-        else interim += text;
+    const recorder = recorderRef.current;
+    recorderRef.current = null;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      try {
+        recorder.stop();
+      } catch {
+        // El grabador ya estaba cerrado; no hay nada que rescatar.
       }
+    }
 
-      if (finalChunk) {
-        finalRef.current = joinTranscript(finalRef.current, finalChunk);
+    stopStream();
+    chunksRef.current = [];
+    changeDictation('idle');
+    setElapsed(0);
+    setModelProgress(null);
+  }, [changeDictation, clearTimers, stopStream]);
+
+  const finishRecording = useCallback(async () => {
+    const recorder = recorderRef.current;
+    const token = tokenRef.current;
+    const chunks = chunksRef.current;
+    const mimeType = recorder?.mimeType || chunks[0]?.type || 'audio/webm';
+
+    recorderRef.current = null;
+    chunksRef.current = [];
+    clearTimers();
+    // El micrófono se apaga en cuanto tenemos los datos.
+    stopStream();
+
+    if (chunks.length === 0) {
+      if (token === tokenRef.current && mountedRef.current) {
+        setVoiceError(DICTATION_NO_AUDIO_ERROR);
+        changeDictation('idle');
       }
-      interimRef.current = interim;
+      return;
+    }
 
-      writeValue(
-        joinTranscript(baseRef.current, joinTranscript(finalRef.current, interimRef.current))
-      );
-    };
+    if (token !== tokenRef.current || !mountedRef.current) return;
 
-    recognition.onerror = (event) => {
-      if (!mountedRef.current) return;
-      setVoiceError(speechErrorMessage(event.error));
-    };
+    changeDictation('transcribing');
 
-    recognition.onend = () => {
-      if (!mountedRef.current) return;
-      // Algunos navegadores cierran sin marcar el último fragmento como final.
-      if (interimRef.current) {
-        finalRef.current = joinTranscript(finalRef.current, interimRef.current);
-        interimRef.current = '';
-        writeValue(joinTranscript(baseRef.current, finalRef.current));
+    let audio: Float32Array<ArrayBuffer>;
+    try {
+      audio = await decodeRecording(new Blob(chunks, { type: mimeType }));
+    } catch (error) {
+      console.error('[dictado] no se pudo decodificar el audio', error);
+      if (token === tokenRef.current && mountedRef.current) {
+        setVoiceError(DICTATION_DECODE_ERROR);
+        changeDictation('idle');
+        setModelProgress(null);
       }
-      recognitionRef.current = null;
-      setListening(false);
-    };
+      return;
+    }
+
+    if (token !== tokenRef.current || !mountedRef.current) return;
+
+    const { durationS, rms } = analyzeAudio(audio);
+    if (durationS < MIN_AUDIO_SECONDS) {
+      setVoiceError(DICTATION_SHORT_ERROR);
+      changeDictation('idle');
+      setModelProgress(null);
+      return;
+    }
+    if (rms < MIN_AUDIO_RMS) {
+      setVoiceError(DICTATION_EMPTY_ERROR);
+      changeDictation('idle');
+      setModelProgress(null);
+      return;
+    }
 
     try {
-      recognition.start();
-      recognitionRef.current = recognition;
-      setListening(true);
-    } catch {
-      setVoiceError('No se pudo iniciar el dictado. Intenta de nuevo.');
-    }
-  };
+      const transcriber =
+        transcriberRef.current ?? createLocalTranscriber({ onProgress: handleProgress });
+      transcriberRef.current = transcriber;
 
-  const stopDictation = () => {
-    // `stop` deja que el navegador entregue el último resultado; el `onend`
-    // limpia el estado y apaga el micrófono.
-    recognitionRef.current?.stop();
-  };
+      const text = cleanTranscript(await transcriber.transcribe(audio));
+      if (token !== tokenRef.current || !mountedRef.current) return;
+      if (!text) {
+        setVoiceError(DICTATION_EMPTY_ERROR);
+        changeDictation('idle');
+        setModelProgress(null);
+        return;
+      }
+
+      writeValue(joinTranscript(valueRef.current, text));
+      setVoiceError(null);
+      setVoiceNotice(null);
+      setModelProgress(null);
+      changeDictation('idle');
+    } catch (error) {
+      if (token !== tokenRef.current || !mountedRef.current) return;
+      const code = error instanceof Error ? error.message : '';
+      setVoiceError(
+        code === DICTATION_ERROR_MODEL || code === DICTATION_ERROR_WORKER
+          ? DICTATION_MODEL_ERROR
+          : DICTATION_TRANSCRIBE_ERROR
+      );
+      setModelProgress(null);
+      changeDictation('idle');
+    }
+  }, [changeDictation, clearTimers, handleProgress, stopStream, writeValue]);
+
+  const stopRecording = useCallback(() => {
+    const recorder = recorderRef.current;
+    if (!recorder || recorder.state === 'inactive') return;
+
+    clearTimers();
+    changeDictation('transcribing');
+    try {
+      // `stop` deja que el grabador entregue el último fragmento; `onstop`
+      // decodifica y transcribe.
+      recorder.stop();
+    } catch (error) {
+      console.error('[dictado] no se pudo detener la grabación', error);
+      setVoiceError(DICTATION_UNKNOWN_ERROR);
+      cancelDictation();
+    }
+  }, [cancelDictation, changeDictation, clearTimers]);
+
+  const startDictation = useCallback(async () => {
+    if (dictationRef.current !== 'idle') return;
+
+    setVoiceError(null);
+    setVoiceNotice(null);
+    setModelProgress(null);
+    tokenRef.current += 1;
+    const token = tokenRef.current;
+    changeDictation('requesting');
+
+    try {
+      const mediaDevices = navigator.mediaDevices;
+      if (!mediaDevices?.getUserMedia) {
+        setVoiceError('Este navegador no permite grabar audio.');
+        changeDictation('idle');
+        return;
+      }
+
+      const stream = await mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      if (token !== tokenRef.current || !mountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      streamRef.current = stream;
+
+      const mimeType = pickAudioMimeType();
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+
+      chunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        void finishRecording();
+      };
+      recorder.onerror = () => {
+        if (token !== tokenRef.current) return;
+        setVoiceError('La grabación se interrumpió. Intenta de nuevo.');
+        cancelDictation();
+      };
+
+      recorder.start(1000);
+      recorderRef.current = recorder;
+      startedAtRef.current = Date.now();
+      setElapsed(0);
+      changeDictation('recording');
+
+      timerRef.current = window.setInterval(() => {
+        setElapsed(Date.now() - startedAtRef.current);
+      }, 250);
+      limitRef.current = window.setTimeout(() => {
+        if (dictationRef.current !== 'recording') return;
+        setVoiceNotice(
+          'La grabación llegó al límite de 2 minutos; se transcribirá lo que alcanzó a grabarse.'
+        );
+        stopRecording();
+      }, MAX_RECORDING_MS);
+
+      // La descarga del modelo avanza mientras el usuario habla; si ya estaba
+      // en caché, la transcripción arranca sin esperas.
+      try {
+        const transcriber =
+          transcriberRef.current ?? createLocalTranscriber({ onProgress: handleProgress });
+        transcriberRef.current = transcriber;
+        transcriber.warmup();
+      } catch (error) {
+        console.error('[dictado] no se pudo preparar el modelo', error);
+      }
+    } catch (error) {
+      if (token !== tokenRef.current || !mountedRef.current) return;
+      console.error('[dictado] no se pudo acceder al micrófono', error);
+      stopStream();
+      setVoiceError(microphoneErrorMessage(error));
+      changeDictation('idle');
+    }
+  }, [cancelDictation, changeDictation, finishRecording, handleProgress, stopRecording, stopStream]);
+
+  // StrictMode monta, desmonta y vuelve a montar: el ref debe recuperarse.
+  useEffect(() => {
+    mountedRef.current = true;
+    setDictationSupported(isLocalDictationSupported());
+    return () => {
+      mountedRef.current = false;
+      cancelDictation();
+      transcriberRef.current?.terminate();
+      transcriberRef.current = null;
+    };
+  }, [cancelDictation]);
+
+  // Si el composer se bloquea (confirmación pendiente) o empieza una
+  // respuesta, el micrófono no debe seguir grabando.
+  useEffect(() => {
+    if (!disabled && !streaming) return;
+    if (dictationRef.current === 'recording' || dictationRef.current === 'requesting') {
+      cancelDictation();
+    }
+  }, [disabled, streaming, cancelDictation]);
 
   const submit = () => {
     const text = value.trim();
     // Mientras el asistente responde se puede escribir, pero no enviar:
     // el turno siguiente espera a que termine o se detenga.
     if (!text || disabled || streaming) return;
-    resetRecognition();
+    if (dictationRef.current !== 'idle') cancelDictation();
     onSend(text);
     writeValue('');
     setVoiceError(null);
+    setVoiceNotice(null);
   };
+
+  const dictationStatus =
+    dictation === 'requesting'
+      ? 'Pidiendo permiso para el micrófono…'
+      : dictation === 'recording'
+        ? `Grabando ${formatElapsed(elapsed)} · pulsa el micrófono para terminar${
+            modelProgress !== null ? ` · descargando modelo ${modelProgress} %` : ''
+          }`
+        : dictation === 'transcribing'
+          ? modelProgress !== null
+            ? `Preparando el dictado… ${modelProgress} % (la primera vez descarga ~100 MB)`
+            : 'Transcribiendo…'
+          : null;
 
   return (
     <Paper withBorder radius="lg" className={classes.composer} w="100%" ref={composerRef}>
@@ -240,29 +434,39 @@ export function ChatInput({
       />
       <Group gap="xs" wrap="nowrap" px="sm" pb={5} pt={0}>
         <Text size="xs" c="dimmed" visibleFrom="sm" truncate>
-          {listening
-            ? 'Escuchando… vuelve a pulsar el micrófono para terminar.'
-            : streaming
-              ? 'Puedes escribir; envía cuando termine.'
-              : 'Enter envía · Shift + Enter salta de línea'}
+          {streaming
+            ? 'Puedes escribir; envía cuando termine.'
+            : 'Enter envía · Shift + Enter salta de línea'}
         </Text>
         <Group gap={6} wrap="nowrap" ml="auto">
-          {voiceReady && !streaming && !disabled && (
+          {dictationSupported && !streaming && !disabled && (
             <Tooltip
-              label={listening ? 'Detener dictado' : 'Dictar por voz (es-MX)'}
+              label={
+                dictation === 'recording'
+                  ? 'Detener grabación'
+                  : dictation === 'transcribing'
+                    ? 'Transcribiendo…'
+                    : 'Dictar por voz (local, es-MX)'
+              }
               withArrow
             >
               <ActionIcon
                 size={38}
                 radius="md"
-                variant={listening ? 'filled' : 'light'}
-                color={listening ? 'red' : 'gray'}
-                onClick={listening ? stopDictation : startDictation}
-                aria-label={listening ? 'Detener dictado' : 'Dictar mensaje'}
-                aria-pressed={listening}
-                className={listening ? classes.listening : undefined}
+                variant={dictation === 'recording' ? 'filled' : 'light'}
+                color={dictation === 'recording' ? 'red' : 'gray'}
+                onClick={dictation === 'recording' ? stopRecording : () => void startDictation()}
+                disabled={dictation === 'requesting' || dictation === 'transcribing'}
+                loading={dictation === 'requesting' || dictation === 'transcribing'}
+                aria-label={dictation === 'recording' ? 'Detener dictado' : 'Dictar mensaje'}
+                aria-pressed={dictation === 'recording'}
+                className={dictation === 'recording' ? classes.listening : undefined}
               >
-                <IconMicrophone size={18} />
+                {dictation === 'recording' ? (
+                  <IconPlayerStop size={18} />
+                ) : (
+                  <IconMicrophone size={18} />
+                )}
               </ActionIcon>
             </Tooltip>
           )}
@@ -295,6 +499,28 @@ export function ChatInput({
           )}
         </Group>
       </Group>
+      {dictation !== 'idle' && (
+        <Box px="sm" pb={6}>
+          {modelProgress !== null && (
+            <Progress
+              value={modelProgress}
+              size={3}
+              radius="xl"
+              color="futcamedic"
+              mb={4}
+              aria-label="Descarga del modelo de dictado"
+            />
+          )}
+          <Text size="xs" c="dimmed" role="status" aria-live="polite">
+            {dictationStatus}
+          </Text>
+        </Box>
+      )}
+      {voiceNotice && !voiceError && (
+        <Text size="xs" c="dimmed" px="sm" pb={6} role="status">
+          {voiceNotice}
+        </Text>
+      )}
       {voiceError && (
         <Text size="xs" c="red" px="sm" pb={6} role="alert">
           {voiceError}
