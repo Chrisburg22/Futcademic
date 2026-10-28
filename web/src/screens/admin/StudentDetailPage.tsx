@@ -57,6 +57,7 @@ import {
   useUpdateUniform,
 } from '../../hooks/useStudents';
 import { useGetAccountStatement } from '../../hooks/usePayments';
+import { useEstadisticaAsistencia } from '../../hooks/useAttendances';
 import { useGetCategories, useGetMyCategories } from '../../hooks/useCategories';
 import { useGetUsers } from '../../hooks/useUsers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -83,7 +84,8 @@ import type { Student, StudentStatus } from '../../types';
 import { StudentExpediente } from './components/StudentExpediente';
 import { StudentEditForm } from './components/StudentEditForm';
 import { StudentPaymentsPanel } from './components/StudentPaymentsPanel';
-import { StudentAttendancePanel } from './components/StudentAttendancePanel';
+import { StudentAttendanceHistory } from '../../components/attendance/StudentAttendanceHistory';
+import { StudentAttendanceCard } from '../../components/attendance/StudentAttendanceCard';
 import { TutorReminderModal } from './components/TutorReminderModal';
 
 type Pestana = 'resumen' | 'datos' | 'expediente' | 'pagos' | 'asistencia';
@@ -174,6 +176,9 @@ export function StudentDetailPage() {
   const { data: todasCategorias = [] } = useGetCategories(!isTeacher);
   const categorias = isTeacher ? misCategorias : todasCategorias;
   const { data: users = [] } = useGetUsers();
+  // La asistencia de los últimos 90 días: alimenta el resumen y el aviso de la
+  // pestaña. Comparte consulta con el historial, así que no cuesta otra.
+  const { estadistica: asistencia } = useEstadisticaAsistencia(id, '90');
   const tutores = users.filter((u: any) => u.role === 'padre');
 
   // Revisar alumnos de uno en uno es lo normal al cerrar expedientes o cobrar:
@@ -572,7 +577,17 @@ export function StudentDetailPage() {
               Pagos
             </Tabs.Tab>
           )}
-          <Tabs.Tab value="asistencia" leftSection={<IconCalendarCheck size={16} />}>
+          <Tabs.Tab
+            value="asistencia"
+            leftSection={<IconCalendarCheck size={16} />}
+            rightSection={
+              asistencia.enRiesgo ? (
+                <Badge size="xs" variant="light" color="orange">
+                  {asistencia.porcentaje}%
+                </Badge>
+              ) : undefined
+            }
+          >
             Asistencia
           </Tabs.Tab>
         </Tabs.List>
@@ -717,6 +732,10 @@ export function StudentDetailPage() {
                     </Stack>
                   </Card>
                 )}
+                <StudentAttendanceCard
+                  estadistica={asistencia}
+                  onVer={() => irAPestana('asistencia')}
+                />
                 <Card withBorder padding="lg" radius="md" style={{ flex: 1 }}>
                   <Group gap="xs" mb="md">
                     <IconUsers size={18} />
@@ -795,7 +814,7 @@ export function StudentDetailPage() {
         )}
 
         <Tabs.Panel value="asistencia" pt="md">
-          <StudentAttendancePanel studentId={id} />
+          <StudentAttendanceHistory studentId={id} nombre={student.full_name} />
         </Tabs.Panel>
       </Tabs>
     </Stack>

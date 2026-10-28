@@ -211,7 +211,11 @@ test('la ficha muestra pendientes y organiza la información en pestañas', asyn
   await page.getByRole('tab', { name: 'Pagos' }).click();
   await expect(page.getByText('Mensualidad septiembre')).toBeVisible();
   await page.getByRole('tab', { name: 'Asistencia' }).click();
-  await expect(page.getByText('50%')).toBeVisible();
+  // El porcentaje también sale en la tarjeta del resumen: hay que mirar la
+  // pestaña de asistencia.
+  await expect(
+    page.getByRole('tabpanel', { name: 'Asistencia' }).getByText('50%').first(),
+  ).toBeVisible();
 
   await pendientes.getByRole('button', { name: 'Resolver' }).first().click();
   await expect(page.getByRole('tab', { name: 'Datos', selected: true })).toBeVisible();
