@@ -115,11 +115,10 @@ const TEAM = {
     { id: 's4', full_name: 'Sofía Herrera', avatar_url: null },
     { id: 's5', full_name: 'Pablo Mendoza', avatar_url: null },
   ],
-  teachers: [{ id: 't1', full_name: 'Prof. García', avatar_url: null }],
+  teachers: [{ id: 't1', name: 'Prof. García', avatar: null, phone: null }],
   schedules: [
-    { day: 'Martes', start_time: '17:00', venue: 'Cancha Central' },
-    { day: 'Jueves', start_time: '17:00', venue: 'Cancha Central' },
-    { day: 'Sábado', start_time: '10:00', venue: 'Campo Norte' },
+    { id: 'ev1', name: 'Entrenamiento de semana', time: '17:00', venue: 'Cancha Central' },
+    { id: 'ev2', name: 'Entrenamiento de sábado', time: '10:00', venue: 'Campo Norte' },
   ],
 };
 
@@ -543,10 +542,12 @@ test('21 — Alumno: Mi equipo', async ({ page }) => {
   // Profesores
   await expect(page.getByText('Prof. García')).toBeVisible();
   await pause(500);
-  // Horarios
-  await expect(page.getByText('Martes — 17:00 (Cancha Central)')).toBeVisible();
-  await expect(page.getByText('Jueves — 17:00 (Cancha Central)')).toBeVisible();
-  await expect(page.getByText('Sábado — 10:00 (Campo Norte)')).toBeVisible();
+  // Horarios: el nombre del entrenamiento recurrente, con hora y cancha
+  await expect(page.getByText('Entrenamiento de semana')).toBeVisible();
+  await expect(page.getByText('17:00')).toBeVisible();
+  await expect(page.getByText('Cancha Central')).toBeVisible();
+  await expect(page.getByText('Entrenamiento de sábado')).toBeVisible();
+  await expect(page.getByText('Campo Norte')).toBeVisible();
   await pause(1500);
 });
 
