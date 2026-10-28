@@ -94,6 +94,35 @@ export const useUpdateStudentStatus = () => {
   });
 };
 
+export type AccionMasiva =
+  | { tipo: 'status'; status: 'activo' | 'pendiente_pago' | 'inactivo' | 'becado' }
+  | { tipo: 'uniform'; entregado: boolean }
+  | { tipo: 'category'; category_id: string };
+
+/**
+ * No hay endpoint masivo: se lanza una petición por alumno y se informa de
+ * cuántas funcionaron, para que un fallo aislado no deje todo a medias sin
+ * avisar.
+ */
+export const useBulkUpdateStudents = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, accion }: { ids: string[]; accion: AccionMasiva }) => {
+      const ejecutar = (id: string) => {
+        if (accion.tipo === 'status') return api.patch(`/students/${id}/status`, { status: accion.status });
+        if (accion.tipo === 'uniform') {
+          return api.patch(`/students/${id}/uniform`, { uniform_delivered: accion.entregado });
+        }
+        return api.put(`/students/${id}`, { category_id: accion.category_id });
+      };
+      const resultados = await Promise.allSettled(ids.map(ejecutar));
+      const fallidos = ids.filter((_, i) => resultados[i].status === 'rejected');
+      return { total: ids.length, correctos: ids.length - fallidos.length, fallidos };
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['students'] }),
+  });
+};
+
 export const useDeleteStudent = () => {
   const qc = useQueryClient();
   return useMutation({

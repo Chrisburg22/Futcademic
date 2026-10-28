@@ -1,105 +1,285 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Card,
-  Group,
   Button,
-  Table,
+  Card,
+  Drawer,
+  Group,
+  Menu,
   Modal,
-  Stack,
-  TextInput,
+  Pagination,
+  Paper,
   Select,
-  Badge,
-  ActionIcon,
-  Avatar,
+  Skeleton,
+  Stack,
   Text,
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
-import { useDisclosure } from '@mantine/hooks';
-import { useForm } from '@mantine/form';
-import { notifications } from '@mantine/notifications';
-import { IconPlus, IconEdit, IconShirt, IconTrash, IconEye, IconLink } from '@tabler/icons-react';
+import { useDebouncedValue, useDisclosure } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
-import dayjs from 'dayjs';
+import { notifications } from '@mantine/notifications';
+import {
+  IconCategory,
+  IconDownload,
+  IconLink,
+  IconPlus,
+  IconSearchOff,
+  IconShirt,
+  IconUserPlus,
+  IconUsers,
+  IconX,
+} from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import {
-  useGetStudents,
-  useUpdateStudent,
-  useUpdateUniform,
-  useUpdateStudentStatus,
+  useBulkUpdateStudents,
   useDeleteStudent,
+  useGetStudents,
+  useUpdateStudentStatus,
+  useUpdateUniform,
+  type AccionMasiva,
 } from '../../hooks/useStudents';
 import { StudentWizard } from './components/StudentWizard';
 import { InviteStudentModal } from './components/InviteStudentModal';
-import { EnrollmentStatusBadge } from '../enrollment/labels';
+import { StudentEditForm } from './components/StudentEditForm';
+import { StudentsSummary } from './components/StudentsSummary';
+import { StudentsToolbar } from './components/StudentsToolbar';
+import { StudentsTable } from './components/StudentsTable';
 import { useGetCategories, useGetMyCategories } from '../../hooks/useCategories';
 import { useGetUsers } from '../../hooks/useUsers';
 import { useAuth } from '../../contexts/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
-import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { mensajeDeError } from '../../lib/categories';
+import { saveBlob } from '../../lib/download';
+import {
+  ESTADOS_ALUMNO,
+  FILTROS_VACIOS,
+  OPCIONES_ESTADO,
+  ORDEN_INICIAL,
+  alumnosACsv,
+  anioNacimiento,
+  filtrarAlumnos,
+  hayFiltros,
+  ordenarAlumnos,
+  resumirAlumnos,
+  type CampoOrden,
+  type FiltrosAlumnos,
+  type Orden,
+} from '../../lib/students';
+import type { Student, StudentStatus } from '../../types';
+
+const POR_PAGINA = 25;
 
 export function StudentsPage() {
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const navigate = useRouter();
   const { profile } = useAuth();
   const isTeacher = profile?.role === 'profesor';
+  // Estado y baja son solo del admin en el backend; el profesor no los ve.
+  const puedeAdministrar = !isTeacher;
+
   // Un profesor solo trabaja con sus categorías asignadas
   const { data: myCategories = [] } = useGetMyCategories(isTeacher);
   const { data: allCategories = [] } = useGetCategories(!isTeacher);
   const categories = isTeacher ? myCategories : allCategories;
   const { data: users = [] } = useGetUsers();
   const parents = users.filter((u: any) => u.role === 'padre');
-  const { data: students = [], isLoading } = useGetStudents(categoryFilter || undefined);
-  const navigate = useRouter();
-  const update = useUpdateStudent();
-  const uniformMut = useUpdateUniform();
-  const statusMut = useUpdateStudentStatus();
-  const deleteMut = useDeleteStudent();
+
+  // La lista completa se trae una vez: el backend no pagina ni filtra más que
+  // por categoría, y una academia maneja cientos de alumnos, no miles.
+  const { data: students = [], isLoading, isError, refetch } = useGetStudents();
+  const alumnos = students as Student[];
+
+  const [filtros, setFiltros] = useState<FiltrosAlumnos>(FILTROS_VACIOS);
+  const [busquedaDebounced] = useDebouncedValue(filtros.busqueda, 200);
+  const [orden, setOrden] = useState<Orden>(ORDEN_INICIAL);
+  const [pagina, setPagina] = useState(1);
+  const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
 
   const [createOpen, { open: openCreate, close: closeCreate }] = useDisclosure(false);
   const [inviteOpen, invite] = useDisclosure(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const editing = students.find((s: any) => s.id === editingId);
+  const [editSucio, setEditSucio] = useState(false);
+  const [categoriaMasiva, setCategoriaMasiva] = useState<string | null>(null);
+  const [moverOpen, mover] = useDisclosure(false);
 
-  const editForm = useForm<any>({ initialValues: {} });
+  const uniformMut = useUpdateUniform();
+  const statusMut = useUpdateStudentStatus();
+  const deleteMut = useDeleteStudent();
+  const bulkMut = useBulkUpdateStudents();
 
-  const startEdit = (s: any) => {
-    setEditingId(s.id);
-    editForm.setValues({
-      full_name: s.full_name,
-      birth_date: s.birth_date ? new Date(s.birth_date) : new Date(),
-      category_id: s.category_id,
-      parent_id: s.parent_id || '',
-      phone: s.phone || '',
-      address: s.address || '',
-      emergency_contact_name: s.emergency_contact_name || '',
-      emergency_contact_phone: s.emergency_contact_phone || '',
-      medical_notes: s.medical_notes || '',
+  const cambiarFiltros = (cambios: Partial<FiltrosAlumnos> | null) => {
+    setFiltros((actual) => (cambios === null ? FILTROS_VACIOS : { ...actual, ...cambios }));
+  };
+
+  // Al filtrar o reordenar se vuelve a la primera página; la selección de
+  // alumnos que ya no se ven se descarta para no actuar sobre filas ocultas.
+  const filtrosEfectivos = useMemo(
+    () => ({ ...filtros, busqueda: busquedaDebounced }),
+    [filtros, busquedaDebounced],
+  );
+  useEffect(() => setPagina(1), [filtrosEfectivos, orden]);
+
+  const resumen = useMemo(() => resumirAlumnos(alumnos), [alumnos]);
+  const filtrados = useMemo(
+    () => ordenarAlumnos(filtrarAlumnos(alumnos, filtrosEfectivos), orden),
+    [alumnos, filtrosEfectivos, orden],
+  );
+  const anios = useMemo(
+    () =>
+      Array.from(new Set(alumnos.map((a) => anioNacimiento(a.birth_date)).filter(Boolean) as string[]))
+        .sort()
+        .reverse(),
+    [alumnos],
+  );
+
+  const paginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginaActual = Math.min(pagina, paginas);
+  const visibles = filtrados.slice((paginaActual - 1) * POR_PAGINA, paginaActual * POR_PAGINA);
+
+  useEffect(() => {
+    const ids = new Set(filtrados.map((a) => a.id));
+    setSeleccion((actual) => {
+      const quedan = [...actual].filter((id) => ids.has(id));
+      return quedan.length === actual.size ? actual : new Set(quedan);
+    });
+  }, [filtrados]);
+
+  const alternarOrden = (campo: CampoOrden) =>
+    setOrden((o) =>
+      o.campo === campo ? { campo, direccion: o.direccion === 'asc' ? 'desc' : 'asc' } : { campo, direccion: 'asc' },
+    );
+
+  const ordenComoTexto = `${orden.campo}:${orden.direccion}`;
+
+  const marcar = (ids: string[], marcado: boolean) =>
+    setSeleccion((actual) => {
+      const siguiente = new Set(actual);
+      ids.forEach((id) => (marcado ? siguiente.add(id) : siguiente.delete(id)));
+      return siguiente;
+    });
+
+  const editing = alumnos.find((s) => s.id === editingId);
+
+  const cerrarEdicion = () => {
+    if (!editSucio) return setEditingId(null);
+    modals.openConfirmModal({
+      title: 'Descartar cambios',
+      children: <Text size="sm">Tienes cambios sin guardar. Si cierras, se pierden.</Text>,
+      labels: { confirm: 'Descartar', cancel: 'Seguir editando' },
+      confirmProps: { color: 'red' },
+      onConfirm: () => {
+        setEditSucio(false);
+        setEditingId(null);
+      },
     });
   };
 
-  const onUpdate = async (v: any) => {
-    if (!editingId) return;
-    await update.mutateAsync({
-      id: editingId,
-      ...v,
-      birth_date: v.birth_date ? dayjs(v.birth_date).format('YYYY-MM-DD') : undefined,
-      parent_id: v.parent_id || null,
+  const cambiarEstado = (alumno: Student, estado: StudentStatus) =>
+    statusMut.mutate(
+      { id: alumno.id, status: estado },
+      {
+        onSuccess: () =>
+          notifications.show({
+            color: 'green',
+            message: `${alumno.full_name} ahora está ${ESTADOS_ALUMNO[estado].label.toLowerCase()}`,
+          }),
+        onError: (error) =>
+          notifications.show({
+            color: 'red',
+            title: 'No se pudo cambiar el estado',
+            message: mensajeDeError(error, 'Inténtalo de nuevo.'),
+          }),
+      },
+    );
+
+  const alternarUniforme = (alumno: Student) =>
+    uniformMut.mutate(
+      { id: alumno.id, uniform_delivered: !alumno.uniform_delivered },
+      {
+        onError: (error) =>
+          notifications.show({
+            color: 'red',
+            title: 'No se pudo actualizar el uniforme',
+            message: mensajeDeError(error, 'Inténtalo de nuevo.'),
+          }),
+      },
+    );
+
+  const confirmarEliminar = (alumno: Student) =>
+    modals.openConfirmModal({
+      title: `Eliminar a ${alumno.full_name}`,
+      children: (
+        <Stack gap="xs">
+          <Text size="sm">
+            Se quita de la academia y se guarda una copia en el historial de eliminados.
+            <strong> No hay forma de restaurarlo desde la app.</strong>
+          </Text>
+          <Text size="sm" c="dimmed">
+            Si solo dejó de entrenar, es mejor marcarlo como inactivo: conserva su historial de
+            asistencias y pagos.
+          </Text>
+        </Stack>
+      ),
+      labels: { confirm: 'Eliminar definitivamente', cancel: 'Cancelar' },
+      confirmProps: { color: 'red' },
+      onConfirm: async () => {
+        try {
+          await deleteMut.mutateAsync(alumno.id);
+          notifications.show({ color: 'green', message: `${alumno.full_name} fue eliminado` });
+        } catch (error) {
+          notifications.show({
+            color: 'red',
+            title: 'No se pudo eliminar',
+            message: mensajeDeError(error, 'Inténtalo de nuevo.'),
+          });
+        }
+      },
     });
-    notifications.show({ color: 'green', message: 'Alumno actualizado' });
-    setEditingId(null);
+
+  const ejecutarMasiva = async (accion: AccionMasiva, descripcion: string) => {
+    const ids = [...seleccion];
+    const resultado = await bulkMut.mutateAsync({ ids, accion });
+    if (resultado.fallidos.length === 0) {
+      notifications.show({ color: 'green', message: `${descripcion}: ${resultado.correctos} alumnos` });
+      setSeleccion(new Set());
+    } else {
+      notifications.show({
+        color: 'orange',
+        title: 'Se completó solo en parte',
+        message: `${resultado.correctos} de ${resultado.total} alumnos. Los que fallaron siguen seleccionados.`,
+      });
+      setSeleccion(new Set(resultado.fallidos));
+    }
   };
+
+  const exportar = (lista: Student[], nombre: string) => {
+    saveBlob(new Blob([alumnosACsv(lista)], { type: 'text/csv;charset=utf-8' }), nombre);
+  };
+
+  const seleccionados = alumnos.filter((a) => seleccion.has(a.id));
+  const paginaSeleccionada = visibles.length > 0 && visibles.every((a) => seleccion.has(a.id));
+  const faltanPorSeleccionar = filtrados.filter((a) => !seleccion.has(a.id)).length;
+  const hayAlumnos = alumnos.length > 0;
 
   return (
     <>
       <PageHeader
         title="Alumnos"
+        description="Quién entrena, quién debe documentos o pagos, y a quién falta atender."
         actions={
           <Group>
             <Button
-              variant="light"
-              leftSection={<IconLink size={16} />}
-              onClick={invite.open}
+              variant="default"
+              leftSection={<IconDownload size={16} />}
+              disabled={filtrados.length === 0}
+              onClick={() =>
+                exportar(
+                  filtrados,
+                  `alumnos-${hayFiltros(filtros) ? 'filtrados' : 'todos'}.csv`,
+                )
+              }
             >
+              Exportar
+            </Button>
+            <Button variant="light" leftSection={<IconLink size={16} />} onClick={invite.open}>
               Invitar alumno
             </Button>
             <Button leftSection={<IconPlus size={16} />} onClick={openCreate}>
@@ -108,151 +288,207 @@ export function StudentsPage() {
           </Group>
         }
       />
-      <Card withBorder padding="md" radius="md" mb="md">
-        <Select
-          label="Filtrar por categoría"
-          placeholder="Todas"
-          clearable
-          value={categoryFilter}
-          onChange={setCategoryFilter}
-          data={categories.map((c: any) => ({ value: c.id, label: c.name }))}
-        />
-      </Card>
 
-      {isLoading ? (
-        <LoadingState />
-      ) : students.length === 0 ? (
-        <EmptyState description="Sin alumnos registrados." />
-      ) : (
-        <Card withBorder padding={0} radius="md">
-          <Table.ScrollContainer minWidth={600}>
-            <Table verticalSpacing="sm">
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Alumno</Table.Th>
-                  <Table.Th>Categoría</Table.Th>
-                  <Table.Th>Status</Table.Th>
-                  <Table.Th>Expediente</Table.Th>
-                  <Table.Th>Uniforme</Table.Th>
-                  <Table.Th />
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {students.map((s: any) => (
-                  <Table.Tr key={s.id}>
-                    <Table.Td>
-                      <Group gap="sm">
-                        <Avatar size="sm" radius="xl">
-                          {s.full_name?.[0]?.toUpperCase()}
-                        </Avatar>
-                        <div>
-                          <Text size="sm" fw={500}>
-                            {s.full_name}
-                          </Text>
-                          <Text size="xs" c="dimmed">
-                            {s.email}
-                          </Text>
-                        </div>
-                      </Group>
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge variant="light">{s.category?.name || '—'}</Badge>
-                    </Table.Td>
-                    <Table.Td>
-                      <Select
-                        size="xs"
-                        w={140}
-                        value={s.status || 'activo'}
-                        data={[
-                          { value: 'activo', label: 'Activo' },
-                          { value: 'becado', label: 'Becado' },
-                          { value: 'pendiente_pago', label: 'Pend. pago' },
-                          { value: 'inactivo', label: 'Inactivo' },
-                        ]}
-                        onChange={(val) =>
-                          val &&
-                          statusMut.mutate(
-                            { id: s.id, status: val as any },
-                            {
-                              onSuccess: () =>
-                                notifications.show({
-                                  color: 'green',
-                                  message: 'Status actualizado',
-                                }),
-                            },
+      {hayAlumnos && (
+        <StudentsSummary
+          resumen={resumen}
+          filtros={filtros}
+          cargando={isLoading}
+          onFiltro={(cambios) =>
+            cambios === null
+              ? cambiarFiltros(null)
+              : setFiltros({ ...FILTROS_VACIOS, categoria: filtros.categoria, ...cambios })
+          }
+          verEstados={puedeAdministrar}
+        />
+      )}
+
+      {(hayAlumnos || hayFiltros(filtros)) && (
+        <StudentsToolbar
+          filtros={filtros}
+          onChange={cambiarFiltros}
+          orden={ordenComoTexto}
+          onOrden={(valor) => {
+            const [campo, direccion] = valor.split(':');
+            setOrden({ campo: campo as CampoOrden, direccion: direccion as Orden['direccion'] });
+          }}
+          categorias={categories}
+          anios={anios}
+          mostrados={filtrados.length}
+          total={alumnos.length}
+          puedeCambiarEstado={puedeAdministrar}
+        />
+      )}
+
+      {seleccion.size > 0 && (
+        <Paper
+          withBorder
+          radius="md"
+          p="xs"
+          mb="sm"
+          shadow="sm"
+          role="region"
+          aria-label="Acciones para los alumnos seleccionados"
+          style={{ position: 'sticky', top: 8, zIndex: 20 }}
+        >
+          <Group justify="space-between" wrap="wrap" gap="xs">
+            <Group gap="xs">
+              <Button
+                variant="subtle"
+                color="gray"
+                size="compact-sm"
+                leftSection={<IconX size={14} />}
+                onClick={() => setSeleccion(new Set())}
+              >
+                Quitar selección
+              </Button>
+              <Text size="sm" fw={600}>
+                {seleccion.size} {seleccion.size === 1 ? 'seleccionado' : 'seleccionados'}
+              </Text>
+            </Group>
+            <Group gap="xs">
+              {puedeAdministrar && (
+                <Menu withinPortal shadow="md">
+                  <Menu.Target>
+                    <Button variant="default" size="compact-md" loading={bulkMut.isPending}>
+                      Cambiar estado
+                    </Button>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    {OPCIONES_ESTADO.map((o) => (
+                      <Menu.Item
+                        key={o.value}
+                        onClick={() =>
+                          ejecutarMasiva(
+                            { tipo: 'status', status: o.value },
+                            `Estado «${o.label}» aplicado a`,
                           )
                         }
-                      />
-                    </Table.Td>
-                    <Table.Td>
-                      <EnrollmentStatusBadge status={s.expediente_status} size="xs" />
-                    </Table.Td>
-                    <Table.Td>
-                      <ActionIcon
-                        variant={s.uniform_delivered ? 'filled' : 'light'}
-                        color={s.uniform_delivered ? 'green' : 'gray'}
-                        onClick={() =>
-                          uniformMut.mutate({
-                            id: s.id,
-                            uniform_delivered: !s.uniform_delivered,
-                          })
-                        }
-                        aria-label="Alternar uniforme"
                       >
-                        <IconShirt size={16} />
-                      </ActionIcon>
-                    </Table.Td>
-                    <Table.Td>
-                      <Group gap={4}>
-                        <ActionIcon
-                          variant="subtle"
-                          onClick={() => navigate.push(`/admin/students/${s.id}`)}
-                          aria-label="Ver detalle"
-                        >
-                          <IconEye size={16} />
-                        </ActionIcon>
-                        <ActionIcon
-                          variant="subtle"
-                          onClick={() => startEdit(s)}
-                          aria-label="Editar"
-                        >
-                          <IconEdit size={16} />
-                        </ActionIcon>
-                        <ActionIcon
-                          variant="subtle"
-                          color="red"
-                          aria-label="Eliminar"
-                          onClick={() =>
-                            modals.openConfirmModal({
-                              title: 'Eliminar alumno',
-                              children: (
-                                <Text size="sm">
-                                  ¿Eliminar a {s.full_name}? El registro se
-                                  archiva pero no se puede revertir fácilmente.
-                                </Text>
-                              ),
-                              labels: { confirm: 'Eliminar', cancel: 'Cancelar' },
-                              confirmProps: { color: 'red' },
-                              onConfirm: async () => {
-                                await deleteMut.mutateAsync(s.id);
-                                notifications.show({
-                                  color: 'green',
-                                  message: 'Alumno eliminado',
-                                });
-                              },
-                            })
-                          }
-                        >
-                          <IconTrash size={16} />
-                        </ActionIcon>
-                      </Group>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </Table.ScrollContainer>
+                        {o.label}
+                      </Menu.Item>
+                    ))}
+                  </Menu.Dropdown>
+                </Menu>
+              )}
+              <Button
+                variant="default"
+                size="compact-md"
+                leftSection={<IconCategory size={14} />}
+                onClick={() => {
+                  setCategoriaMasiva(null);
+                  mover.open();
+                }}
+              >
+                Mover de categoría
+              </Button>
+              <Button
+                variant="default"
+                size="compact-md"
+                leftSection={<IconShirt size={14} />}
+                loading={bulkMut.isPending}
+                onClick={() =>
+                  ejecutarMasiva({ tipo: 'uniform', entregado: true }, 'Uniforme entregado a')
+                }
+              >
+                Uniforme entregado
+              </Button>
+              <Button
+                variant="default"
+                size="compact-md"
+                leftSection={<IconDownload size={14} />}
+                onClick={() => exportar(seleccionados, 'alumnos-seleccionados.csv')}
+              >
+                Exportar
+              </Button>
+            </Group>
+          </Group>
+          {paginaSeleccionada && faltanPorSeleccionar > 0 && (
+            <Group gap="xs" mt="xs" role="status">
+              <Text size="sm" c="dimmed">
+                Seleccionaste los {visibles.length} de esta página.
+              </Text>
+              <Button
+                variant="subtle"
+                size="compact-sm"
+                onClick={() => marcar(filtrados.map((a) => a.id), true)}
+              >
+                Seleccionar los {filtrados.length} alumnos
+                {hayFiltros(filtros) ? ' filtrados' : ''}
+              </Button>
+            </Group>
+          )}
+        </Paper>
+      )}
+
+      {isLoading ? (
+        <Card withBorder padding="md" radius="md">
+          <Stack gap="sm">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} height={44} radius="sm" />
+            ))}
+          </Stack>
         </Card>
+      ) : isError ? (
+        <Card withBorder radius="md">
+          <EmptyState
+            title="No se pudo cargar la lista"
+            description="Revisa tu conexión e inténtalo de nuevo."
+            action={<Button onClick={() => refetch()}>Reintentar</Button>}
+          />
+        </Card>
+      ) : !hayAlumnos ? (
+        <Card withBorder radius="md">
+          <EmptyState
+            icon={<IconUsers size={32} />}
+            title="Aún no hay alumnos"
+            description="Da de alta al primero, o manda un link de inscripción para que el tutor llene el expediente."
+            action={
+              <Group>
+                <Button leftSection={<IconUserPlus size={16} />} onClick={openCreate}>
+                  Nuevo alumno
+                </Button>
+                <Button variant="light" leftSection={<IconLink size={16} />} onClick={invite.open}>
+                  Invitar alumno
+                </Button>
+              </Group>
+            }
+          />
+        </Card>
+      ) : filtrados.length === 0 ? (
+        <Card withBorder radius="md">
+          <EmptyState
+            icon={<IconSearchOff size={32} />}
+            title="Ningún alumno coincide"
+            description="Prueba con otra búsqueda o quita algunos filtros."
+            action={<Button variant="light" onClick={() => cambiarFiltros(null)}>Limpiar filtros</Button>}
+          />
+        </Card>
+      ) : (
+        <>
+          <StudentsTable
+            alumnos={visibles}
+            orden={orden}
+            onOrden={alternarOrden}
+            seleccion={seleccion}
+            onSeleccion={marcar}
+            puedeAdministrar={puedeAdministrar}
+            onAbrir={(a) => navigate.push(`/admin/students/${a.id}`)}
+            onEditar={(a) => setEditingId(a.id)}
+            onEliminar={confirmarEliminar}
+            onEstado={cambiarEstado}
+            onUniforme={alternarUniforme}
+          />
+          {paginas > 1 && (
+            <Group justify="space-between" mt="md" wrap="wrap">
+              <Text size="sm" c="dimmed">
+                {(paginaActual - 1) * POR_PAGINA + 1}–
+                {Math.min(paginaActual * POR_PAGINA, filtrados.length)} de {filtrados.length}
+              </Text>
+              <Pagination value={paginaActual} onChange={setPagina} total={paginas} />
+            </Group>
+          )}
+        </>
       )}
 
       <StudentWizard
@@ -262,54 +498,73 @@ export function StudentsPage() {
         parents={parents}
       />
 
-      <Modal
-        opened={!!editingId}
-        onClose={() => setEditingId(null)}
-        title={`Editar ${editing?.full_name || ''}`}
-        centered
+      <Drawer
+        opened={!!editing}
+        onClose={cerrarEdicion}
+        position="right"
         size="lg"
+        title={`Editar a ${editing?.full_name || ''}`}
+        closeButtonProps={{ 'aria-label': 'Cerrar edición' }}
       >
-        <form onSubmit={editForm.onSubmit(onUpdate)}>
-          <Stack>
-            <TextInput label="Nombre completo" {...editForm.getInputProps('full_name')} />
-            <DateInput label="Fecha de nacimiento" {...editForm.getInputProps('birth_date')} />
-            <Select
-              label="Categoría"
-              data={categories.map((c: any) => ({ value: c.id, label: c.name }))}
-              {...editForm.getInputProps('category_id')}
-            />
-            <Select
-              label="Padre/Tutor"
-              clearable
-              data={parents.map((p: any) => ({ value: p.id, label: p.full_name }))}
-              {...editForm.getInputProps('parent_id')}
-            />
-            <Group grow>
-              <TextInput label="Teléfono" {...editForm.getInputProps('phone')} />
-              <TextInput label="Dirección" {...editForm.getInputProps('address')} />
-            </Group>
-            <Group grow>
-              <TextInput
-                label="Contacto emergencia"
-                {...editForm.getInputProps('emergency_contact_name')}
-              />
-              <TextInput
-                label="Tel. emergencia"
-                {...editForm.getInputProps('emergency_contact_phone')}
-              />
-            </Group>
-            <TextInput label="Notas médicas" {...editForm.getInputProps('medical_notes')} />
-            <Button type="submit" loading={update.isPending}>
-              Guardar cambios
+        {editing && (
+          <StudentEditForm
+            alumno={editing}
+            categorias={categories}
+            tutores={parents}
+            onDirtyChange={setEditSucio}
+            onSaved={() => {
+              setEditSucio(false);
+              setEditingId(null);
+            }}
+            onCancel={cerrarEdicion}
+          />
+        )}
+      </Drawer>
+
+      <Modal
+        opened={moverOpen}
+        onClose={mover.close}
+        title={`Mover ${seleccion.size} ${seleccion.size === 1 ? 'alumno' : 'alumnos'} de categoría`}
+        centered
+      >
+        <Stack>
+          <Select
+            label="Nueva categoría"
+            placeholder="Elige una categoría"
+            searchable
+            data={categories.map((c: any) => ({ value: c.id, label: c.name }))}
+            value={categoriaMasiva}
+            onChange={setCategoriaMasiva}
+            data-autofocus
+          />
+          <Text size="xs" c="dimmed">
+            Su asistencia y mensualidad pasan a la nueva categoría. Los registros anteriores se
+            conservan.
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={mover.close}>
+              Cancelar
             </Button>
-          </Stack>
-        </form>
+            <Button
+              disabled={!categoriaMasiva}
+              loading={bulkMut.isPending}
+              onClick={async () => {
+                if (!categoriaMasiva) return;
+                await ejecutarMasiva({ tipo: 'category', category_id: categoriaMasiva }, 'Movidos');
+                mover.close();
+              }}
+            >
+              Mover
+            </Button>
+          </Group>
+        </Stack>
       </Modal>
+
       <InviteStudentModal
         opened={inviteOpen}
         onClose={invite.close}
         categories={categories}
-        defaultCategoryId={categoryFilter}
+        defaultCategoryId={filtros.categoria}
       />
     </>
   );

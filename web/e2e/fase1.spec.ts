@@ -148,20 +148,20 @@ test('venues: crear cancha', async ({ page }) => {
 test('students: cambiar status', async ({ page }) => {
   await loginAs(page, { api: API_FX, goto: '/admin/students' });
   await expect(page.getByText('Carlos López')).toBeVisible();
-  // Status column renders.
-  await expect(page.getByText('Status')).toBeVisible();
+  // La columna de estado se renderiza y es ordenable.
+  await expect(page.getByRole('columnheader', { name: 'Estado' })).toBeVisible();
 });
 
 // --- Student detail page ---
 test('students: navegar a detalle', async ({ page }) => {
   await loginAs(page, { api: API_FX, goto: '/admin/students' });
-  await page.getByRole('button', { name: 'Ver detalle' }).first().click();
+  await page.getByRole('button', { name: 'Abrir ficha de Carlos López' }).click();
   await expect(page).toHaveURL(/\/admin\/students\/s1/);
   await expect(page.getByRole('heading', { name: 'Carlos López' })).toBeVisible();
   // Stats
   await expect(page.getByText('Racha actual')).toBeVisible();
   // Team
-  await expect(page.getByText('Compañeros')).toBeVisible();
+  await expect(page.getByText(/^Compañeros/)).toBeVisible();
 });
 
 // --- Teacher detail + permisos ---

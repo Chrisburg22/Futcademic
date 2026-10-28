@@ -207,8 +207,8 @@ test('03 — Admin: Gestión de alumnos', async ({ page }) => {
   await expect(page.getByText('Diego Ramírez')).toBeVisible();
   await pause(500);
   // Columnas visibles
-  await expect(page.getByText('Status')).toBeVisible();
-  await expect(page.getByText('Uniforme')).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Estado' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Uniforme' })).toBeVisible();
   await pause(500);
   // Botón nuevo alumno
   await page.getByRole('button', { name: 'Nuevo alumno' }).click();
@@ -220,7 +220,7 @@ test('03 — Admin: Gestión de alumnos', async ({ page }) => {
 
 test('04 — Admin: Detalle de alumno (stats + equipo)', async ({ page }) => {
   await loginAs(page, { profile: ADMIN_PROFILE, api: FULL_API, goto: '/admin/students' });
-  await page.getByRole('button', { name: 'Ver detalle' }).first().click();
+  await page.getByRole('button', { name: 'Abrir ficha de Carlos López' }).click();
   await expect(page).toHaveURL(/\/admin\/students\/s1/);
   await pause(500);
   // Perfil
@@ -229,8 +229,8 @@ test('04 — Admin: Detalle de alumno (stats + equipo)', async ({ page }) => {
   // Stats
   await expect(page.getByText('Racha actual')).toBeVisible();
   await expect(page.getByText('Racha máxima')).toBeVisible();
-  await expect(page.getByText('Este mes')).toBeVisible();
-  await expect(page.getByText('Logros')).toBeVisible();
+  await expect(page.getByText('Este mes', { exact: true })).toBeVisible();
+  await expect(page.getByText('Logros', { exact: true })).toBeVisible();
   await pause(800);
   // Equipo
   await expect(page.getByText('Compañeros')).toBeVisible();
@@ -238,7 +238,8 @@ test('04 — Admin: Detalle de alumno (stats + equipo)', async ({ page }) => {
   await expect(page.getByText('Prof. García')).toBeVisible();
   await pause(800);
   // Historial
-  await expect(page.getByText('Historial de asistencia')).toBeVisible();
+  await page.getByRole('tab', { name: 'Asistencia' }).click();
+  await expect(page.getByText('Sin asistencias registradas')).toBeVisible();
   await pause(1000);
 });
 

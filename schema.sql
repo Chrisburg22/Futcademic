@@ -194,7 +194,7 @@ CREATE TABLE public.students (
   parent_id uuid,
   full_name character varying NOT NULL,
   birth_date date NOT NULL,
-  status character varying DEFAULT 'activo'::character varying CHECK (status::text = ANY (ARRAY['activo'::character varying, 'beca'::character varying, 'pendiente'::character varying, 'inactivo'::character varying]::text[])),
+  status character varying DEFAULT 'activo'::character varying CHECK (status::text = ANY (ARRAY['activo'::character varying, 'pendiente_pago'::character varying, 'becado'::character varying, 'inactivo'::character varying]::text[])),
   uniform_delivered boolean DEFAULT false,
   phone character varying,
   address text,

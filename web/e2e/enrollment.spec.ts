@@ -351,7 +351,8 @@ test('alumnos: columna Expediente y acceso a Invitar alumno', async ({ page }) =
   });
 
   await expect(page.getByRole('columnheader', { name: 'Expediente' })).toBeVisible();
-  await expect(page.getByText('Incompleto')).toBeVisible();
-  await expect(page.getByText('Sin tutor')).toBeVisible();
+  const tabla = page.getByRole('table');
+  await expect(tabla.getByText('Incompleto')).toBeVisible();
+  await expect(tabla.getByRole('row', { name: /Luis Histórico/ })).toContainText('Sin tutor');
   await expect(page.getByRole('button', { name: 'Invitar alumno' })).toBeVisible();
 });

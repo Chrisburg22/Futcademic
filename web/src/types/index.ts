@@ -91,6 +91,14 @@ export interface Student {
   emergency_contact_phone?: string | null;
   medical_notes?: string | null;
   avatar_url?: string | null;
+  /** El backend acepta `activo`, `pendiente_pago`, `inactivo` y `becado`. */
+  status?: string | null;
+  created_at?: string | null;
+  current_streak?: number | null;
+  max_streak?: number | null;
+  /** `completo`, `incompleto` o `sin_tutor`; lo calcula una vista en el backend. */
+  expediente_status?: string | null;
+  expediente_missing?: string[];
   category?: Category | null;
   parent?: AppUser | null;
 }
