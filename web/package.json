@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start -p 5173",
     "test:e2e": "playwright test",
+    "test:pwa": "playwright test -c playwright.pwa.config.ts",
     "test:smoke": "playwright test -c playwright.smoke.config.ts",
     "e2e:video": "bash e2e/make-video.sh"
   },

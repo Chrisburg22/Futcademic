@@ -1,5 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '../api/axios';
+import {
+  OFFLINE_MUTATION_KEYS,
+  type SaveAttendancesPayload,
+} from '../lib/offlineMutations';
 
 export const useGetAttendancesByCategory = (categoryId: string, date?: string) =>
   useQuery({
@@ -20,27 +24,16 @@ export const useGetAttendancesByStudent = (studentId?: string) =>
     enabled: !!studentId,
   });
 
-export const useMarkTrainingComplete = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (trainingId: string) =>
-      (await api.patch(`/attendances/trainings/${trainingId}/complete`)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['trainings'] }),
+// `mutationFn`, el optimista y los invalidate viven en los defaults de
+// `src/lib/offlineMutations.ts`: así una escritura que se quedó en cola sin
+// conexión se puede reanudar después de recargar, cuando ya no existe el
+// componente que la lanzó.
+export const useMarkTrainingComplete = () =>
+  useMutation<unknown, Error, string>({
+    mutationKey: OFFLINE_MUTATION_KEYS.markTrainingComplete,
   });
-};
 
-export const useSaveAttendances = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: {
-      category_id: string;
-      date: string;
-      type: 'entrenamiento' | 'partido';
-      records: { student_id: string; present: boolean }[];
-      training_id?: string;
-    }) => (await api.post('/attendances', payload)).data,
-    onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: ['attendances', variables.category_id] });
-    },
+export const useSaveAttendances = () =>
+  useMutation<unknown, Error, SaveAttendancesPayload>({
+    mutationKey: OFFLINE_MUTATION_KEYS.saveAttendances,
   });
-};

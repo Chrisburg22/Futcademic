@@ -15,6 +15,7 @@ import {
 import { DateInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import dayjs from 'dayjs';
+import { willQueueOffline } from '../lib/offlineMutations';
 import { useAuth } from '../contexts/AuthContext';
 import {
   useGetAttendancesByCategory,
@@ -68,23 +69,51 @@ function RollCallView() {
     setMarks(map);
   }, [existing]);
 
-  const onSave = async () => {
+  const onSave = () => {
     if (!categoryId || !dateStr) return;
-    await save.mutateAsync({
-      category_id: categoryId,
-      date: dateStr,
-      type,
-      records: students.map((s: any) => ({
-        student_id: s.id,
-        present: !!marks[s.id],
-      })),
-    });
-    notifications.show({ color: 'green', message: 'Asistencias guardadas' });
-    const presentIds = students
-      .filter((s: any) => marks[s.id])
-      .map((s: any) => s.id);
-    for (const sid of presentIds) {
-      checkAchievements.mutate(sid);
+
+    const presentIds = students.filter((s: any) => marks[s.id]).map((s: any) => s.id);
+    // Hay que preguntarlo antes de lanzar: sin red la promesa de la mutación se
+    // queda pendiente hasta que vuelva la conexión, así que no se puede
+    // esperar para saber si salió o quedó en cola.
+    const enCola = willQueueOffline();
+
+    save.mutate(
+      {
+        category_id: categoryId,
+        date: dateStr,
+        type,
+        records: students.map((s: any) => ({
+          student_id: s.id,
+          present: !!marks[s.id],
+        })),
+      },
+      {
+        onSuccess: () => {
+          notifications.show({ color: 'green', message: 'Asistencias guardadas' });
+          // Los logros se recalculan cuando el pase de lista sale de verdad. Si
+          // salió desde la cola tras recargar la app, este callback ya no
+          // existe y los recalcula la siguiente visita a la pantalla de logros.
+          for (const sid of presentIds) {
+            checkAchievements.mutate(sid);
+          }
+        },
+        onError: (error: any) => {
+          notifications.show({
+            color: 'red',
+            title: 'No se pudo guardar el pase de lista',
+            message: error?.response?.data?.error || 'Inténtalo de nuevo.',
+          });
+        },
+      },
+    );
+
+    if (enCola) {
+      notifications.show({
+        color: 'orange',
+        title: 'Guardado sin conexión',
+        message: 'El pase de lista se enviará solo en cuanto haya señal. No cierres sesión.',
+      });
     }
   };
 
@@ -168,7 +197,7 @@ function RollCallView() {
                 />
               </Group>
             ))}
-            <Button onClick={onSave} loading={save.isPending} mt="md">
+            <Button onClick={onSave} loading={save.isPending && !save.isPaused} mt="md">
               Guardar asistencias
             </Button>
           </Stack>

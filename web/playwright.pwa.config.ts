@@ -3,12 +3,10 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Harness de PWA.
  *
- * ⚠️ DORMIDO: la PWA se difirió durante la migración a Next.js. Este config
- * todavía asume `vite preview` y un service worker generado por Vite, así que
- * no se puede ejecutar hasta reimplementar la PWA (Serwist) en `app/`.
- *
  * A diferencia de `playwright.config.ts` (que corre contra `next dev`), aquí
- * hace falta un build de producción: el service worker solo existe en build.
+ * hace falta un build de producción: el service worker solo se registra en
+ * producción (ver `ServiceWorkerRegistration`, que en desarrollo desinstala
+ * cualquiera que haya quedado para no romper el HMR).
  *
  * El backend sigue mockeado con `page.route` + `context.route` (ver
  * e2e/helpers.ts). El mock a nivel de contexto es imprescindible: las peticiones
@@ -29,9 +27,15 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'npm run build -- --mode test && npx vite preview --host 127.0.0.1 --port 4173',
+    command: 'npm run build && npx next start -H 127.0.0.1 -p 4173',
     url: 'http://127.0.0.1:4173',
+    // Un service worker de una corrida anterior contaminaría la siguiente.
     reuseExistingServer: false,
-    timeout: 180_000,
+    timeout: 300_000,
+    env: {
+      NEXT_PUBLIC_API_URL: 'http://localhost:3000/api',
+      NEXT_PUBLIC_SUPABASE_URL: 'https://stub.supabase.co',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
+    },
   },
 });
