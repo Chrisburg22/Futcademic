@@ -16,6 +16,10 @@ import { AuthProvider } from '@/contexts/AuthContext';
 // Import con efecto: registra el listener de `beforeinstallprompt` antes del
 // primer render, que es cuando el navegador lo dispara.
 import '@/lib/pwaInstall';
+// Import con efecto: dayjs necesita `customParseFormat` para respetar el
+// `valueFormat` de los DateInput (DD/MM/YYYY) al parsear lo que escribe la
+// persona.
+import '@/lib/dates';
 
 // Cambiar de build invalida la caché persistida: evita rehidratar datos con
 // una forma que el código nuevo ya no espera.
