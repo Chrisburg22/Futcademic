@@ -7,8 +7,11 @@ import {
   Box,
   Card,
   Checkbox,
+  Divider,
   Group,
   Menu,
+  SegmentedControl,
+  Select,
   Stack,
   Table,
   Text,
@@ -16,30 +19,84 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import {
+  IconAlertTriangle,
   IconArrowDown,
   IconArrowUp,
   IconArrowsSort,
+  IconBrandWhatsapp,
+  IconCheck,
   IconChevronDown,
+  IconColumns3,
   IconDots,
   IconEdit,
   IconEye,
+  IconPhone,
   IconShirt,
   IconTrash,
 } from '@tabler/icons-react';
 import { useMediaQuery } from '@mantine/hooks';
+import dayjs from 'dayjs';
 import {
   ESTADOS_ALUMNO,
   ESTADOS_EXPEDIENTE,
   OPCIONES_ESTADO,
   calcularEdad,
+  deudaDe,
   iniciales,
   nombreDocumento,
   nombreTutor,
   normalizarEstado,
+  pendientesDelAlumno,
   type CampoOrden,
+  type ContextoAlumnos,
   type Orden,
 } from '../../../lib/students';
 import type { Student, StudentStatus } from '../../../types';
+
+export type ColumnaAlumno =
+  | 'categoria'
+  | 'estado'
+  | 'expediente'
+  | 'adeudo'
+  | 'uniforme'
+  | 'atencion'
+  | 'edad'
+  | 'contacto'
+  | 'alta';
+
+export type Densidad = 'compacta' | 'comoda';
+
+/** Catálogo de columnas opcionales; «Alumno» y las acciones son fijas. */
+export const COLUMNAS: {
+  clave: ColumnaAlumno;
+  titulo: string;
+  orden?: CampoOrden;
+  /** Solo el admin ve el cobro. */
+  soloAdmin?: boolean;
+  centrada?: boolean;
+}[] = [
+  { clave: 'categoria', titulo: 'Categoría', orden: 'categoria' },
+  { clave: 'estado', titulo: 'Estado', orden: 'estado', soloAdmin: true },
+  { clave: 'expediente', titulo: 'Expediente' },
+  { clave: 'adeudo', titulo: 'Adeudo', orden: 'adeudo', soloAdmin: true },
+  { clave: 'uniforme', titulo: 'Uniforme', centrada: true },
+  { clave: 'atencion', titulo: 'Por atender', centrada: true },
+  { clave: 'edad', titulo: 'Edad', orden: 'edad', centrada: true },
+  { clave: 'contacto', titulo: 'Contacto' },
+  { clave: 'alta', titulo: 'Alta', orden: 'alta' },
+];
+
+/**
+ * Lo que cabe sin scroll horizontal en un portátil. El resto se enciende
+ * desde el menú de columnas y se recuerda por navegador.
+ */
+export const COLUMNAS_INICIALES: ColumnaAlumno[] = [
+  'categoria',
+  'estado',
+  'expediente',
+  'adeudo',
+  'uniforme',
+];
 
 type Props = {
   alumnos: Student[];
@@ -48,12 +105,23 @@ type Props = {
   seleccion: Set<string>;
   onSeleccion: (ids: string[], marcado: boolean) => void;
   puedeAdministrar: boolean;
+  contexto?: ContextoAlumnos;
+  columnas: ColumnaAlumno[];
+  onColumnas: (columnas: ColumnaAlumno[]) => void;
+  densidad: Densidad;
+  onDensidad: (densidad: Densidad) => void;
+  porPagina: number;
+  onPorPagina: (porPagina: number) => void;
   onAbrir: (alumno: Student) => void;
   onEditar: (alumno: Student) => void;
   onEliminar: (alumno: Student) => void;
   onEstado: (alumno: Student, estado: StudentStatus) => void;
   onUniforme: (alumno: Student) => void;
 };
+
+const pesos = (monto: number) => `$${monto.toLocaleString('es-MX')}`;
+
+const soloDigitos = (telefono?: string | null) => (telefono || '').replace(/\D/g, '');
 
 function Expediente({ alumno }: { alumno: Student }) {
   const clave = (alumno.expediente_status || 'incompleto') as keyof typeof ESTADOS_EXPEDIENTE;
@@ -76,6 +144,108 @@ function Expediente({ alumno }: { alumno: Student }) {
         {badge}
       </span>
     </Tooltip>
+  );
+}
+
+function Adeudo({ alumno, contexto }: { alumno: Student; contexto?: ContextoAlumnos }) {
+  const deuda = deudaDe(alumno, contexto);
+  const estado = normalizarEstado(alumno.status);
+  if (estado === 'becado') {
+    return (
+      <Text size="sm" c="dimmed">
+        Becado
+      </Text>
+    );
+  }
+  if (deuda <= 0) {
+    return (
+      <Group gap={4} wrap="nowrap" c="dimmed">
+        <IconCheck size={14} />
+        <Text size="sm">Al día</Text>
+      </Group>
+    );
+  }
+  return (
+    <Text size="sm" fw={600} c="red" style={{ fontVariantNumeric: 'tabular-nums' }}>
+      {pesos(deuda)}
+    </Text>
+  );
+}
+
+function Atencion({ alumno, contexto }: { alumno: Student; contexto?: ContextoAlumnos }) {
+  const pendientes = pendientesDelAlumno(alumno, { deuda: deudaDe(alumno, contexto) });
+  const urgentes = pendientes.filter((p) => p.severidad === 'alta').length;
+  if (pendientes.length === 0) {
+    return (
+      <Tooltip label="Sin pendientes">
+        <IconCheck size={16} color="var(--mantine-color-green-6)" aria-label="Sin pendientes" />
+      </Tooltip>
+    );
+  }
+  return (
+    <Tooltip
+      multiline
+      w={260}
+      withArrow
+      label={pendientes.map((p) => `• ${p.mensaje}`).join('\n')}
+    >
+      <Badge
+        variant="light"
+        color={urgentes ? 'orange' : 'yellow'}
+        leftSection={<IconAlertTriangle size={12} />}
+        tabIndex={0}
+        style={{ cursor: 'help' }}
+      >
+        {pendientes.length}
+      </Badge>
+    </Tooltip>
+  );
+}
+
+function Contacto({ alumno }: { alumno: Student }) {
+  const telefono = alumno.parent?.phone || alumno.phone;
+  const tutor = nombreTutor(alumno);
+  if (!telefono) {
+    return (
+      <Text size="sm" c="dimmed">
+        Sin teléfono
+      </Text>
+    );
+  }
+  const digitos = soloDigitos(telefono);
+  const whatsapp = digitos.length >= 10 ? `https://wa.me/${digitos.length === 10 ? `52${digitos}` : digitos}` : null;
+  return (
+    <Group gap={4} wrap="nowrap" onClick={(e) => e.stopPropagation()}>
+      <Tooltip label={`Llamar a ${tutor || alumno.full_name}: ${telefono}`}>
+        <ActionIcon
+          component="a"
+          href={`tel:${digitos}`}
+          variant="subtle"
+          color="gray"
+          aria-label={`Llamar a ${tutor || alumno.full_name}`}
+        >
+          <IconPhone size={16} />
+        </ActionIcon>
+      </Tooltip>
+      {whatsapp && (
+        <Tooltip label="Escribir por WhatsApp">
+          <ActionIcon
+            component="a"
+            href={whatsapp}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="subtle"
+            color="green"
+            aria-label={`Escribir por WhatsApp a ${tutor || alumno.full_name}`}
+          >
+            <IconBrandWhatsapp size={16} />
+          </ActionIcon>
+        </Tooltip>
+      )}
+      <Text size="xs" c="dimmed" visibleFrom="lg">
+        {telefono}
+      </Text>
+    </Group>
   );
 }
 
@@ -134,11 +304,13 @@ function EncabezadoOrdenable({
   campo,
   orden,
   onOrden,
+  centrada,
   children,
 }: {
   campo: CampoOrden;
   orden: Orden;
   onOrden: Props['onOrden'];
+  centrada?: boolean;
   children: React.ReactNode;
 }) {
   const activo = orden.campo === campo;
@@ -146,9 +318,10 @@ function EncabezadoOrdenable({
   return (
     <Table.Th
       aria-sort={activo ? (orden.direccion === 'asc' ? 'ascending' : 'descending') : 'none'}
+      ta={centrada ? 'center' : undefined}
     >
       <UnstyledButton onClick={() => onOrden(campo)} style={{ font: 'inherit', fontWeight: 600 }}>
-        <Group gap={4} wrap="nowrap">
+        <Group gap={4} wrap="nowrap" justify={centrada ? 'center' : undefined}>
           {children}
           <Icono size={14} opacity={activo ? 1 : 0.4} />
         </Group>
@@ -157,12 +330,18 @@ function EncabezadoOrdenable({
   );
 }
 
-function Identidad({ alumno }: { alumno: Student }) {
+function Identidad({ alumno, compacta }: { alumno: Student; compacta?: boolean }) {
   const edad = calcularEdad(alumno.birth_date);
   const tutor = nombreTutor(alumno);
   return (
     <Group gap="sm" wrap="nowrap">
-      <Avatar size="md" radius="xl" color="initials" name={alumno.full_name} src={alumno.avatar_url || undefined}>
+      <Avatar
+        size={compacta ? 'sm' : 'md'}
+        radius="xl"
+        color="initials"
+        name={alumno.full_name}
+        src={alumno.avatar_url || undefined}
+      >
         {iniciales(alumno.full_name)}
       </Avatar>
       <div style={{ minWidth: 0 }}>
@@ -261,13 +440,144 @@ function BotonUniforme({ alumno, onUniforme }: { alumno: Student; onUniforme: Pr
   );
 }
 
+/** Ajustes de la tabla: columnas, densidad y tamaño de página. */
+function OpcionesTabla({
+  columnas,
+  onColumnas,
+  densidad,
+  onDensidad,
+  porPagina,
+  onPorPagina,
+  disponibles,
+}: Pick<
+  Props,
+  'columnas' | 'onColumnas' | 'densidad' | 'onDensidad' | 'porPagina' | 'onPorPagina'
+> & { disponibles: typeof COLUMNAS }) {
+  return (
+    <Group justify="space-between" p="xs" wrap="wrap" gap="xs">
+      <Group gap="xs">
+        <Menu closeOnItemClick={false} withinPortal shadow="md" width={230}>
+          <Menu.Target>
+            <ActionIcon variant="default" size="lg" aria-label="Elegir columnas visibles">
+              <IconColumns3 size={16} />
+            </ActionIcon>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Label>Columnas</Menu.Label>
+            {disponibles.map((c) => (
+              <Menu.Item
+                key={c.clave}
+                onClick={() =>
+                  onColumnas(
+                    columnas.includes(c.clave)
+                      ? columnas.filter((x) => x !== c.clave)
+                      : [...columnas, c.clave],
+                  )
+                }
+              >
+                <Checkbox
+                  readOnly
+                  size="xs"
+                  tabIndex={-1}
+                  checked={columnas.includes(c.clave)}
+                  label={c.titulo}
+                  styles={{ label: { cursor: 'pointer' } }}
+                />
+              </Menu.Item>
+            ))}
+          </Menu.Dropdown>
+        </Menu>
+        <SegmentedControl
+          size="xs"
+          aria-label="Densidad de la tabla"
+          value={densidad}
+          onChange={(valor) => onDensidad(valor as Densidad)}
+          data={[
+            { value: 'comoda', label: 'Cómoda' },
+            { value: 'compacta', label: 'Compacta' },
+          ]}
+        />
+      </Group>
+      <Select
+        size="xs"
+        w={140}
+        aria-label="Alumnos por página"
+        allowDeselect={false}
+        value={String(porPagina)}
+        onChange={(valor) => valor && onPorPagina(Number(valor))}
+        data={[
+          { value: '25', label: '25 por página' },
+          { value: '50', label: '50 por página' },
+          { value: '100', label: '100 por página' },
+        ]}
+      />
+    </Group>
+  );
+}
+
 export function StudentsTable(props: Props) {
-  const { alumnos, orden, onOrden, seleccion, onSeleccion, puedeAdministrar, onAbrir, onEstado, onUniforme } = props;
+  const {
+    alumnos,
+    orden,
+    onOrden,
+    seleccion,
+    onSeleccion,
+    puedeAdministrar,
+    contexto,
+    columnas,
+    densidad,
+    onAbrir,
+    onEstado,
+    onUniforme,
+  } = props;
   const esMovil = useMediaQuery('(max-width: 48em)');
+  const compacta = densidad === 'compacta';
 
   const idsVisibles = alumnos.map((a) => a.id);
   const todos = idsVisibles.length > 0 && idsVisibles.every((id) => seleccion.has(id));
   const algunos = idsVisibles.some((id) => seleccion.has(id));
+
+  const disponibles = COLUMNAS.filter((c) => !c.soloAdmin || puedeAdministrar);
+  const visibles = disponibles.filter((c) => columnas.includes(c.clave));
+
+  const celda = (clave: ColumnaAlumno, a: Student) => {
+    switch (clave) {
+      case 'categoria':
+        return <CategoriaBadge alumno={a} />;
+      case 'estado':
+        return <EstadoMenu alumno={a} editable={puedeAdministrar} onEstado={onEstado} />;
+      case 'expediente':
+        return <Expediente alumno={a} />;
+      case 'adeudo':
+        return <Adeudo alumno={a} contexto={contexto} />;
+      case 'uniforme':
+        return <BotonUniforme alumno={a} onUniforme={onUniforme} />;
+      case 'atencion':
+        return <Atencion alumno={a} contexto={contexto} />;
+      case 'edad': {
+        const edad = calcularEdad(a.birth_date);
+        return (
+          <Text size="sm" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            {edad ?? '—'}
+          </Text>
+        );
+      }
+      case 'contacto':
+        return <Contacto alumno={a} />;
+      case 'alta':
+        return (
+          <Text size="sm" c="dimmed" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            {a.created_at ? dayjs(a.created_at).format('DD/MM/YYYY') : '—'}
+          </Text>
+        );
+      default:
+        return null;
+    }
+  };
+
+  /** Las columnas que se interactúan no deben abrir la ficha al hacer clic. */
+  const propia = (clave: ColumnaAlumno) =>
+    clave === 'estado' || clave === 'uniforme' || clave === 'contacto';
 
   if (esMovil) {
     return (
@@ -301,6 +611,11 @@ export function StudentsTable(props: Props) {
               <CategoriaBadge alumno={a} />
               <EstadoMenu alumno={a} editable={puedeAdministrar} onEstado={onEstado} />
               <Expediente alumno={a} />
+              {puedeAdministrar && deudaDe(a, contexto) > 0 && (
+                <Badge variant="light" color="red">
+                  Debe {pesos(deudaDe(a, contexto))}
+                </Badge>
+              )}
               <BotonUniforme alumno={a} onUniforme={onUniforme} />
             </Group>
           </Card>
@@ -311,8 +626,15 @@ export function StudentsTable(props: Props) {
 
   return (
     <Card withBorder padding={0} radius="md">
-      <Table.ScrollContainer minWidth={860}>
-        <Table verticalSpacing="xs" highlightOnHover stickyHeader stickyHeaderOffset={0}>
+      <OpcionesTabla {...props} disponibles={disponibles} />
+      <Divider />
+      <Table.ScrollContainer minWidth={420 + visibles.length * 108}>
+        <Table
+          verticalSpacing={compacta ? 4 : 'xs'}
+          highlightOnHover
+          stickyHeader
+          stickyHeaderOffset={0}
+        >
           <Table.Thead>
             <Table.Tr>
               <Table.Th w={44}>
@@ -326,16 +648,34 @@ export function StudentsTable(props: Props) {
               <EncabezadoOrdenable campo="nombre" orden={orden} onOrden={onOrden}>
                 Alumno
               </EncabezadoOrdenable>
-              <EncabezadoOrdenable campo="categoria" orden={orden} onOrden={onOrden}>
-                Categoría
-              </EncabezadoOrdenable>
-              <EncabezadoOrdenable campo="estado" orden={orden} onOrden={onOrden}>
-                Estado
-              </EncabezadoOrdenable>
-              <Table.Th>Expediente</Table.Th>
-              <Table.Th ta="center">Uniforme</Table.Th>
+              {visibles.map((c) =>
+                c.orden ? (
+                  <EncabezadoOrdenable
+                    key={c.clave}
+                    campo={c.orden}
+                    orden={orden}
+                    onOrden={onOrden}
+                    centrada={c.centrada}
+                  >
+                    {c.titulo}
+                  </EncabezadoOrdenable>
+                ) : (
+                  <Table.Th key={c.clave} ta={c.centrada ? 'center' : undefined}>
+                    {c.titulo}
+                  </Table.Th>
+                ),
+              )}
               <Table.Th w={56}>
-                <Box component="span" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+                <Box
+                  component="span"
+                  style={{
+                    position: 'absolute',
+                    width: 1,
+                    height: 1,
+                    overflow: 'hidden',
+                    clip: 'rect(0 0 0 0)',
+                  }}
+                >
                   Acciones
                 </Box>
               </Table.Th>
@@ -356,7 +696,7 @@ export function StudentsTable(props: Props) {
                     onChange={(e) => onSeleccion([a.id], e.currentTarget.checked)}
                   />
                 </Table.Td>
-                <Table.Td maw={320}>
+                <Table.Td maw={300}>
                   <UnstyledButton
                     onClick={(e) => {
                       e.stopPropagation();
@@ -365,21 +705,18 @@ export function StudentsTable(props: Props) {
                     style={{ width: '100%', textAlign: 'left' }}
                     aria-label={`Abrir ficha de ${a.full_name}`}
                   >
-                    <Identidad alumno={a} />
+                    <Identidad alumno={a} compacta={compacta} />
                   </UnstyledButton>
                 </Table.Td>
-                <Table.Td>
-                  <CategoriaBadge alumno={a} />
-                </Table.Td>
-                <Table.Td onClick={(e) => e.stopPropagation()}>
-                  <EstadoMenu alumno={a} editable={puedeAdministrar} onEstado={onEstado} />
-                </Table.Td>
-                <Table.Td>
-                  <Expediente alumno={a} />
-                </Table.Td>
-                <Table.Td ta="center">
-                  <BotonUniforme alumno={a} onUniforme={onUniforme} />
-                </Table.Td>
+                {visibles.map((c) => (
+                  <Table.Td
+                    key={c.clave}
+                    ta={c.centrada ? 'center' : undefined}
+                    onClick={propia(c.clave) ? (e) => e.stopPropagation() : undefined}
+                  >
+                    {celda(c.clave, a)}
+                  </Table.Td>
+                ))}
                 <Table.Td>
                   <Acciones {...props} alumno={a} />
                 </Table.Td>

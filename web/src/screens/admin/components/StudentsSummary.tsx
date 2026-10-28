@@ -4,6 +4,7 @@ import { Skeleton, Text, ThemeIcon, UnstyledButton, Group } from '@mantine/core'
 import {
   IconAlertTriangle,
   IconCash,
+  IconCoin,
   IconFileAlert,
   IconUserCheck,
   IconUsers,
@@ -20,6 +21,8 @@ type Tarjeta = {
   /** Filtro que aplica al pulsarla; `null` = quitar filtros. */
   filtro: Partial<FiltrosAlumnos> | null;
   activa: boolean;
+  /** Dato de apoyo bajo el título (por ejemplo, el monto por cobrar). */
+  pie?: string;
   ocultar?: boolean;
 };
 
@@ -30,9 +33,18 @@ type Props = {
   onFiltro: (cambios: Partial<FiltrosAlumnos> | null) => void;
   /** Los profesores no ven ni cambian el estado de cobro. */
   verEstados: boolean;
+  /** El adeudo del mes solo se conoce si ya llegó `/payments/pending`. */
+  verAdeudo?: boolean;
 };
 
-export function StudentsSummary({ resumen, filtros, cargando, onFiltro, verEstados }: Props) {
+export function StudentsSummary({
+  resumen,
+  filtros,
+  cargando,
+  onFiltro,
+  verEstados,
+  verAdeudo = false,
+}: Props) {
   const soloEstado = (estado: FiltrosAlumnos['estado']) =>
     filtros.estado === estado && !filtros.expediente && !filtros.tutor && !filtros.categoria;
 
@@ -44,7 +56,12 @@ export function StudentsSummary({ resumen, filtros, cargando, onFiltro, verEstad
       color: 'blue',
       icono: <IconUsers size={20} />,
       filtro: null,
-      activa: !filtros.estado && !filtros.expediente && !filtros.tutor && !filtros.uniforme,
+      activa:
+        !filtros.estado &&
+        !filtros.expediente &&
+        !filtros.tutor &&
+        !filtros.uniforme &&
+        !filtros.adeudo,
     },
     {
       clave: 'activos',
@@ -65,6 +82,17 @@ export function StudentsSummary({ resumen, filtros, cargando, onFiltro, verEstad
       filtro: { estado: 'pendiente_pago' },
       activa: soloEstado('pendiente_pago'),
       ocultar: !verEstados,
+    },
+    {
+      clave: 'adeudo',
+      titulo: 'Con adeudo',
+      valor: resumen.conAdeudo,
+      color: 'red',
+      icono: <IconCoin size={20} />,
+      filtro: { adeudo: 'con' },
+      activa: filtros.adeudo === 'con',
+      pie: resumen.adeudoTotal > 0 ? `$${resumen.adeudoTotal.toLocaleString('es-MX')} por cobrar` : undefined,
+      ocultar: !verAdeudo,
     },
     {
       clave: 'expediente',
@@ -124,7 +152,7 @@ export function StudentsSummary({ resumen, filtros, cargando, onFiltro, verEstad
             cursor: 'pointer',
             transition: 'border-color 150ms ease, background-color 150ms ease',
             minHeight: 64,
-            flex: '1 0 140px',
+            flex: '1 0 150px',
             textAlign: 'left',
           }}
         >
@@ -143,6 +171,11 @@ export function StudentsSummary({ resumen, filtros, cargando, onFiltro, verEstad
               <Text size="xs" c="dimmed" lh={1.3}>
                 {t.titulo}
               </Text>
+              {t.pie && (
+                <Text size="xs" c="dimmed" lh={1.3} truncate>
+                  {t.pie}
+                </Text>
+              )}
             </div>
           </Group>
         </UnstyledButton>

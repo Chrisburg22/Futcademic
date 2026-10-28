@@ -88,6 +88,45 @@ test('el link público muestra solo academia, categoría y formulario', async ({
   expect(referrer).toBe('no-referrer');
 });
 
+test('«Continuar» valida el paso del alumno y guarda el avance', async ({ page }) => {
+  const drafts: Array<Record<string, any>> = [];
+  await page.route('**/api/enrollment/**', (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === `/api/enrollment/${TOKEN}`) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(publicPayload()),
+      });
+    }
+    if (path === `/api/enrollment/${TOKEN}/draft`) {
+      drafts.push(route.request().postDataJSON());
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ draft: { fields: {} }, message: 'ok' }),
+      });
+    }
+    return route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"no"}' });
+  });
+
+  await page.goto(`/inscripcion/${TOKEN}`);
+
+  // Sin datos no avanza, pero el motivo se ve junto al campo (antes no pasaba
+  // nada visible porque el handler salía antes de pintar el error).
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await expect(page.getByText('Escribe el nombre del alumno')).toBeVisible();
+  await expect(page.getByText('Datos del alumno')).toBeVisible();
+
+  await page.getByLabel('Nombre completo').fill('Diego Ramos');
+  await page.getByLabel('Fecha de nacimiento').fill('04/03/2015');
+  await page.getByRole('button', { name: 'Continuar' }).click();
+
+  await expect(page.getByText('Datos del tutor')).toBeVisible();
+  expect(drafts.at(-1)?.student_full_name).toBe('Diego Ramos');
+  expect(drafts.at(-1)?.student_birth_date).toBe('2015-03-04');
+});
+
 test('un link ya enviado muestra el estado final, no el formulario', async ({ page }) => {
   await page.route('**/api/enrollment/**', (route) =>
     route.fulfill({

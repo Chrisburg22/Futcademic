@@ -46,6 +46,8 @@ export const useGetStudentDetails = (studentId?: string) =>
 
 export interface UpdateStudentDTO {
   id: string;
+  /** El controlador lee `fullName`; se manda junto con `full_name`. */
+  fullName?: string;
   full_name?: string;
   birth_date?: string;
   category_id?: string | null;

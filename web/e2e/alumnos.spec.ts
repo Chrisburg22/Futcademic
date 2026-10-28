@@ -28,7 +28,12 @@ const alumno = (n: number, extra: Record<string, unknown> = {}) => ({
 });
 
 const ALUMNOS = [
-  alumno(1, { full_name: 'Ángel Ramírez', status: 'pendiente_pago' }),
+  alumno(1, {
+    full_name: 'Ángel Ramírez',
+    status: 'pendiente_pago',
+    emergency_contact_name: 'Rosa Ramírez',
+    emergency_contact_phone: '55 9999 8888',
+  }),
   alumno(2, { full_name: 'Beatriz Soto', expediente_status: 'incompleto', expediente_missing: ['curp', 'acta_nacimiento'] }),
   alumno(3, { full_name: 'Carlos López', parent_id: null, parent: null, expediente_status: 'sin_tutor', uniform_delivered: false }),
   alumno(4, { full_name: 'Diana Cruz', status: 'becado' }),
@@ -51,12 +56,18 @@ const DETALLE = {
   medical_notes: 'Alergia a la penicilina',
 };
 
-async function abrirLista(page: Page) {
+/** Cobranza del mes: solo Ángel debe (el backend excluye a los becados). */
+const COBRANZA = [
+  { id: 's1', full_name: 'Ángel Ramírez', monthly_fee: 500, paid_amount: 0, pending_amount: 500 },
+];
+
+async function abrirLista(page: Page, ruta = '/admin/students') {
   await loginAs(page, {
-    goto: '/admin/students',
+    goto: ruta,
     api: {
       students: ALUMNOS,
       categories: CATEGORIAS,
+      pendingPayments: COBRANZA,
       users: [{ id: 'p1', full_name: 'María López', role: 'padre' }],
       extra: {
         '/students/s2': DETALLE_BEATRIZ,
@@ -174,7 +185,9 @@ test('edición rápida en panel lateral valida y avisa de cambios sin guardar', 
   await expect(nombre).toHaveValue('Carlos López');
   await nombre.fill('Ca');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('Escribe el nombre completo')).toBeVisible();
+  // El error sale junto al campo y, además, resumido arriba del formulario.
+  await expect(page.getByRole('alert').filter({ hasText: 'por corregir' })).toBeVisible();
+  await expect(page.getByText('Escribe el nombre completo').last()).toBeVisible();
 
   await page.getByRole('button', { name: 'Cerrar edición' }).click();
   await expect(page.getByText('Tienes cambios sin guardar. Si cierras, se pierden.')).toBeVisible();
@@ -244,4 +257,50 @@ test('recordar al tutor arma el mensaje y abre WhatsApp con la lada de México',
   await dialogo.getByRole('checkbox', { name: 'Documentos del expediente' }).uncheck();
   await expect(mensaje).not.toHaveValue(/CURP/);
   await page.screenshot({ path: '/private/tmp/claude-501/shots/recordatorio.png' });
+});
+
+test('los filtros viajan en la URL y los chips los quitan de uno en uno', async ({ page }) => {
+  await abrirLista(page, '/admin/students?tutor=sin');
+
+  await expect(page.getByText('1 de 30 alumnos')).toBeVisible();
+  await expect(page.getByRole('table')).toContainText('Carlos López');
+
+  await page.getByRole('button', { name: /Quitar filtro Tutor/ }).click();
+  await expect(page.getByText('30 alumnos')).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/students$/);
+});
+
+test('filtra por adeudo del mes y por contacto de emergencia', async ({ page }) => {
+  await abrirLista(page);
+
+  // El adeudo no viene en GET /students: se cruza con /payments/pending.
+  await page.getByRole('button', { name: /^Con adeudo: 1/ }).click();
+  await expect(page.getByText('1 de 30 alumnos')).toBeVisible();
+  await expect(page.getByRole('table')).toContainText('$500');
+  await page.getByRole('button', { name: /^Limpiar/ }).click();
+
+  await page.getByRole('button', { name: 'Más filtros' }).click();
+  await page.getByRole('textbox', { name: 'Contacto de emergencia' }).click();
+  await page.getByRole('option', { name: 'Con contacto' }).click();
+  await expect(page.getByText('1 de 30 alumnos')).toBeVisible();
+  await expect(page.getByRole('table')).toContainText('Ángel Ramírez');
+});
+
+test('la tabla deja ocultar columnas', async ({ page }) => {
+  await abrirLista(page);
+  await expect(page.getByRole('columnheader', { name: /Uniforme/ })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Elegir columnas visibles' }).click();
+  await page.getByRole('menuitem', { name: 'Uniforme' }).click();
+  await expect(page.getByRole('columnheader', { name: /Uniforme/ })).toHaveCount(0);
+});
+
+test('la ficha pasa al alumno siguiente sin volver al listado', async ({ page }) => {
+  await abrirLista(page);
+  await page.getByRole('button', { name: 'Abrir ficha de Beatriz Soto' }).click();
+  await expect(page.getByText('2 de 30')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Alumno siguiente' }).click();
+  await expect(page.getByRole('heading', { name: 'Carlos López' })).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/students\/s3/);
 });

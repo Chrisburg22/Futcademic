@@ -1,11 +1,25 @@
 'use client';
 
-import { useEffect } from 'react';
-import { Alert, Button, Divider, Group, Select, SimpleGrid, Stack, Text, TextInput, Textarea } from '@mantine/core';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  Anchor,
+  Button,
+  Divider,
+  Group,
+  List,
+  Paper,
+  Select,
+  SimpleGrid,
+  Stack,
+  Text,
+  TextInput,
+  Textarea,
+} from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconAlertCircle, IconDeviceFloppy, IconHeartbeat, IconPhoneCall, IconUser, IconUsers } from '@tabler/icons-react';
+import { IconAlertCircle, IconAlertTriangle, IconDeviceFloppy, IconHeartbeat, IconPhoneCall, IconUser, IconUsers } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import { useUpdateStudent } from '../../../hooks/useStudents';
 import { mensajeDeError } from '../../../lib/categories';
@@ -65,10 +79,17 @@ export const validacionAlumno = {
       : null,
 };
 
-/** Convierte los valores del formulario en el cuerpo del PUT. */
+/**
+ * Convierte los valores del formulario en el cuerpo del PUT.
+ *
+ * `PUT /students/:id` lee el nombre de `fullName` (student.controller.ts), así
+ * que mandar solo `full_name` dejaba el nombre sin guardar en silencio. Se
+ * envían los dos nombres hasta que el backend acepte `full_name`.
+ */
 export const aPayloadAlumno = (v: StudentFormValues) => {
   const opcional = (texto: string) => texto.trim() || null;
   return {
+    fullName: v.full_name.trim(),
     full_name: v.full_name.trim(),
     birth_date: v.birth_date ? dayjs(v.birth_date).format('YYYY-MM-DD') : undefined,
     category_id: v.category_id,
@@ -146,20 +167,34 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
   const edad = calcularEdad(form.values.birth_date ? dayjs(form.values.birth_date).format('YYYY-MM-DD') : null);
   const categoriaCambio = form.values.category_id !== (alumno.category_id || null);
 
-  const guardar = form.onSubmit(async (valores) => {
-    try {
-      await update.mutateAsync({ id: alumno.id, ...aPayloadAlumno(valores) } as any);
-      form.resetDirty(valores);
-      notifications.show({ color: 'green', message: 'Cambios guardados' });
-      onSaved?.();
-    } catch (error) {
-      notifications.show({
-        color: 'red',
-        title: 'No se pudo guardar',
-        message: mensajeDeError(error, 'Revisa tu conexión e inténtalo de nuevo.'),
-      });
-    }
-  });
+  // Un formulario largo necesita decir de golpe qué falta: el resumen junta
+  // los errores y manda el foco al primer campo que hay que corregir.
+  const [errores, setErrores] = useState<{ campo: string; mensaje: string }[]>([]);
+
+  const guardar = form.onSubmit(
+    async (valores) => {
+      setErrores([]);
+      try {
+        await update.mutateAsync({ id: alumno.id, ...aPayloadAlumno(valores) } as any);
+        form.resetDirty(valores);
+        notifications.show({ color: 'green', message: 'Cambios guardados' });
+        onSaved?.();
+      } catch (error) {
+        notifications.show({
+          color: 'red',
+          title: 'No se pudo guardar',
+          message: mensajeDeError(error, 'Revisa tu conexión e inténtalo de nuevo.'),
+        });
+      }
+    },
+    (erroresDelFormulario) => {
+      const lista = Object.entries(erroresDelFormulario)
+        .filter(([, mensaje]) => typeof mensaje === 'string')
+        .map(([campo, mensaje]) => ({ campo, mensaje: mensaje as string }));
+      setErrores(lista);
+      if (lista[0]) form.getInputNode(lista[0].campo)?.focus();
+    },
+  );
 
   const opcionesCategoria = categorias.map((c) => ({
     value: c.id,
@@ -169,6 +204,30 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
   return (
     <form onSubmit={guardar} noValidate>
       <Stack gap="lg">
+        {errores.length > 0 && (
+          <Alert
+            color="red"
+            variant="light"
+            icon={<IconAlertTriangle size={16} />}
+            title={`Faltan ${errores.length} ${errores.length === 1 ? 'dato' : 'datos'} por corregir`}
+            role="alert"
+          >
+            <List size="sm" spacing={2}>
+              {errores.map((e) => (
+                <List.Item key={e.campo}>
+                  <Anchor
+                    component="button"
+                    type="button"
+                    size="sm"
+                    onClick={() => form.getInputNode(e.campo)?.focus()}
+                  >
+                    {e.mensaje}
+                  </Anchor>
+                </List.Item>
+              ))}
+            </List>
+          </Alert>
+        )}
         <Seccion icono={<IconUser size={18} />} titulo="Datos del alumno">
           <TextInput
             label="Nombre completo"
@@ -206,6 +265,7 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
               type="tel"
               inputMode="tel"
               autoComplete="off"
+              description="10 dígitos, como 55 1234 5678"
               {...form.getInputProps('phone')}
             />
             <TextInput label="Dirección" autoComplete="off" {...form.getInputProps('address')} />
@@ -270,6 +330,14 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
           />
         </Seccion>
 
+        <Paper
+          withBorder
+          radius="md"
+          p="sm"
+          // Al pie y pegada: en un formulario largo el botón de guardar no
+          // debería quedar tres pantallas más abajo.
+          style={{ position: 'sticky', bottom: 0, zIndex: 5 }}
+        >
         <Group justify="space-between" wrap="wrap">
           <Text size="xs" c={sucio ? 'orange' : 'dimmed'} role="status">
             {sucio ? 'Tienes cambios sin guardar' : 'Sin cambios pendientes'}
@@ -295,6 +363,7 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
             </Button>
           </Group>
         </Group>
+        </Paper>
       </Stack>
     </form>
   );

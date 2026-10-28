@@ -107,6 +107,9 @@ export const nombreTutor = (alumno: Pick<Student, 'parent'>) =>
 
 // ── Filtros y orden del listado ───────────────────────────────────────────
 
+/** Antigüedad del alta, en días. */
+export type RangoAlta = '7' | '30' | '90';
+
 export type FiltrosAlumnos = {
   busqueda: string;
   categoria: string | null;
@@ -115,6 +118,13 @@ export type FiltrosAlumnos = {
   uniforme: 'entregado' | 'pendiente' | null;
   anio: string | null;
   tutor: 'con' | 'sin' | null;
+  /** Adeudo de la mensualidad del mes en curso. */
+  adeudo: 'con' | 'sin' | null;
+  emergencia: 'con' | 'sin' | null;
+  medicas: 'con' | 'sin' | null;
+  alta: RangoAlta | null;
+  /** Solo los que tienen algo urgente por resolver. */
+  atencion: 'si' | null;
 };
 
 export const FILTROS_VACIOS: FiltrosAlumnos = {
@@ -125,13 +135,71 @@ export const FILTROS_VACIOS: FiltrosAlumnos = {
   uniforme: null,
   anio: null,
   tutor: null,
+  adeudo: null,
+  emergencia: null,
+  medicas: null,
+  alta: null,
+  atencion: null,
 };
+
+/**
+ * Lo que el listado sabe de cada alumno y no viene en `GET /students`.
+ * Hoy solo el adeudo del mes, que sale de `GET /payments/pending`.
+ */
+export type ContextoAlumnos = {
+  deudas?: Record<string, number>;
+};
+
+const CLAVES_FILTRO: (keyof FiltrosAlumnos)[] = [
+  'categoria',
+  'estado',
+  'expediente',
+  'uniforme',
+  'anio',
+  'tutor',
+  'adeudo',
+  'emergencia',
+  'medicas',
+  'alta',
+  'atencion',
+];
 
 /** Cuántos filtros hay activos (sin contar la búsqueda de texto). */
 export const contarFiltros = (f: FiltrosAlumnos) =>
-  [f.categoria, f.estado, f.expediente, f.uniforme, f.anio, f.tutor].filter(Boolean).length;
+  CLAVES_FILTRO.filter((clave) => f[clave]).length;
 
 export const hayFiltros = (f: FiltrosAlumnos) => contarFiltros(f) > 0 || !!f.busqueda.trim();
+
+export const OPCIONES_UNIFORME = [
+  { value: 'entregado', label: 'Entregado' },
+  { value: 'pendiente', label: 'Por entregar' },
+];
+
+export const OPCIONES_TUTOR = [
+  { value: 'con', label: 'Con tutor' },
+  { value: 'sin', label: 'Sin tutor asignado' },
+];
+
+export const OPCIONES_ADEUDO = [
+  { value: 'con', label: 'Con adeudo este mes' },
+  { value: 'sin', label: 'Al corriente' },
+];
+
+export const OPCIONES_EMERGENCIA = [
+  { value: 'con', label: 'Con contacto' },
+  { value: 'sin', label: 'Sin contacto' },
+];
+
+export const OPCIONES_MEDICAS = [
+  { value: 'con', label: 'Con notas médicas' },
+  { value: 'sin', label: 'Sin notas médicas' },
+];
+
+export const OPCIONES_ALTA = [
+  { value: '7', label: 'Últimos 7 días' },
+  { value: '30', label: 'Últimos 30 días' },
+  { value: '90', label: 'Últimos 90 días' },
+];
 
 const sinAcentos = (texto: string) =>
   texto
@@ -139,8 +207,18 @@ const sinAcentos = (texto: string) =>
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase();
 
-export const filtrarAlumnos = (alumnos: Student[], f: FiltrosAlumnos) => {
+const conTexto = (valor?: string | null) => !!valor && valor.trim().length > 0;
+
+export const deudaDe = (alumno: Pick<Student, 'id'>, ctx: ContextoAlumnos = {}) =>
+  ctx.deudas?.[alumno.id] ?? 0;
+
+export const filtrarAlumnos = (
+  alumnos: Student[],
+  f: FiltrosAlumnos,
+  ctx: ContextoAlumnos = {},
+) => {
   const q = sinAcentos(f.busqueda.trim());
+  const desdeAlta = f.alta ? dayjs().subtract(Number(f.alta), 'day') : null;
   return alumnos.filter((a) => {
     if (f.categoria && a.category_id !== f.categoria) return false;
     if (f.estado && normalizarEstado(a.status) !== f.estado) return false;
@@ -150,9 +228,30 @@ export const filtrarAlumnos = (alumnos: Student[], f: FiltrosAlumnos) => {
     if (f.anio && anioNacimiento(a.birth_date) !== f.anio) return false;
     if (f.tutor === 'con' && !a.parent_id) return false;
     if (f.tutor === 'sin' && a.parent_id) return false;
+    const deuda = deudaDe(a, ctx);
+    if (f.adeudo === 'con' && deuda <= 0) return false;
+    if (f.adeudo === 'sin' && deuda > 0) return false;
+    if (f.emergencia === 'con' && !conTexto(a.emergency_contact_phone)) return false;
+    if (f.emergencia === 'sin' && conTexto(a.emergency_contact_phone)) return false;
+    if (f.medicas === 'con' && !conTexto(a.medical_notes)) return false;
+    if (f.medicas === 'sin' && conTexto(a.medical_notes)) return false;
+    if (desdeAlta) {
+      const alta = a.created_at ? dayjs(a.created_at) : null;
+      if (!alta?.isValid() || alta.isBefore(desdeAlta)) return false;
+    }
+    if (f.atencion === 'si' && !requiereAtencion(a, { deuda })) return false;
     if (q) {
       const pajar = sinAcentos(
-        [a.full_name, a.email, nombreTutor(a), a.category?.name, a.phone].filter(Boolean).join(' '),
+        [
+          a.full_name,
+          a.email,
+          nombreTutor(a),
+          a.category?.name,
+          a.phone,
+          a.emergency_contact_name,
+        ]
+          .filter(Boolean)
+          .join(' '),
       );
       if (!pajar.includes(q)) return false;
     }
@@ -160,7 +259,73 @@ export const filtrarAlumnos = (alumnos: Student[], f: FiltrosAlumnos) => {
   });
 };
 
-export type CampoOrden = 'nombre' | 'categoria' | 'edad' | 'estado' | 'alta';
+/** Un filtro activo, listo para pintarse como etiqueta que se puede quitar. */
+export type ChipFiltro = {
+  clave: keyof FiltrosAlumnos;
+  titulo: string;
+  valor: string;
+};
+
+const etiquetaDe = (opciones: { value: string; label: string }[], valor: string) =>
+  opciones.find((o) => o.value === valor)?.label || valor;
+
+export const chipsDeFiltros = (
+  f: FiltrosAlumnos,
+  categorias: { id: string; name: string }[] = [],
+): ChipFiltro[] => {
+  const chips: ChipFiltro[] = [];
+  if (f.busqueda.trim()) chips.push({ clave: 'busqueda', titulo: 'Busca', valor: f.busqueda.trim() });
+  if (f.atencion) chips.push({ clave: 'atencion', titulo: 'Solo', valor: 'Por atender' });
+  if (f.categoria) {
+    chips.push({
+      clave: 'categoria',
+      titulo: 'Categoría',
+      valor: categorias.find((c) => c.id === f.categoria)?.name || 'Categoría',
+    });
+  }
+  if (f.estado) {
+    chips.push({ clave: 'estado', titulo: 'Estado', valor: ESTADOS_ALUMNO[f.estado].label });
+  }
+  if (f.expediente) {
+    chips.push({
+      clave: 'expediente',
+      titulo: 'Expediente',
+      valor: etiquetaDe(OPCIONES_EXPEDIENTE, f.expediente),
+    });
+  }
+  if (f.adeudo) {
+    chips.push({ clave: 'adeudo', titulo: 'Pago', valor: etiquetaDe(OPCIONES_ADEUDO, f.adeudo) });
+  }
+  if (f.uniforme) {
+    chips.push({
+      clave: 'uniforme',
+      titulo: 'Uniforme',
+      valor: etiquetaDe(OPCIONES_UNIFORME, f.uniforme),
+    });
+  }
+  if (f.tutor) {
+    chips.push({ clave: 'tutor', titulo: 'Tutor', valor: etiquetaDe(OPCIONES_TUTOR, f.tutor) });
+  }
+  if (f.emergencia) {
+    chips.push({
+      clave: 'emergencia',
+      titulo: 'Emergencia',
+      valor: etiquetaDe(OPCIONES_EMERGENCIA, f.emergencia),
+    });
+  }
+  if (f.medicas) {
+    chips.push({
+      clave: 'medicas',
+      titulo: 'Salud',
+      valor: etiquetaDe(OPCIONES_MEDICAS, f.medicas),
+    });
+  }
+  if (f.anio) chips.push({ clave: 'anio', titulo: 'Nacido en', valor: f.anio });
+  if (f.alta) chips.push({ clave: 'alta', titulo: 'Alta', valor: etiquetaDe(OPCIONES_ALTA, f.alta) });
+  return chips;
+};
+
+export type CampoOrden = 'nombre' | 'categoria' | 'edad' | 'estado' | 'alta' | 'adeudo';
 export type Orden = { campo: CampoOrden; direccion: 'asc' | 'desc' };
 
 export const ORDEN_INICIAL: Orden = { campo: 'nombre', direccion: 'asc' };
@@ -171,10 +336,11 @@ export const OPCIONES_ORDEN: { value: string; label: string }[] = [
   { value: 'edad:asc', label: 'Edad (menor a mayor)' },
   { value: 'edad:desc', label: 'Edad (mayor a menor)' },
   { value: 'categoria:asc', label: 'Categoría (A-Z)' },
+  { value: 'adeudo:desc', label: 'Adeudo (mayor primero)' },
   { value: 'alta:desc', label: 'Altas recientes' },
 ];
 
-const clave = (a: Student, campo: CampoOrden): string | number => {
+const clave = (a: Student, campo: CampoOrden, ctx: ContextoAlumnos): string | number => {
   switch (campo) {
     case 'categoria':
       return sinAcentos(a.category?.name || '~');
@@ -185,21 +351,83 @@ const clave = (a: Student, campo: CampoOrden): string | number => {
       return Object.keys(ESTADOS_ALUMNO).indexOf(normalizarEstado(a.status));
     case 'alta':
       return dayjs(a.created_at).valueOf() || 0;
+    case 'adeudo':
+      return deudaDe(a, ctx);
     default:
       return sinAcentos(a.full_name || '');
   }
 };
 
-export const ordenarAlumnos = (alumnos: Student[], orden: Orden) => {
+export const ordenarAlumnos = (alumnos: Student[], orden: Orden, ctx: ContextoAlumnos = {}) => {
   const signo = orden.direccion === 'asc' ? 1 : -1;
   return [...alumnos].sort((a, b) => {
-    const ka = clave(a, orden.campo);
-    const kb = clave(b, orden.campo);
+    const ka = clave(a, orden.campo, ctx);
+    const kb = clave(b, orden.campo, ctx);
     if (ka < kb) return -1 * signo;
     if (ka > kb) return 1 * signo;
     return sinAcentos(a.full_name || '').localeCompare(sinAcentos(b.full_name || ''));
   });
 };
+
+// ── Estado en la URL ──────────────────────────────────────────────────────
+//
+// Los filtros viven en el query string para poder compartir una vista, volver
+// atrás sin perderla y enlazar desde Inicio ("ver los 4 sin tutor").
+
+const PARAMETROS: Record<string, keyof FiltrosAlumnos> = {
+  q: 'busqueda',
+  categoria: 'categoria',
+  estado: 'estado',
+  expediente: 'expediente',
+  uniforme: 'uniforme',
+  anio: 'anio',
+  tutor: 'tutor',
+  adeudo: 'adeudo',
+  emergencia: 'emergencia',
+  medicas: 'medicas',
+  alta: 'alta',
+  atencion: 'atencion',
+};
+
+export type EstadoListado = { filtros: FiltrosAlumnos; orden: Orden; pagina: number };
+
+export const leerEstadoDeUrl = (busqueda: string): EstadoListado => {
+  const params = new URLSearchParams(busqueda);
+  const filtros = { ...FILTROS_VACIOS };
+  for (const [param, campo] of Object.entries(PARAMETROS)) {
+    const valor = params.get(param);
+    if (valor) (filtros as Record<string, unknown>)[campo] = valor;
+  }
+  const [campo, direccion] = (params.get('orden') || '').split(':');
+  const orden: Orden =
+    campo && direccion
+      ? { campo: campo as CampoOrden, direccion: direccion === 'desc' ? 'desc' : 'asc' }
+      : ORDEN_INICIAL;
+  const pagina = Math.max(1, Number(params.get('pagina')) || 1);
+  return { filtros, orden, pagina };
+};
+
+export const escribirEstadoEnUrl = ({ filtros, orden, pagina }: EstadoListado) => {
+  const params = new URLSearchParams();
+  for (const [param, campo] of Object.entries(PARAMETROS)) {
+    const valor = filtros[campo];
+    if (typeof valor === 'string' && valor.trim()) params.set(param, valor.trim());
+  }
+  if (orden.campo !== ORDEN_INICIAL.campo || orden.direccion !== ORDEN_INICIAL.direccion) {
+    params.set('orden', `${orden.campo}:${orden.direccion}`);
+  }
+  if (pagina > 1) params.set('pagina', String(pagina));
+  const texto = params.toString();
+  return texto ? `?${texto}` : '';
+};
+
+/** Enlace al listado con un filtro ya puesto, para los avisos de Inicio. */
+export const enlaceAlListado = (filtros: Partial<FiltrosAlumnos>) =>
+  `/admin/students${escribirEstadoEnUrl({
+    filtros: { ...FILTROS_VACIOS, ...filtros },
+    orden: ORDEN_INICIAL,
+    pagina: 1,
+  })}`;
 
 // ── Resumen y alertas ─────────────────────────────────────────────────────
 
@@ -212,9 +440,20 @@ export type ResumenAlumnos = {
   expedienteIncompleto: number;
   sinTutor: number;
   sinUniforme: number;
+  conAdeudo: number;
+  /** Suma de lo que falta por cobrar este mes. */
+  adeudoTotal: number;
+  sinEmergencia: number;
+  /** Altas de los últimos 30 días. */
+  nuevos: number;
+  /** Alumnos con al menos un pendiente urgente. */
+  porAtender: number;
 };
 
-export const resumirAlumnos = (alumnos: Student[]): ResumenAlumnos => {
+export const resumirAlumnos = (
+  alumnos: Student[],
+  ctx: ContextoAlumnos = {},
+): ResumenAlumnos => {
   const resumen: ResumenAlumnos = {
     total: alumnos.length,
     activos: 0,
@@ -224,7 +463,13 @@ export const resumirAlumnos = (alumnos: Student[]): ResumenAlumnos => {
     expedienteIncompleto: 0,
     sinTutor: 0,
     sinUniforme: 0,
+    conAdeudo: 0,
+    adeudoTotal: 0,
+    sinEmergencia: 0,
+    nuevos: 0,
+    porAtender: 0,
   };
+  const hace30 = dayjs().subtract(30, 'day');
   for (const a of alumnos) {
     const estado = normalizarEstado(a.status);
     if (estado === 'activo') resumen.activos += 1;
@@ -234,6 +479,14 @@ export const resumirAlumnos = (alumnos: Student[]): ResumenAlumnos => {
     if (!a.parent_id) resumen.sinTutor += 1;
     else if (a.expediente_status === 'incompleto') resumen.expedienteIncompleto += 1;
     if (!a.uniform_delivered && estado !== 'inactivo') resumen.sinUniforme += 1;
+    const deuda = deudaDe(a, ctx);
+    if (deuda > 0) {
+      resumen.conAdeudo += 1;
+      resumen.adeudoTotal += deuda;
+    }
+    if (!a.emergency_contact_phone && estado !== 'inactivo') resumen.sinEmergencia += 1;
+    if (a.created_at && dayjs(a.created_at).isAfter(hace30)) resumen.nuevos += 1;
+    if (requiereAtencion(a, { deuda })) resumen.porAtender += 1;
   }
   return resumen;
 };
@@ -300,6 +553,15 @@ export const pendientesDelAlumno = (
   return lista;
 };
 
+/**
+ * ¿Hay algo urgente? Un alumno inactivo no "requiere atención": dejó de
+ * entrenar, así que su expediente o su uniforme ya no urgen.
+ */
+export const requiereAtencion = (alumno: Student, opciones: { deuda?: number } = {}) => {
+  if (normalizarEstado(alumno.status) === 'inactivo') return false;
+  return pendientesDelAlumno(alumno, opciones).some((p) => p.severidad === 'alta');
+};
+
 // ── Exportación ───────────────────────────────────────────────────────────
 
 const celdaCsv = (valor: unknown) => {
@@ -309,7 +571,7 @@ const celdaCsv = (valor: unknown) => {
   return /[",\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
 };
 
-export const alumnosACsv = (alumnos: Student[]) => {
+export const alumnosACsv = (alumnos: Student[], ctx: ContextoAlumnos = {}) => {
   const columnas: [string, (a: Student) => unknown][] = [
     ['Nombre', (a) => a.full_name],
     ['Fecha de nacimiento', (a) => a.birth_date],
@@ -323,6 +585,8 @@ export const alumnosACsv = (alumnos: Student[]) => {
     ['Contacto de emergencia', (a) => a.emergency_contact_name],
     ['Teléfono de emergencia', (a) => a.emergency_contact_phone],
     ['Notas médicas', (a) => a.medical_notes],
+    ['Adeudo del mes', (a) => deudaDe(a, ctx) || 0],
+    ['Fecha de alta', (a) => (a.created_at ? dayjs(a.created_at).format('YYYY-MM-DD') : null)],
   ];
   const filas = [
     columnas.map(([titulo]) => celdaCsv(titulo)).join(','),

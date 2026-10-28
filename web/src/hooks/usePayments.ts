@@ -19,11 +19,13 @@ export const useGetPayments = (filters?: {
     },
   });
 
-export const useGetPendingPayments = (month?: number) => {
+/** `GET /payments/pending` es solo de admin: `enabled` evita el 403. */
+export const useGetPendingPayments = (month?: number, enabled = true) => {
   const currentMonth = month ?? new Date().getMonth() + 1;
   return useQuery({
     queryKey: ['payments', 'pending', currentMonth],
     queryFn: async () => (await api.get(`/payments/pending?month=${currentMonth}`)).data,
+    enabled,
   });
 };
 

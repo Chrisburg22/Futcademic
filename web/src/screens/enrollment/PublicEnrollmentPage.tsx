@@ -437,24 +437,28 @@ export function PublicEnrollmentPage({ token }: { token: string }) {
     }
   };
 
+  /**
+   * `validateField` no devuelve un mapa de errores: devuelve `{ hasError, error }`
+   * y además pinta el mensaje bajo el campo. Por eso se consulta `hasError` uno
+   * por uno; esparcir el resultado hacía que el paso nunca avanzara.
+   */
+  const stepIsValid = (paths: string[]) =>
+    paths.every((path) => !form.validateField(path).hasError);
+
   const nextFromStudent = async () => {
-    const errors = {
-      ...form.validateField('student_full_name'),
-      ...form.validateField('student_birth_date'),
-    };
-    if (Object.keys(errors).length > 0) return;
+    if (!stepIsValid(['student_full_name', 'student_birth_date'])) return;
     await persistDraft();
     setStep(1);
   };
 
   const nextFromTutor = async () => {
-    const errors = {
-      ...form.validateField('guardian_full_name'),
-      ...form.validateField('guardian_relationship'),
-      ...form.validateField('guardian_email'),
-      ...form.validateField('guardian_phone'),
-    };
-    if (Object.keys(errors).length > 0) return;
+    const guardianFields = [
+      'guardian_full_name',
+      'guardian_relationship',
+      'guardian_email',
+      'guardian_phone',
+    ];
+    if (!stepIsValid(guardianFields)) return;
     await persistDraft();
     setStep(2);
   };

@@ -192,8 +192,11 @@ test('02 — Admin: Dashboard con estadísticas', async ({ page }) => {
   await expect(page.getByText('Alumnos activos')).toBeVisible();
   await expect(page.getByText('Ingreso mensual')).toBeVisible();
   await pause(1500);
-  // Shortcut cards
-  await expect(page.getByRole('main').getByRole('link', { name: 'Alumnos' })).toBeVisible();
+  // Accesos rápidos: "Alumnos" a secas, que ahora también hay indicadores y
+  // avisos que enlazan al listado.
+  await expect(
+    page.getByRole('main').getByRole('link', { name: 'Alumnos', exact: true }),
+  ).toBeVisible();
   await pause(1000);
 });
 
