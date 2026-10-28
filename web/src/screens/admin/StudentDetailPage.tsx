@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ActionIcon,
@@ -27,6 +27,8 @@ import {
   IconAlertTriangle,
   IconBrandWhatsapp,
   IconCalendar,
+  IconChevronLeft,
+  IconChevronRight,
   IconMapPin,
   IconCalendarCheck,
   IconChevronDown,
@@ -36,6 +38,7 @@ import {
   IconFlame,
   IconHeartbeat,
   IconPhone,
+  IconReceipt,
   IconShirt,
   IconTrash,
   IconTrophy,
@@ -47,6 +50,7 @@ import dayjs from 'dayjs';
 import {
   useDeleteStudent,
   useGetStudentDetails,
+  useGetStudents,
   useGetStudentStats,
   useGetStudentTeam,
   useUpdateStudentStatus,
@@ -59,19 +63,23 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useRegisterChatScreen } from '../../contexts/ChatScreenContext';
-import { mensajeDeError } from '../../lib/categories';
+import { formatearMensualidad, mensajeDeError } from '../../lib/categories';
 import {
   ESTADOS_ALUMNO,
+  ESTADOS_EXPEDIENTE,
   OPCIONES_ESTADO,
+  ORDEN_INICIAL,
   calcularEdad,
+  enlaceWhatsapp,
   iniciales,
   motivosDisponibles,
   nombreTutor,
   normalizarEstado,
+  ordenarAlumnos,
   pendientesDelAlumno,
   type Pendiente,
 } from '../../lib/students';
-import type { StudentStatus } from '../../types';
+import type { Student, StudentStatus } from '../../types';
 import { StudentExpediente } from './components/StudentExpediente';
 import { StudentEditForm } from './components/StudentEditForm';
 import { StudentPaymentsPanel } from './components/StudentPaymentsPanel';
@@ -168,6 +176,18 @@ export function StudentDetailPage() {
   const { data: users = [] } = useGetUsers();
   const tutores = users.filter((u: any) => u.role === 'padre');
 
+  // Revisar alumnos de uno en uno es lo normal al cerrar expedientes o cobrar:
+  // la ficha deja pasar al siguiente sin volver al listado.
+  const { data: listado = [] } = useGetStudents();
+  const vecinos = useMemo(
+    () => ordenarAlumnos(listado as Student[], ORDEN_INICIAL),
+    [listado],
+  );
+  const posicion = vecinos.findIndex((a) => a.id === id);
+  const anterior = posicion > 0 ? vecinos[posicion - 1] : null;
+  const siguiente =
+    posicion >= 0 && posicion < vecinos.length - 1 ? vecinos[posicion + 1] : null;
+
   const statusMut = useUpdateStudentStatus();
   const uniformMut = useUpdateUniform();
   const deleteMut = useDeleteStudent();
@@ -223,17 +243,33 @@ export function StudentDetailPage() {
   const deuda = cuenta ? Number(cuenta.pendingAmount) : 0;
   const pendientes = pendientesDelAlumno(student, { deuda });
   const puedeRecordar = esAdmin && motivosDisponibles(student, { deuda }).length > 0;
+  const expediente =
+    ESTADOS_EXPEDIENTE[
+      (student.expediente_status || 'incompleto') as keyof typeof ESTADOS_EXPEDIENTE
+    ] || ESTADOS_EXPEDIENTE.incompleto;
+  const faltanDocumentos = student.expediente_missing?.length || 0;
+  const telefonoTutor = student.parent?.phone || null;
+  const whatsappTutor = enlaceWhatsapp(
+    telefonoTutor,
+    `Hola${tutor ? ` ${tutor.split(' ')[0]}` : ''}, te escribimos sobre ${student.full_name}.`,
+  );
 
-  const volver = () => {
-    if (!sucio) return navigate.push('/admin/students');
+  /** Salir de la ficha avisando si quedaron cambios en «Datos». */
+  const irA = (ruta: string) => {
+    if (!sucio) return navigate.push(ruta);
     modals.openConfirmModal({
       title: 'Salir sin guardar',
       children: <Text size="sm">Tienes cambios sin guardar en los datos del alumno.</Text>,
       labels: { confirm: 'Salir sin guardar', cancel: 'Seguir editando' },
       confirmProps: { color: 'red' },
-      onConfirm: () => navigate.push('/admin/students'),
+      onConfirm: () => {
+        setSucio(false);
+        navigate.push(ruta);
+      },
     });
   };
+
+  const volver = () => irA('/admin/students');
 
   const cambiarEstado = (nuevo: StudentStatus) =>
     statusMut.mutate(
@@ -297,14 +333,43 @@ export function StudentDetailPage() {
 
   return (
     <Stack gap="md">
-      <Breadcrumbs>
-        <Anchor component="button" type="button" size="sm" onClick={volver}>
-          Alumnos
-        </Anchor>
-        <Text size="sm" c="dimmed">
-          {student.full_name}
-        </Text>
-      </Breadcrumbs>
+      <Group justify="space-between" wrap="wrap" gap="xs">
+        <Breadcrumbs>
+          <Anchor component="button" type="button" size="sm" onClick={volver}>
+            Alumnos
+          </Anchor>
+          <Text size="sm" c="dimmed">
+            {student.full_name}
+          </Text>
+        </Breadcrumbs>
+        {vecinos.length > 1 && posicion >= 0 && (
+          <Group gap="xs" wrap="nowrap">
+            <Text size="xs" c="dimmed" style={{ fontVariantNumeric: 'tabular-nums' }}>
+              {posicion + 1} de {vecinos.length}
+            </Text>
+            <Tooltip label={anterior ? `Anterior: ${anterior.full_name}` : 'Es el primero'}>
+              <ActionIcon
+                variant="default"
+                disabled={!anterior}
+                aria-label="Alumno anterior"
+                onClick={() => anterior && irA(`/admin/students/${anterior.id}`)}
+              >
+                <IconChevronLeft size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={siguiente ? `Siguiente: ${siguiente.full_name}` : 'Es el último'}>
+              <ActionIcon
+                variant="default"
+                disabled={!siguiente}
+                aria-label="Alumno siguiente"
+                onClick={() => siguiente && irA(`/admin/students/${siguiente.id}`)}
+              >
+                <IconChevronRight size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+        )}
+      </Group>
 
       <Card withBorder padding="lg" radius="md">
         <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
@@ -367,11 +432,52 @@ export function StudentDetailPage() {
                     {metaEstado.label}
                   </Badge>
                 )}
+                <Badge
+                  color={expediente.color}
+                  variant="light"
+                  style={{ cursor: 'pointer' }}
+                  component="button"
+                  type="button"
+                  onClick={() => irAPestana('expediente')}
+                >
+                  Expediente: {expediente.label.toLowerCase()}
+                  {faltanDocumentos ? ` (faltan ${faltanDocumentos})` : ''}
+                </Badge>
               </Group>
             </Stack>
           </Group>
 
           <Group gap="xs">
+            {telefonoTutor && (
+              <Tooltip label={`Llamar a ${tutor || 'el tutor'}: ${telefonoTutor}`}>
+                <ActionIcon
+                  component="a"
+                  href={`tel:${telefonoTutor.replace(/[^\d+]/g, '')}`}
+                  size="lg"
+                  variant="light"
+                  color="gray"
+                  aria-label={`Llamar a ${tutor || 'el tutor'}`}
+                >
+                  <IconPhone size={18} />
+                </ActionIcon>
+              </Tooltip>
+            )}
+            {whatsappTutor && (
+              <Tooltip label={`Escribir a ${tutor || 'el tutor'} por WhatsApp`}>
+                <ActionIcon
+                  component="a"
+                  href={whatsappTutor}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="lg"
+                  variant="light"
+                  color="green"
+                  aria-label={`Escribir a ${tutor || 'el tutor'} por WhatsApp`}
+                >
+                  <IconBrandWhatsapp size={18} />
+                </ActionIcon>
+              </Tooltip>
+            )}
             <Tooltip
               label={student.uniform_delivered ? 'Uniforme entregado (clic para deshacer)' : 'Marcar uniforme entregado'}
             >
@@ -438,11 +544,31 @@ export function StudentDetailPage() {
           >
             Datos
           </Tabs.Tab>
-          <Tabs.Tab value="expediente" leftSection={<IconFileText size={16} />}>
+          <Tabs.Tab
+            value="expediente"
+            leftSection={<IconFileText size={16} />}
+            rightSection={
+              faltanDocumentos ? (
+                <Badge size="xs" variant="filled" color="orange" circle>
+                  {faltanDocumentos}
+                </Badge>
+              ) : undefined
+            }
+          >
             Expediente
           </Tabs.Tab>
           {esAdmin && (
-            <Tabs.Tab value="pagos" leftSection={<IconCash size={16} />}>
+            <Tabs.Tab
+              value="pagos"
+              leftSection={<IconCash size={16} />}
+              rightSection={
+                deuda > 0 && estado !== 'becado' ? (
+                  <Badge size="xs" variant="light" color="orange">
+                    Debe
+                  </Badge>
+                ) : undefined
+              }
+            >
               Pagos
             </Tabs.Tab>
           )}
@@ -538,7 +664,60 @@ export function StudentDetailPage() {
               </Grid.Col>
 
               <Grid.Col span={{ base: 12, md: 5 }}>
-                <Card withBorder padding="lg" radius="md" h="100%">
+                <Stack gap="md" h="100%">
+                {esAdmin && cuenta && (
+                  <Card withBorder padding="lg" radius="md">
+                    <Group justify="space-between" mb="sm" wrap="nowrap">
+                      <Group gap="xs">
+                        <IconReceipt size={18} />
+                        <Text fw={600}>Mensualidad</Text>
+                      </Group>
+                      <Button
+                        variant="subtle"
+                        size="compact-sm"
+                        onClick={() => irAPestana('pagos')}
+                      >
+                        Ver pagos
+                      </Button>
+                    </Group>
+                    <Stack gap={6}>
+                      <Group justify="space-between" wrap="nowrap">
+                        <Text size="sm" c="dimmed">
+                          Cuota
+                        </Text>
+                        <Text size="sm" fw={500} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                          {formatearMensualidad(cuenta.monthlyFee)}
+                        </Text>
+                      </Group>
+                      <Group justify="space-between" wrap="nowrap">
+                        <Text size="sm" c="dimmed">
+                          Debe este mes
+                        </Text>
+                        <Text
+                          size="sm"
+                          fw={700}
+                          c={deuda > 0 && estado !== 'becado' ? 'orange' : undefined}
+                          style={{ fontVariantNumeric: 'tabular-nums' }}
+                        >
+                          {estado === 'becado'
+                            ? 'Becado'
+                            : deuda > 0
+                              ? formatearMensualidad(deuda)
+                              : 'Nada'}
+                        </Text>
+                      </Group>
+                      <Group justify="space-between" wrap="nowrap">
+                        <Text size="sm" c="dimmed">
+                          Pagado en total
+                        </Text>
+                        <Text size="sm" fw={500} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                          {formatearMensualidad(cuenta.totalPaid)}
+                        </Text>
+                      </Group>
+                    </Stack>
+                  </Card>
+                )}
+                <Card withBorder padding="lg" radius="md" style={{ flex: 1 }}>
                   <Group gap="xs" mb="md">
                     <IconUsers size={18} />
                     <Text fw={600}>{team?.teamName || student.category?.name || 'Equipo'}</Text>
@@ -587,6 +766,7 @@ export function StudentDetailPage() {
                     </Text>
                   )}
                 </Card>
+                </Stack>
               </Grid.Col>
             </Grid>
           </Stack>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button,
   Card,
@@ -27,7 +27,7 @@ import {
   IconUsers,
   IconX,
 } from '@tabler/icons-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   useBulkUpdateStudents,
   useDeleteStudent,
@@ -36,12 +36,19 @@ import {
   useUpdateUniform,
   type AccionMasiva,
 } from '../../hooks/useStudents';
+import { useGetPendingPayments } from '../../hooks/usePayments';
+import { useLocalPref } from '../../hooks/useLocalPref';
 import { StudentWizard } from './components/StudentWizard';
 import { InviteStudentModal } from './components/InviteStudentModal';
 import { StudentEditForm } from './components/StudentEditForm';
 import { StudentsSummary } from './components/StudentsSummary';
 import { StudentsToolbar } from './components/StudentsToolbar';
-import { StudentsTable } from './components/StudentsTable';
+import {
+  COLUMNAS_INICIALES,
+  StudentsTable,
+  type ColumnaAlumno,
+  type Densidad,
+} from './components/StudentsTable';
 import { useGetCategories, useGetMyCategories } from '../../hooks/useCategories';
 import { useGetUsers } from '../../hooks/useUsers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -56,20 +63,25 @@ import {
   ORDEN_INICIAL,
   alumnosACsv,
   anioNacimiento,
+  escribirEstadoEnUrl,
   filtrarAlumnos,
   hayFiltros,
+  leerEstadoDeUrl,
   ordenarAlumnos,
   resumirAlumnos,
   type CampoOrden,
+  type ContextoAlumnos,
   type FiltrosAlumnos,
   type Orden,
 } from '../../lib/students';
 import type { Student, StudentStatus } from '../../types';
 
-const POR_PAGINA = 25;
-
 export function StudentsPage() {
   const navigate = useRouter();
+  // `useSearchParams` sí tiene la query en el primer render de una navegación
+  // suave (un enlace de Inicio como `?tutor=sin`), a diferencia de
+  // `window.location.search`.
+  const consultaInicial = useSearchParams();
   const { profile } = useAuth();
   const isTeacher = profile?.role === 'profesor';
   // Estado y baja son solo del admin en el backend; el profesor no los ve.
@@ -87,11 +99,33 @@ export function StudentsPage() {
   const { data: students = [], isLoading, isError, refetch } = useGetStudents();
   const alumnos = students as Student[];
 
-  const [filtros, setFiltros] = useState<FiltrosAlumnos>(FILTROS_VACIOS);
+  // El adeudo del mes no viene en `GET /students`: se cruza con la cobranza
+  // pendiente, que es lo que permite filtrar y ordenar por deuda.
+  const { data: cobranza } = useGetPendingPayments(undefined, !!profile && puedeAdministrar);
+  const contexto: ContextoAlumnos = useMemo(() => {
+    if (!puedeAdministrar || !cobranza?.pending) return {};
+    const deudas: Record<string, number> = {};
+    for (const fila of cobranza.pending as any[]) {
+      deudas[fila.id] = Number(fila.pending_amount) || 0;
+    }
+    return { deudas };
+  }, [cobranza, puedeAdministrar]);
+  const hayCobranza = !!contexto.deudas;
+
+  const [inicial] = useState(() => leerEstadoDeUrl(consultaInicial.toString()));
+  const [filtros, setFiltros] = useState<FiltrosAlumnos>(inicial.filtros);
   const [busquedaDebounced] = useDebouncedValue(filtros.busqueda, 200);
-  const [orden, setOrden] = useState<Orden>(ORDEN_INICIAL);
-  const [pagina, setPagina] = useState(1);
+  const [orden, setOrden] = useState<Orden>(inicial.orden);
+  const [pagina, setPagina] = useState(inicial.pagina);
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
+
+  // Preferencias de la tabla: las decide quien la usa y se recuerdan.
+  const [columnas, setColumnas] = useLocalPref<ColumnaAlumno[]>(
+    'alumnos.columnas',
+    COLUMNAS_INICIALES,
+  );
+  const [densidad, setDensidad] = useLocalPref<Densidad>('alumnos.densidad', 'comoda');
+  const [porPagina, setPorPagina] = useLocalPref<number>('alumnos.porPagina', 25);
 
   const [createOpen, { open: openCreate, close: closeCreate }] = useDisclosure(false);
   const [inviteOpen, invite] = useDisclosure(false);
@@ -115,12 +149,27 @@ export function StudentsPage() {
     () => ({ ...filtros, busqueda: busquedaDebounced }),
     [filtros, busquedaDebounced],
   );
-  useEffect(() => setPagina(1), [filtrosEfectivos, orden]);
+  // La primera vuelta respeta la página que venía en la URL.
+  const primeraVuelta = useRef(true);
+  useEffect(() => {
+    if (primeraVuelta.current) {
+      primeraVuelta.current = false;
+      return;
+    }
+    setPagina(1);
+  }, [filtrosEfectivos, orden]);
 
-  const resumen = useMemo(() => resumirAlumnos(alumnos), [alumnos]);
+  // Los filtros viven en la URL: así se comparte una vista, se vuelve atrás
+  // sin perderla y Inicio puede enlazar "los 4 que no tienen tutor".
+  useEffect(() => {
+    const consulta = escribirEstadoEnUrl({ filtros: filtrosEfectivos, orden, pagina });
+    window.history.replaceState(null, '', `${window.location.pathname}${consulta}`);
+  }, [filtrosEfectivos, orden, pagina]);
+
+  const resumen = useMemo(() => resumirAlumnos(alumnos, contexto), [alumnos, contexto]);
   const filtrados = useMemo(
-    () => ordenarAlumnos(filtrarAlumnos(alumnos, filtrosEfectivos), orden),
-    [alumnos, filtrosEfectivos, orden],
+    () => ordenarAlumnos(filtrarAlumnos(alumnos, filtrosEfectivos, contexto), orden, contexto),
+    [alumnos, filtrosEfectivos, orden, contexto],
   );
   const anios = useMemo(
     () =>
@@ -130,9 +179,9 @@ export function StudentsPage() {
     [alumnos],
   );
 
-  const paginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginas = Math.max(1, Math.ceil(filtrados.length / porPagina));
   const paginaActual = Math.min(pagina, paginas);
-  const visibles = filtrados.slice((paginaActual - 1) * POR_PAGINA, paginaActual * POR_PAGINA);
+  const visibles = filtrados.slice((paginaActual - 1) * porPagina, paginaActual * porPagina);
 
   useEffect(() => {
     const ids = new Set(filtrados.map((a) => a.id));
@@ -251,13 +300,15 @@ export function StudentsPage() {
   };
 
   const exportar = (lista: Student[], nombre: string) => {
-    saveBlob(new Blob([alumnosACsv(lista)], { type: 'text/csv;charset=utf-8' }), nombre);
+    saveBlob(new Blob([alumnosACsv(lista, contexto)], { type: 'text/csv;charset=utf-8' }), nombre);
   };
 
   const seleccionados = alumnos.filter((a) => seleccion.has(a.id));
   const paginaSeleccionada = visibles.length > 0 && visibles.every((a) => seleccion.has(a.id));
   const faltanPorSeleccionar = filtrados.filter((a) => !seleccion.has(a.id)).length;
   const hayAlumnos = alumnos.length > 0;
+  // Filtrar por adeudo sin la cobranza cargada daría "ningún alumno coincide".
+  const esperandoCobranza = puedeAdministrar && !!filtros.adeudo && !hayCobranza;
 
   return (
     <>
@@ -300,6 +351,7 @@ export function StudentsPage() {
               : setFiltros({ ...FILTROS_VACIOS, categoria: filtros.categoria, ...cambios })
           }
           verEstados={puedeAdministrar}
+          verAdeudo={hayCobranza}
         />
       )}
 
@@ -317,6 +369,8 @@ export function StudentsPage() {
           mostrados={filtrados.length}
           total={alumnos.length}
           puedeCambiarEstado={puedeAdministrar}
+          puedeVerPagos={hayCobranza}
+          porAtender={resumen.porAtender}
         />
       )}
 
@@ -421,7 +475,7 @@ export function StudentsPage() {
         </Paper>
       )}
 
-      {isLoading ? (
+      {isLoading || esperandoCobranza ? (
         <Card withBorder padding="md" radius="md">
           <Stack gap="sm">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -473,6 +527,16 @@ export function StudentsPage() {
             seleccion={seleccion}
             onSeleccion={marcar}
             puedeAdministrar={puedeAdministrar}
+            contexto={contexto}
+            columnas={columnas}
+            onColumnas={setColumnas}
+            densidad={densidad}
+            onDensidad={setDensidad}
+            porPagina={porPagina}
+            onPorPagina={(valor) => {
+              setPorPagina(valor);
+              setPagina(1);
+            }}
             onAbrir={(a) => navigate.push(`/admin/students/${a.id}`)}
             onEditar={(a) => setEditingId(a.id)}
             onEliminar={confirmarEliminar}
@@ -482,8 +546,8 @@ export function StudentsPage() {
           {paginas > 1 && (
             <Group justify="space-between" mt="md" wrap="wrap">
               <Text size="sm" c="dimmed">
-                {(paginaActual - 1) * POR_PAGINA + 1}–
-                {Math.min(paginaActual * POR_PAGINA, filtrados.length)} de {filtrados.length}
+                {(paginaActual - 1) * porPagina + 1}–
+                {Math.min(paginaActual * porPagina, filtrados.length)} de {filtrados.length}
               </Text>
               <Pagination value={paginaActual} onChange={setPagina} total={paginas} />
             </Group>
