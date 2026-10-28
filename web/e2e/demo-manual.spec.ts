@@ -77,11 +77,47 @@ const EVENTS = [
   { id: 'e2', category_id: 'cat2', date: '2025-07-02', start_time: '18:00', type: 'partido', category: { id: 'cat2', name: 'Sub-14' } },
 ];
 
+const MES_ACTUAL = new Date().getMonth() + 1;
+const ANIO_ACTUAL = new Date().getFullYear();
+const MES_DOS_DIGITOS = String(MES_ACTUAL).padStart(2, '0');
+
 const PAYMENTS = [
-  { id: 'p1', type: 'mensualidad', amount: 500, payment_date: '2025-06-15', description: 'Mensualidad junio', student: STUDENTS[0] },
-  { id: 'p2', type: 'mensualidad', amount: 500, payment_date: '2025-06-16', description: 'Mensualidad junio', student: STUDENTS[2] },
-  { id: 'p3', type: 'pago_profesor', amount: 3000, payment_date: '2025-06-20', description: 'Nómina junio', teacher: TEACHERS[0] },
+  { id: 'p1', type: 'mensualidad', amount: 500, payment_date: `${ANIO_ACTUAL}-${MES_DOS_DIGITOS}-15`, payment_month: MES_ACTUAL, payment_year: ANIO_ACTUAL, description: 'Mensualidad', student: STUDENTS[0] },
+  { id: 'p2', type: 'mensualidad', amount: 500, payment_date: `${ANIO_ACTUAL}-${MES_DOS_DIGITOS}-16`, payment_month: MES_ACTUAL, payment_year: ANIO_ACTUAL, description: 'Mensualidad', student: STUDENTS[2] },
+  { id: 'p3', type: 'pago_profesor', amount: 3000, payment_date: `${ANIO_ACTUAL}-${MES_DOS_DIGITOS}-20`, payment_month: MES_ACTUAL, payment_year: ANIO_ACTUAL, description: 'Nómina', teacher: TEACHERS[0] },
 ];
+
+// El resumen financiero del panel: el mes en curso con cobranza y nómina, y
+// seis meses de historia para que la gráfica tenga forma.
+const RESUMEN_FINANCIERO = (() => {
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const month = i + 1;
+    const collected = month === MES_ACTUAL ? 1000 : month < MES_ACTUAL ? 3200 + month * 140 : 0;
+    const payroll = month === MES_ACTUAL ? 3000 : month < MES_ACTUAL ? 3000 : 0;
+    return { month, collected, payroll, margin: collected - payroll };
+  });
+  const totals = months.reduce(
+    (acc, m) => ({
+      collected: acc.collected + m.collected,
+      payroll: acc.payroll + m.payroll,
+      margin: acc.margin + m.margin,
+    }),
+    { collected: 0, payroll: 0, margin: 0 },
+  );
+  return { year: ANIO_ACTUAL, months, totals };
+})();
+
+const ESTADO_CUENTA = {
+  studentName: 'Carlos López',
+  category: 'Sub-12',
+  monthlyFee: 500,
+  pendingAmount: 500,
+  hasPaidThisMonth: false,
+  dueDate: `${ANIO_ACTUAL}-${MES_DOS_DIGITOS}-10`,
+  totalPayments: 6,
+  totalPaid: 2500,
+  movements: [],
+};
 
 const NOTIFS = [
   { id: 'n1', title: 'Pago registrado', body: 'Carlos López — $500 mensualidad', is_read: false, created_at: new Date().toISOString() },
@@ -115,11 +151,12 @@ const TEAM = {
     { id: 's4', full_name: 'Sofía Herrera', avatar_url: null },
     { id: 's5', full_name: 'Pablo Mendoza', avatar_url: null },
   ],
-  teachers: [{ id: 't1', full_name: 'Prof. García', avatar_url: null }],
+  // Forma real de getStudentTeam: nombre/hora/cancha ya vienen resueltos.
+  teachers: [{ id: 't1', name: 'Prof. García', avatar: null }],
   schedules: [
-    { day: 'Martes', start_time: '17:00', venue: 'Cancha Central' },
-    { day: 'Jueves', start_time: '17:00', venue: 'Cancha Central' },
-    { day: 'Sábado', start_time: '10:00', venue: 'Campo Norte' },
+    { id: 'ev1', name: 'Entrenamiento', time: '17:00', venue: 'Cancha Central' },
+    { id: 'ev2', name: 'Entrenamiento', time: '17:00', venue: 'Cancha Central' },
+    { id: 'ev3', name: 'Entrenamiento', time: '10:00', venue: 'Campo Norte' },
   ],
 };
 
@@ -135,6 +172,8 @@ const FULL_API = {
   venues: VENUES,
   events: EVENTS,
   payments: PAYMENTS,
+  paymentsSummary: RESUMEN_FINANCIERO,
+  accountStatement: ESTADO_CUENTA,
   // Forma real de payment.controller.ts:102-112: los items llevan `id`
   // (no `student_id`) y el mes vive en el sobre, no en cada item.
   pendingPayments: [
@@ -280,7 +319,9 @@ test('06 — Admin: Categorías', async ({ page }) => {
   await expect(page.getByText('Sub-14')).toBeVisible();
   await pause(500);
   await page.getByRole('button', { name: 'Nueva categoría' }).click();
-  await expect(page.getByText('Años de nacimiento')).toBeVisible();
+  const dialogo = page.getByRole('dialog', { name: 'Nueva categoría' });
+  await expect(dialogo).toBeVisible();
+  await expect(dialogo.getByText('Generación')).toBeVisible();
   await pause(1000);
   await page.keyboard.press('Escape');
   await pause(500);
@@ -326,14 +367,16 @@ test('09 — Admin: Finanzas (pagos y pendientes)', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Finanzas' })).toBeVisible();
   await pause(500);
   // Tabs
-  await expect(page.getByRole('tab', { name: 'Alumnos' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Profesores' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Pendientes' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: /Cobranza/ })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Pagos del mes' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Nómina' })).toBeVisible();
   await pause(500);
-  // Pendientes tab
-  await page.getByRole('tab', { name: 'Pendientes' }).click();
-  await pause(500);
+  // La bandeja de cobranza abre por defecto y dice quién debe
   await expect(page.getByText('Ana Torres')).toBeVisible();
+  await pause(500);
+  await page.getByRole('tab', { name: 'Pagos del mes' }).click();
+  await pause(500);
+  await page.getByRole('tab', { name: /Cobranza/ }).click();
   await pause(500);
   // Botón registrar pago
   await page.getByRole('button', { name: 'Registrar pago' }).click();
@@ -543,10 +586,10 @@ test('21 — Alumno: Mi equipo', async ({ page }) => {
   // Profesores
   await expect(page.getByText('Prof. García')).toBeVisible();
   await pause(500);
-  // Horarios
-  await expect(page.getByText('Martes — 17:00 (Cancha Central)')).toBeVisible();
-  await expect(page.getByText('Jueves — 17:00 (Cancha Central)')).toBeVisible();
-  await expect(page.getByText('Sábado — 10:00 (Campo Norte)')).toBeVisible();
+  // Horarios (el nombre del evento ya no incluye el día)
+  await expect(page.getByText('17:00')).toHaveCount(2);
+  await expect(page.getByText('Cancha Central')).toHaveCount(2);
+  await expect(page.getByText('Campo Norte')).toBeVisible();
   await pause(1500);
 });
 

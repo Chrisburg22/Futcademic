@@ -101,7 +101,7 @@ export function StudentsPage() {
 
   // El adeudo del mes no viene en `GET /students`: se cruza con la cobranza
   // pendiente, que es lo que permite filtrar y ordenar por deuda.
-  const { data: cobranza } = useGetPendingPayments(undefined, !!profile && puedeAdministrar);
+  const { data: cobranza } = useGetPendingPayments({ enabled: !!profile && puedeAdministrar });
   const contexto: ContextoAlumnos = useMemo(() => {
     if (!puedeAdministrar || !cobranza?.pending) return {};
     const deudas: Record<string, number> = {};

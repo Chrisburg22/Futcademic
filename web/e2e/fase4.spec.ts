@@ -39,8 +39,8 @@ const TEAM = {
   color: '#3498db',
   birthYear: 2012,
   teammates: [{ id: 's2', full_name: 'Ana Torres' }],
-  teachers: [{ id: 't1', full_name: 'Prof. García' }],
-  schedules: [{ day: 'Martes', start_time: '17:00', venue: 'Cancha Central' }],
+  teachers: [{ id: 't1', name: 'Prof. García', avatar: null }],
+  schedules: [{ id: 'ev1', name: 'Entrenamiento', time: '17:00', venue: 'Cancha Central' }],
 };
 
 const STATS = {
