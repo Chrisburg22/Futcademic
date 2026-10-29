@@ -1,6 +1,7 @@
 'use client';
 
 import { MantineProvider } from '@mantine/core';
+import { DatesProvider } from '@mantine/dates';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -32,6 +33,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <MantineProvider theme={theme} defaultColorScheme="light">
       <Notifications position="top-right" />
+      <DatesProvider settings={{ locale: 'es', firstDayOfWeek: 1, weekendDays: [0, 6] }}>
       <ModalsProvider>
         <PersistQueryClientProvider
           client={queryClient}
@@ -55,6 +57,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <AuthProvider>{children}</AuthProvider>
         </PersistQueryClientProvider>
       </ModalsProvider>
+      </DatesProvider>
     </MantineProvider>
   );
 }

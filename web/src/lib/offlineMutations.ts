@@ -72,11 +72,16 @@ queryClient.setMutationDefaults(OFFLINE_MUTATION_KEYS.saveAttendances, {
     const key: QueryKey = ['attendances', payload.category_id, payload.date];
     await queryClient.cancelQueries({ queryKey: key });
     const previous = queryClient.getQueryData(key);
+    // Con la misma forma que un `Attendance` de la API: la pantalla filtra por
+    // `type` y `date` (ver `marcasDeRegistros`) y descartaría filas incompletas.
     queryClient.setQueryData(
       key,
       payload.records.map((record) => ({
         student_id: record.student_id,
         present: record.present,
+        type: payload.type,
+        date: payload.date,
+        training_id: payload.training_id ?? null,
       })),
     );
     return { key, previous };
@@ -85,9 +90,11 @@ queryClient.setMutationDefaults(OFFLINE_MUTATION_KEYS.saveAttendances, {
     const ctx = context as AttendancesContext | undefined;
     if (ctx) queryClient.setQueryData(ctx.key, ctx.previous);
   },
-  onSuccess: (_data, payload) => {
-    const { category_id } = payload as SaveAttendancesPayload;
-    void queryClient.invalidateQueries({ queryKey: ['attendances', category_id] });
+  onSuccess: () => {
+    // El pase de lista cambia el histórico de la categoría, el del día y el de
+    // cada alumno: la clave entera es lo único que los cubre a todos.
+    void queryClient.invalidateQueries({ queryKey: ['attendances'] });
+    void queryClient.invalidateQueries({ queryKey: ['trainings'] });
     void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
   },
 });

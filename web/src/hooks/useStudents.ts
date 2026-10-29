@@ -7,13 +7,14 @@ export const useGetMyChildren = () =>
     queryFn: async () => (await api.get('/students?parent_id=me')).data,
   });
 
-export const useGetStudents = (categoryId?: string) =>
+export const useGetStudents = (categoryId?: string, enabled = true) =>
   useQuery({
     queryKey: ['students', categoryId],
     queryFn: async () => {
       const url = categoryId ? `/students?category_id=${categoryId}` : '/students';
       return (await api.get(url)).data;
     },
+    enabled,
   });
 
 export const useCreateStudent = () => {

@@ -135,6 +135,7 @@ export interface Attendance {
   date: string;
   type: EventType;
   present: boolean;
+  created_at?: string;
   student?: Student;
 }
 

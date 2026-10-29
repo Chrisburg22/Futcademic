@@ -326,10 +326,12 @@ test('06 — Sin conexión: el pase de lista se guarda y se envía al volver la 
   await context.setOffline(true);
   await expect(page.getByText('Sin conexión')).toBeVisible({ timeout: 15_000 });
 
-  // Marca presente al primer alumno y guarda, ya sin red.
-  // El input del Switch de Mantine está oculto: se pulsa su etiqueta.
-  await page.getByText('Ausente').first().click();
-  await page.getByRole('button', { name: 'Guardar asistencias' }).click();
+  // Marca a todos los de la lista (si queda alguno sin marcar sale el diálogo
+  // «sin marcar») y guarda, ya sin red.
+  await page.getByRole('button', { name: 'Presente: Carlos López' }).click();
+  await page.getByRole('button', { name: 'Ausente: Ana Torres' }).click();
+  await page.getByRole('button', { name: 'Presente: Diego Ramírez' }).click();
+  await page.getByRole('button', { name: 'Guardar pase de lista' }).click();
 
   await expect(page.getByText('Guardado sin conexión')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText('1 por enviar')).toBeVisible({ timeout: 10_000 });
@@ -353,9 +355,11 @@ test('06 — Sin conexión: el pase de lista se guarda y se envía al volver la 
   await expect(page.locator('header')).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText('1 por enviar')).toBeVisible({ timeout: 20_000 });
   expect(enviados, 'una app abierta sin red no debe disparar la cola').toHaveLength(0);
-  await page.getByRole('textbox', { name: 'Categoría' }).click();
-  await page.getByRole('option', { name: 'Sub-12' }).click();
-  await expect(page.getByText('Presente')).toBeVisible({ timeout: 15_000 });
+  // La categoría viaja en la URL (?categoria=) y sobrevive a la recarga. No se
+  // vuelve a elegir: en Mantine, pulsar la opción ya elegida la deselecciona.
+  await expect(
+    page.getByRole('button', { name: 'Presente: Carlos López' }),
+  ).toHaveAttribute('aria-pressed', 'true', { timeout: 15_000 });
   await caption(page, 'Tras recargar sin red: el cambio sigue en cola y la marca en pantalla', 3000);
 
   // Vuelve la conexión: la cola se envía sola.
