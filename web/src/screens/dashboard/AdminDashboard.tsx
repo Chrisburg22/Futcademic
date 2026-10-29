@@ -168,7 +168,8 @@ export function AdminDashboard() {
             }
             icon={<IconCoin size={20} />}
             color="orange"
-            href={enlaceAlListado({ adeudo: 'con' })}
+            // El número es dinero: se cobra en Finanzas, no en el listado.
+            href="/finances?tab=cobranza"
             cargando={!cobranza}
           />
         </Grid.Col>

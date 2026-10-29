@@ -35,6 +35,10 @@ export interface ApiFixtures {
   teachers?: any[];
   users?: any[];
   payments?: any[];
+  /** `GET /payments/summary`; si falta se arma un año en ceros. */
+  paymentsSummary?: any;
+  /** `GET /payments/account-statement/:id` (vista del padre). */
+  accountStatement?: any;
   pendingPayments?: any[];
   venues?: any[];
   events?: any[];
@@ -233,14 +237,53 @@ export async function mockApi(page: Page, fx: ApiFixtures) {
         const pending = fx.pendingPayments ?? [];
         return json({
           month: Number(url.searchParams.get('month')) || new Date().getMonth() + 1,
-          year: new Date().getFullYear(),
+          year: Number(url.searchParams.get('year')) || new Date().getFullYear(),
           pending,
           total_pending_amount: pending.reduce(
             (acc: number, p: any) => acc + Number(p.pending_amount ?? 0),
             0,
           ),
-          total_students: pending.length,
+          total_students: fx.students?.length ?? pending.length,
         });
+      }
+      if (path === '/payments/summary') {
+        const year = Number(url.searchParams.get('year')) || new Date().getFullYear();
+        const vacio = {
+          year,
+          months: Array.from({ length: 12 }, (_, i) => ({
+            month: i + 1,
+            collected: 0,
+            payroll: 0,
+            margin: 0,
+          })),
+          totals: { collected: 0, payroll: 0, margin: 0 },
+        };
+        return json(fx.paymentsSummary ?? vacio);
+      }
+      const cuentaMatch = path.match(/^\/payments\/account-statement\/([^/]+)$/);
+      if (cuentaMatch) {
+        return json(
+          fx.accountStatement ?? {
+            studentName: 'Alumno',
+            category: 'Sin categoría',
+            monthlyFee: 0,
+            pendingAmount: 0,
+            hasPaidThisMonth: true,
+            dueDate: null,
+            totalPayments: 0,
+            totalPaid: 0,
+            movements: [],
+          },
+        );
+      }
+      // El filtro por tipo sí se aplica: la pestaña de nómina no debe mostrar
+      // mensualidades (en la fixture el tipo puede venir como `type`).
+      if (path === '/payments') {
+        const tipo = url.searchParams.get('type');
+        const pagos = fx.payments ?? [];
+        return json(
+          tipo ? pagos.filter((p: any) => (p.payment_type ?? p.type) === tipo) : pagos,
+        );
       }
       if (path.startsWith('/payments')) return json(fx.payments ?? []);
       if (path.startsWith('/venues')) return json(fx.venues ?? []);

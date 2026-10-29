@@ -279,7 +279,7 @@ test('06 — Admin: Categorías', async ({ page }) => {
   await expect(page.getByText('Sub-14')).toBeVisible();
   await pause(500);
   await page.getByRole('button', { name: 'Nueva categoría' }).click();
-  await expect(page.getByText('Años de nacimiento')).toBeVisible();
+  await expect(page.getByText('Años', { exact: true }).first()).toBeVisible();
   await pause(1000);
   await page.keyboard.press('Escape');
   await pause(500);
@@ -324,18 +324,17 @@ test('09 — Admin: Finanzas (pagos y pendientes)', async ({ page }) => {
   await loginAs(page, { profile: ADMIN_PROFILE, api: FULL_API, goto: '/finances' });
   await expect(page.getByRole('heading', { name: 'Finanzas' })).toBeVisible();
   await pause(500);
-  // Tabs
-  await expect(page.getByRole('tab', { name: 'Alumnos' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Profesores' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Pendientes' })).toBeVisible();
+  // Tabs: la bandeja de cobranza es la pestaña por defecto
+  await expect(page.getByRole('tab', { name: /Cobranza/ })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Pagos del mes' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Nómina' })).toBeVisible();
   await pause(500);
-  // Pendientes tab
-  await page.getByRole('tab', { name: 'Pendientes' }).click();
+  await page.getByRole('tab', { name: 'Pagos del mes' }).click();
   await pause(500);
-  await expect(page.getByText('Ana Torres')).toBeVisible();
+  await page.getByRole('tab', { name: /Cobranza/ }).click();
   await pause(500);
   // Botón registrar pago
-  await page.getByRole('button', { name: 'Registrar pago' }).click();
+  await page.getByRole('button', { name: 'Registrar pago' }).first().click();
   await pause(1000);
   await page.keyboard.press('Escape');
   await pause(500);

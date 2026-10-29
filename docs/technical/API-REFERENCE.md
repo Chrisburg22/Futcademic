@@ -472,13 +472,42 @@ List payments.
 
 **Query Parameters:**
 - `type` (optional): `mensualidad` or `pago_profesor`
-- `month` (optional): Filter by month (YYYY-MM format, e.g., "2026-05")
+- `month` (optional): month number 1–12 (e.g., `10`)
+- `year` (optional): four-digit year (e.g., `2026`). Sent together with `month` so
+  October 2025 and October 2026 are not mixed.
+
+### GET /payments/summary
+Yearly roll-up used by the finance panel: money collected from monthly fees and
+payroll paid, month by month.
+
+**Query Parameters:**
+- `year` (optional): defaults to the current year
+
+**Response:**
+```json
+{
+  "year": 2026,
+  "months": [
+    { "month": 1, "collected": 9800, "payroll": 4200, "margin": 5600 },
+    "..."
+  ],
+  "totals": { "collected": 97500, "payroll": 44000, "margin": 53500 }
+}
+```
 
 ### GET /payments/student/:studentId
 Get payment history for a specific student.
 
 ### GET /payments/pending
-Get students with no payment in the current month.
+Get the students who still owe the monthly fee for a given period.
+
+**Query Parameters:**
+- `month` (optional): month number 1–12, defaults to the current month
+- `year` (optional): four-digit year, defaults to the current year
+
+Each student comes with `monthly_fee`, `paid_amount`, `pending_amount` and
+`is_fully_paid`; the envelope also carries `total_pending_amount` and
+`total_students`. Becados and inactive students are excluded.
 
 ### POST /payments/students
 Register payment for student(s). Supports single or bulk payments.

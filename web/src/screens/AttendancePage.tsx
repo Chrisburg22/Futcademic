@@ -21,6 +21,7 @@ import { useCheckAchievements } from '../hooks/useAchievements';
 import { useGetMyCategories, useGetCategories } from '../hooks/useCategories';
 import { useGetStudents, useGetMyChildren } from '../hooks/useStudents';
 import { useGetTrainings } from '../hooks/useEvents';
+import { willQueueOffline } from '../lib/offlineMutations';
 import { PageHeader } from '../components/common/PageHeader';
 import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
@@ -234,10 +235,17 @@ function RollCallScreen() {
     });
   };
 
-  const enviar = async () => {
+  const enviar = () => {
     if (!categoriaId) return;
-    try {
-      await save.mutateAsync({
+    const presentes = resumen.presentes;
+    const total = resumen.total;
+    const ids = delPase.filter((a) => marcaDe(marcas, a.id) === 'presente').map((a) => a.id);
+    // Sin red la promesa de la mutación no resuelve hasta que vuelva la conexión:
+    // se pregunta antes de lanzar para poder decir la verdad en el aviso.
+    const enCola = willQueueOffline();
+
+    save.mutate(
+      {
         category_id: categoriaId,
         date: fecha,
         type: estado.tipo,
@@ -246,21 +254,35 @@ function RollCallScreen() {
           student_id: a.id,
           present: marcaDe(marcas, a.id) === 'presente',
         })),
-      });
+      },
+      {
+        onSuccess: () => {
+          setSucio(false);
+          notifications.show({
+            color: 'green',
+            title: 'Pase de lista guardado',
+            message: `${presentes} presentes y ${total - presentes} ausentes el ${dayjs(fecha).format('DD/MM/YYYY')}.`,
+          });
+          // Si el envío salió desde la cola tras recargar, este callback ya no
+          // existe; los logros se recalculan en la siguiente visita.
+          for (const id of ids) checkAchievements.mutate(id);
+        },
+        onError: (error) => {
+          notifications.show({
+            color: 'red',
+            title: 'No se pudo guardar el pase de lista',
+            message: mensajeDeError(error, 'Revisa tu conexión e inténtalo de nuevo.'),
+          });
+        },
+      },
+    );
+
+    if (enCola) {
       setSucio(false);
       notifications.show({
-        color: 'green',
-        title: 'Pase de lista guardado',
-        message: `${resumen.presentes} presentes y ${resumen.total - resumen.presentes} ausentes el ${dayjs(fecha).format('DD/MM/YYYY')}.`,
-      });
-      for (const a of delPase) {
-        if (marcaDe(marcas, a.id) === 'presente') checkAchievements.mutate(a.id);
-      }
-    } catch (error) {
-      notifications.show({
-        color: 'red',
-        title: 'No se pudo guardar el pase de lista',
-        message: mensajeDeError(error, 'Revisa tu conexión e inténtalo de nuevo.'),
+        color: 'orange',
+        title: 'Guardado sin conexión',
+        message: 'El pase de lista se enviará solo en cuanto haya señal. No cierres sesión.',
       });
     }
   };
@@ -427,7 +449,7 @@ function RollCallScreen() {
                 sucio={sucio}
                 guardado={yaGuardado}
                 guardadoEn={guardadoEn}
-                guardando={save.isPending}
+                guardando={save.isPending && !save.isPaused}
                 onGuardar={guardar}
                 onDescartar={() => {
                   setMarcas(guardadas);

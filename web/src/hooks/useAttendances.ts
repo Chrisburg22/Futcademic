@@ -1,6 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../api/axios';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { api } from '../api/axios';
+import {
+  OFFLINE_MUTATION_KEYS,
+  type SaveAttendancesPayload,
+} from '../lib/offlineMutations';
 import {
   enPeriodo,
   estadisticaDeRegistros,
@@ -33,33 +37,19 @@ export const useGetAttendancesByStudent = (studentId?: string) =>
     enabled: !!studentId,
   });
 
-export const useMarkTrainingComplete = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (trainingId: string) =>
-      (await api.patch(`/attendances/trainings/${trainingId}/complete`)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['trainings'] }),
+// `mutationFn`, el optimista y los invalidate viven en los defaults de
+// `src/lib/offlineMutations.ts`: así una escritura que se quedó en cola sin
+// conexión se puede reanudar después de recargar, cuando ya no existe el
+// componente que la lanzó.
+export const useMarkTrainingComplete = () =>
+  useMutation<unknown, Error, string>({
+    mutationKey: OFFLINE_MUTATION_KEYS.markTrainingComplete,
   });
-};
 
-export const useSaveAttendances = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: {
-      category_id: string;
-      date: string;
-      type: 'entrenamiento' | 'partido';
-      records: { student_id: string; present: boolean }[];
-      training_id?: string;
-    }) => (await api.post('/attendances', payload)).data,
-    onSuccess: () => {
-      // El pase de lista cambia el histórico de la categoría, el del día y el
-      // de cada alumno: la clave entera es lo único que los cubre a todos.
-      qc.invalidateQueries({ queryKey: ['attendances'] });
-      qc.invalidateQueries({ queryKey: ['trainings'] });
-    },
+export const useSaveAttendances = () =>
+  useMutation<unknown, Error, SaveAttendancesPayload>({
+    mutationKey: OFFLINE_MUTATION_KEYS.saveAttendances,
   });
-};
 
 /**
  * Resumen de asistencia de un alumno, ya filtrado por periodo. Reutiliza la

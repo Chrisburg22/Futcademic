@@ -95,7 +95,7 @@ test('finanzas manda el mes que está seleccionado', async ({ page }) => {
     screen: 'Finanzas',
     filters: [
       { label: 'Mes', value: mes },
-      { label: 'Vista', value: 'pagos de alumnos' },
+      { label: 'Vista', value: 'pendientes del mes' },
     ],
   });
 });

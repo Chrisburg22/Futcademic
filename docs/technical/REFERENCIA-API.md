@@ -477,13 +477,42 @@ Lista pagos.
 
 **Parámetros de Consulta:**
 - `type` (opcional): `mensualidad` o `pago_profesor`
-- `month` (opcional): Filtrar por mes (formato AAAA-MM, ej., "2026-05")
+- `month` (opcional): número de mes 1–12 (ej., `10`)
+- `year` (opcional): año de cuatro dígitos (ej., `2026`). Se manda junto con
+  `month` para no mezclar octubre de 2025 con octubre de 2026.
+
+### GET /payments/summary
+Resumen anual que alimenta el panel de finanzas: cobrado por mensualidades y
+nómina pagada, mes a mes.
+
+**Parámetros de Consulta:**
+- `year` (opcional): por defecto, el año en curso
+
+**Respuesta:**
+```json
+{
+  "year": 2026,
+  "months": [
+    { "month": 1, "collected": 9800, "payroll": 4200, "margin": 5600 },
+    "..."
+  ],
+  "totals": { "collected": 97500, "payroll": 44000, "margin": 53500 }
+}
+```
 
 ### GET /payments/student/:studentId
 Obtiene historial de pagos de un alumno específico.
 
 ### GET /payments/pending
-Obtiene alumnos sin pago en el mes actual.
+Obtiene los alumnos que todavía deben la mensualidad de un periodo.
+
+**Parámetros de Consulta:**
+- `month` (opcional): número de mes 1–12, por defecto el actual
+- `year` (opcional): año de cuatro dígitos, por defecto el actual
+
+Cada alumno llega con `monthly_fee`, `paid_amount`, `pending_amount` e
+`is_fully_paid`; el sobre trae además `total_pending_amount` y
+`total_students`. Becados e inactivos quedan fuera.
 
 ### POST /payments/students
 Registra pago para alumno(s). Soporta pagos individuales o en bloque.

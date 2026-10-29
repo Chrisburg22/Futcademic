@@ -139,7 +139,8 @@ test.describe('Pase de lista', () => {
     await page.getByRole('button', { name: 'Guardar pase de lista' }).click();
     await expect(page.getByText('2 alumnos sin marcar')).toBeVisible();
     await page.getByRole('button', { name: 'Guardar como ausentes' }).click();
-    await expect(page.getByText('Pase de lista guardado')).toBeVisible();
+    // Exacto: tras guardar aparece también el aviso «Ya hay un pase de lista guardado…».
+    await expect(page.getByText('Pase de lista guardado', { exact: true })).toBeVisible();
   });
 
   test('las acciones masivas solo tocan a los alumnos filtrados', async ({ page }) => {

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type Route } from '@playwright/test';
 import { loginAs, mockApi, mockSupabase } from './helpers';
 
 /**
@@ -14,6 +14,7 @@ import { loginAs, mockApi, mockSupabase } from './helpers';
  *   4. Sin conexión: la app sigue viva y muestra datos guardados
  *   5. Vuelta a la conexión
  *   6. Cerrar sesión borra la caché (aislamiento entre academias)
+ *   7. Cola de escrituras: pase de lista sin red, reenvío al volver
  */
 
 const ADMIN_PROFILE = {
@@ -286,4 +287,85 @@ test('05 — Cerrar sesión borra la caché (aislamiento entre academias)', asyn
   if (leftover) {
     expect(JSON.parse(leftover).clientState.queries).toHaveLength(0);
   }
+});
+
+// ═══════════════════════════════════════════════════════════
+// 7. COLA DE ESCRITURAS SIN CONEXIÓN
+// ═══════════════════════════════════════════════════════════
+
+test('06 — Sin conexión: el pase de lista se guarda y se envía al volver la red', async ({
+  page,
+  context,
+}) => {
+  await mockAtContextLevel(page);
+  await loginAs(page, { profile: ADMIN_PROFILE, api: API });
+  await waitForServiceWorker(page);
+
+  // Cuenta los POST que llegan DE VERDAD al backend. Se registra después de
+  // `loginAs` a propósito: en Playwright gana el handler más reciente, y el de
+  // `mockApi` atrapa `/api/**`.
+  const enviados: unknown[] = [];
+  const contarPost = async (route: Route) => {
+    const req = route.request();
+    if (req.method() === 'POST') enviados.push(req.postDataJSON());
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'ok' }),
+    });
+  };
+  await context.route('http://localhost:3000/api/attendances', contarPost);
+  await page.route('http://localhost:3000/api/attendances', contarPost);
+
+  await page.goto('/attendance');
+  await page.getByRole('textbox', { name: 'Categoría' }).click();
+  await page.getByRole('option', { name: 'Sub-12' }).click();
+  await expect(page.getByText('Carlos López')).toBeVisible();
+  await caption(page, 'Pase de lista en la cancha… donde justo no hay señal', 2000);
+
+  await context.setOffline(true);
+  await expect(page.getByText('Sin conexión')).toBeVisible({ timeout: 15_000 });
+
+  // Marca a todos los de la lista (si queda alguno sin marcar sale el diálogo
+  // «sin marcar») y guarda, ya sin red.
+  await page.getByRole('button', { name: 'Presente: Carlos López' }).click();
+  await page.getByRole('button', { name: 'Ausente: Ana Torres' }).click();
+  await page.getByRole('button', { name: 'Presente: Diego Ramírez' }).click();
+  await page.getByRole('button', { name: 'Guardar pase de lista' }).click();
+
+  await expect(page.getByText('Guardado sin conexión')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('1 por enviar')).toBeVisible({ timeout: 10_000 });
+  expect(enviados, 'sin red no debe salir ninguna petición').toHaveLength(0);
+  await caption(page, 'Queda guardado en el teléfono: "1 por enviar"', 2600);
+
+  // La cola se persiste: sobrevive a cerrar la app.
+  await page.waitForFunction(
+    () => {
+      const raw = localStorage.getItem('futcademic-query-cache');
+      if (!raw) return false;
+      return (JSON.parse(raw).clientState.mutations ?? []).length > 0;
+    },
+    null,
+    { timeout: 15_000 },
+  );
+
+  // Recarga completa SIN red: el shell sale del service worker, la cola se
+  // rehidrata y lo marcado sigue en pantalla.
+  await page.reload({ waitUntil: 'load' });
+  await expect(page.locator('header')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('1 por enviar')).toBeVisible({ timeout: 20_000 });
+  expect(enviados, 'una app abierta sin red no debe disparar la cola').toHaveLength(0);
+  // La categoría viaja en la URL (?categoria=) y sobrevive a la recarga. No se
+  // vuelve a elegir: en Mantine, pulsar la opción ya elegida la deselecciona.
+  await expect(
+    page.getByRole('button', { name: 'Presente: Carlos López' }),
+  ).toHaveAttribute('aria-pressed', 'true', { timeout: 15_000 });
+  await caption(page, 'Tras recargar sin red: el cambio sigue en cola y la marca en pantalla', 3000);
+
+  // Vuelve la conexión: la cola se envía sola.
+  await context.setOffline(false);
+  await expect(page.getByText('Cambios enviados')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('1 por enviar')).toBeHidden({ timeout: 20_000 });
+  expect(enviados, 'al volver la red el pase de lista debe salir una sola vez').toHaveLength(1);
+  await caption(page, 'Al volver la señal se envía solo, una sola vez', 3000);
 });
