@@ -1,0 +1,327 @@
+{
+  "pestanas_con_datos": 12,
+  "pestanas_total": 12,
+  "alumnos_hoja": 352,
+  "sin_fecha_nacimiento": 79,
+  "marcas_AF": 791,
+  "marcas_futuras": 23,
+  "codigos_no_asistencia": {
+    "theme6": 7,
+    "FFFF9900": 27,
+    "FFFF00FF": 50,
+    "texto": 1,
+    "FFCCCCCC": 10
+  },
+  "edad_fuera_de_rango": 5,
+  "alumnos_repetidos": 6,
+  "alumnos_limpios": 262,
+  "marcas_limpias": 750,
+  "alumnos_con_1_marca_o_menos": 110,
+  "alumnos_en_vista": 152,
+  "filas": 566,
+  "fechas": 18,
+  "primera_fecha": "2026-03-26",
+  "ultima_fecha": "2026-10-22",
+  "faltas": 105,
+  "tasa_falta": 0.1855,
+  "corte_temporal": "2026-10-13",
+  "filas_entrenamiento": 355,
+  "filas_prueba": 211,
+  "perfil": {
+    "edad": {
+      "min": 5.0,
+      "max": 15.0,
+      "media": 9.601,
+      "mediana": 10.0,
+      "q1": 7.0,
+      "q3": 12.0,
+      "atipicos_iqr": 0,
+      "distintos": 11,
+      "valores": [
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0,
+        10.0,
+        11.0,
+        12.0,
+        13.0,
+        14.0,
+        15.0
+      ]
+    },
+    "n_previas": {
+      "min": 1.0,
+      "max": 7.0,
+      "media": 2.666,
+      "mediana": 3.0,
+      "q1": 1.0,
+      "q3": 4.0,
+      "atipicos_iqr": 0,
+      "distintos": 7,
+      "valores": [
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0
+      ]
+    },
+    "tasa_previa": {
+      "min": 0.0,
+      "max": 1.0,
+      "media": 0.849,
+      "mediana": 1.0,
+      "q1": 0.8,
+      "q3": 1.0,
+      "atipicos_iqr": 85,
+      "distintos": 11,
+      "valores": [
+        0.0,
+        0.2,
+        0.25,
+        0.3333,
+        0.4,
+        0.5,
+        0.6,
+        0.6667,
+        0.75,
+        0.8,
+        1.0
+      ]
+    },
+    "tasa_ultimas3": {
+      "min": 0.0,
+      "max": 1.0,
+      "media": 0.844,
+      "mediana": 1.0,
+      "q1": 1.0,
+      "q3": 1.0,
+      "atipicos_iqr": 139,
+      "distintos": 5,
+      "valores": [
+        0.0,
+        0.3333,
+        0.5,
+        0.6667,
+        1.0
+      ]
+    },
+    "racha_faltas": {
+      "min": 0.0,
+      "max": 7.0,
+      "media": 0.313,
+      "mediana": 0.0,
+      "q1": 0.0,
+      "q3": 0.0,
+      "atipicos_iqr": 94,
+      "distintos": 8,
+      "valores": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0
+      ]
+    },
+    "dias_desde_ultima": {
+      "min": 2.0,
+      "max": 14.0,
+      "media": 3.68,
+      "mediana": 2.0,
+      "q1": 2.0,
+      "q3": 5.0,
+      "atipicos_iqr": 5,
+      "distintos": 5,
+      "valores": [
+        2.0,
+        5.0,
+        7.0,
+        12.0,
+        14.0
+      ]
+    },
+    "mes": {
+      "min": 3.0,
+      "max": 10.0,
+      "media": 9.631,
+      "mediana": 10.0,
+      "q1": 10.0,
+      "q3": 10.0,
+      "atipicos_iqr": 79,
+      "distintos": 4,
+      "valores": [
+        3.0,
+        4.0,
+        9.0,
+        10.0
+      ]
+    },
+    "dia_semana": {
+      "min": 0.0,
+      "max": 3.0,
+      "media": 1.686,
+      "mediana": 2.0,
+      "q1": 1.0,
+      "q3": 3.0,
+      "atipicos_iqr": 0,
+      "distintos": 4,
+      "valores": [
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ]
+    },
+    "falta_siguiente": {
+      "min": 0.0,
+      "max": 1.0,
+      "media": 0.186,
+      "mediana": 0.0,
+      "q1": 0.0,
+      "q3": 0.0,
+      "atipicos_iqr": 105,
+      "distintos": 2,
+      "valores": [
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "racha_distribucion": [
+    [
+      0,
+      472
+    ],
+    [
+      1,
+      55
+    ],
+    [
+      2,
+      18
+    ],
+    [
+      3,
+      8
+    ],
+    [
+      4,
+      6
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      6,
+      1
+    ],
+    [
+      7,
+      1
+    ]
+  ],
+  "edad_distribucion": [
+    [
+      5,
+      30
+    ],
+    [
+      6,
+      96
+    ],
+    [
+      7,
+      34
+    ],
+    [
+      8,
+      37
+    ],
+    [
+      9,
+      61
+    ],
+    [
+      10,
+      80
+    ],
+    [
+      11,
+      54
+    ],
+    [
+      12,
+      82
+    ],
+    [
+      13,
+      42
+    ],
+    [
+      14,
+      49
+    ],
+    [
+      15,
+      1
+    ]
+  ],
+  "dias_distribucion": [
+    [
+      2,
+      300
+    ],
+    [
+      5,
+      206
+    ],
+    [
+      7,
+      55
+    ],
+    [
+      12,
+      1
+    ],
+    [
+      14,
+      4
+    ]
+  ],
+  "mes_distribucion": [
+    [
+      3,
+      5
+    ],
+    [
+      4,
+      20
+    ],
+    [
+      9,
+      54
+    ],
+    [
+      10,
+      487
+    ]
+  ],
+  "clase_distribucion": [
+    [
+      0,
+      461
+    ],
+    [
+      1,
+      105
+    ]
+  ]
+}
