@@ -11,7 +11,7 @@ Parte de la hoja de calculo de Gallos San Rafael Serratos ya extraida a JSON y
 deja una tabla lista para minar, contando que se pierde en cada etapa.
 
   1. Limpieza        fechas futuras, fechas de nacimiento imposibles, alumnos repetidos
-  2. Integracion     12 pestanas -> una sola tabla alumno/sesion (llave: nombre + nacimiento)
+  2. Integracion     12 pestanas -> una sola tabla alumno/sesion (llave: nombre + nacimiento; repetidos se unen)
   3. Seleccion       atributos, tipo, valores posibles y valores atipicos (IQR)
   4. Transformacion  atributos derivados con ventana previa, etiqueta, seudonimo, particion
 
@@ -30,9 +30,9 @@ from collections import Counter
 from datetime import date
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-CRUDO = os.path.join(AQUI, "..", "extraccion", "serratos_data.json")
-FILTRADO = os.path.join(AQUI, "..", "extraccion", "serratos_data_filtrado.json")
-SALIDA = os.path.join(AQUI, "..", "..", "03-datos", "real")
+CRUDO = os.path.join(AQUI, "..", "scripts", "serratos_data.json")
+FILTRADO = os.path.join(AQUI, "..", "scripts", "serratos_data_filtrado.json")
+SALIDA = os.path.join(AQUI, "real")
 
 HOY = "2026-10-22"
 EDAD_MIN, EDAD_MAX = 3, 18            # rango plausible de una academia infantil y juvenil
@@ -40,14 +40,6 @@ COLUMNAS = ["alumno", "fecha", "edad", "n_previas", "tasa_previa", "tasa_ultimas
             "racha_faltas", "dias_desde_ultima", "mes", "dia_semana", "falta_siguiente"]
 ATRIBUTOS = ["edad", "n_previas", "tasa_previa", "tasa_ultimas3", "racha_faltas",
              "dias_desde_ultima", "mes", "dia_semana"]
-
-
-def cuantil(xs, p):
-    xs = sorted(xs)
-    k = (len(xs) - 1) * p
-    f = int(k)
-    c = min(f + 1, len(xs) - 1)
-    return xs[f] + (xs[c] - xs[f]) * (k - f)
 
 
 def dias(a, b):
@@ -74,7 +66,10 @@ def main():
                 otros[k] += n if isinstance(n, int) else 1
     inf["codigos_no_asistencia"] = dict(otros)
 
-    alumnos, vistos, imposibles, repetidos = [], set(), 0, 0
+    # Integración: un alumno que aparece en varias pestañas se une por la llave
+    # (nombre, nacimiento) y sus marcas se combinan; si dos pestañas marcan la
+    # misma fecha, se conserva la primera.
+    por_clave, imposibles, repetidos = {}, 0, 0
     for h in filtrado["hojas"]:
         for a in h["alumnos"]:
             edad = 2026 - int(a["fecha_nac"][:4])
@@ -82,14 +77,26 @@ def main():
                 imposibles += 1
                 continue
             clave = (a["nombre"].lower(), a["fecha_nac"])
-            if clave in vistos:
+            if clave in por_clave:
                 repetidos += 1
-                continue
-            vistos.add(clave)
-            marcas = sorted((x for x in a["asistencias"] if x["fecha"] <= HOY), key=lambda x: x["fecha"])
-            alumnos.append({"hoja": h["hoja"], "edad": edad, "marcas": marcas})
+            else:
+                por_clave[clave] = {"hoja": h["hoja"], "edad": edad, "por_fecha": {}}
+            pf = por_clave[clave]["por_fecha"]
+            for x in a["asistencias"]:
+                if x["fecha"] <= HOY:
+                    pf.setdefault(x["fecha"], x)
+    alumnos = [{"hoja": v["hoja"], "edad": v["edad"],
+                "marcas": [v["por_fecha"][f] for f in sorted(v["por_fecha"])]}
+               for v in por_clave.values()]
     inf["edad_fuera_de_rango"] = imposibles
-    inf["alumnos_repetidos"] = repetidos
+    inf["alumnos_repetidos_unidos"] = repetidos
+    # Quien nunca asistió ya no está activo: sus filas son positivos triviales
+    # (tasa 0, etiqueta 1) que inflarían el AUC. Se excluyen.
+    sin_asistencia = [a for a in alumnos if a["marcas"] and not any(x["present"] for x in a["marcas"])]
+    inf["alumnos_sin_ninguna_asistencia"] = len(sin_asistencia)
+    inf["alumnos_unicos"] = len(alumnos)
+    inf["alumnos_sin_marcas"] = sum(1 for a in alumnos if not a["marcas"])
+    alumnos = [a for a in alumnos if not a["marcas"] or any(x["present"] for x in a["marcas"])]
     inf["alumnos_limpios"] = len(alumnos)
     inf["marcas_limpias"] = sum(len(a["marcas"]) for a in alumnos)
     inf["alumnos_con_1_marca_o_menos"] = sum(1 for a in alumnos if len(a["marcas"]) < 2)
@@ -139,7 +146,7 @@ def main():
     perfil = {}
     for c in ATRIBUTOS + ["falta_siguiente"]:
         xs = [float(r[c]) for r in filas]
-        q1, q3 = cuantil(xs, .25), cuantil(xs, .75)
+        q1, _, q3 = st.quantiles(xs, n=4, method="inclusive")
         iqr = q3 - q1
         lo, hi = q1 - 1.5 * iqr, q3 + 1.5 * iqr
         valores = sorted(set(xs))

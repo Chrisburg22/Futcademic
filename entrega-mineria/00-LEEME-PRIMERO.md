@@ -10,13 +10,15 @@ Esta carpeta reúne todo el proyecto universitario en archivos Markdown. Futcade
 - **Modelo A (datos reales):** ¿faltará el alumno a su siguiente sesión? Usa la hoja de asistencia de la academia Gallos San Rafael Serratos, ya anonimizada.
 - **Modelo B (datos sintéticos):** ¿desertará el alumno en 30 días? Se simula porque las bajas reales no tienen historial de asistencia.
 
-**Cifras vigentes del Modelo A:**
-- 566 filas, 152 alumnos, 18.6 % de faltas.
-- Partición por fecha: 355 filas para entrenar y 211 para probar.
-- Árbol CART (Gini, profundidad 4, hoja mínima 15): AUC de prueba 0.779, recall 0.725 marcando el 25 %, lift 2.89×.
+**Cifras vigentes del Modelo A (tras la revisión del 12/11/2026):**
+- 548 filas, 146 alumnos, 14.1 % de faltas.
+- Partición por fecha: 300 filas para entrenar (antes del 12/oct) y 248 para probar.
+- Árbol CART (Gini, profundidad 4, hoja mínima 15): AUC de prueba 0.675; marcando exactamente el 25 %, recall 0.533 y lift 2.13×.
 - scikit-learn 1.6.1 da el mismo resultado.
-- La validación cruzada por alumno da 0.730.
-- La tasa de asistencia previa, sola, da 0.784.
+- Validación por alumno y fecha: AUC media 0.630.
+- La tasa de asistencia previa, sola, da 0.639: el árbol la supera.
+- Corrección de la revisión: se excluyeron 18 alumnos que nunca asistieron (inflaban el AUC hasta 0.779) y se unieron las marcas de 6 alumnos repetidos entre pestañas.
+- Las diapositivas y la animación son anteriores a la revisión: llevan una nota con las cifras vigentes.
 
 ## Orden de lectura
 

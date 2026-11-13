@@ -47,7 +47,7 @@ SEMILLA = 20261021          # reproducibilidad: mismo dataset en cada corrida
 random.seed(SEMILLA)
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-SALIDA = os.path.join(AQUI, "..", "..", "03-datos", "sintetico")
+SALIDA = os.path.join(AQUI, "dataset")
 
 INICIO = date(2026, 5, 7)   # primer registro real en la base
 FIN = date(2026, 10, 21)    # fecha de corte

@@ -82,15 +82,19 @@ Entrenado solo con la asistencia real de una academia. **Sin ningún dato simula
 
 | | |
 |---|---|
-| Filas | 566 (152 alumnos, 18 fechas, 26/mar – 22/oct) |
-| Etiqueta | Faltó a esa sesión (18.4 % de las filas) |
+| Filas | 548 (146 alumnos, 17 fechas, 26/mar – 22/oct) |
+| Etiqueta | Faltó a esa sesión (14.1 % de las filas) |
 | Atributos | Solo lo ocurrido **antes** de la sesión: edad, sesiones previas, tasa de asistencia previa y de las últimas 3, racha de faltas, días desde la última, mes, día de la semana |
-| Partición | **Temporal**: entrena hasta el 13/oct, prueba después (213 filas, 40 faltas) |
-| **AUC en prueba** | **0.779** (entrenamiento 0.775) |
-| **Sobreajuste** | **−0.004** |
-| Marcando al 25 % de las sesiones | Recall **0.725** · precisión 0.547 · lift **2.91×** |
+| Partición | **Temporal**: entrena antes del 12/oct (300 filas), prueba después (248 filas, 30 faltas) |
+| **AUC en prueba** | **0.675** (entrenamiento 0.748; scikit-learn da lo mismo) |
+| **Sobreajuste** | **0.073** |
+| Marcando exactamente al 25 % de las sesiones | Recall **0.533** · precisión 0.258 · lift **2.13×** |
+| Validación por alumno y fecha | AUC media **0.630** |
+| Sin modelo (solo tasa previa) | AUC 0.639 |
 
-**Hallazgo: una falta llama a otra.** La racha de faltas es el mejor predictor (AUC 0.722). Sin racha, la probabilidad de faltar ronda el **12 %**; después de una falta sube a cerca del **54 %**.
+**Hallazgo: una falta llama a otra.** La racha de faltas es el mejor predictor. Sin racha, la probabilidad de faltar es **10.6 %**; después de una o más faltas seguidas sube a **39.4 %**.
+
+**Corrección tras la revisión:** se excluyeron 18 alumnos que nunca asistieron (sus filas eran aciertos triviales que inflaban el AUC hasta 0.779) y se unieron las marcas de 6 alumnos repetidos entre pestañas.
 
 ### Modelo B · datos simulados · ¿abandonará en 30 días?
 
@@ -104,8 +108,6 @@ La deserción no tiene historial real, así que se modela con un conjunto sinté
 | Marcando al 15 % de los alumnos | Recall 0.566 · lift 3.38× |
 
 El generador se **calibró** contra la base real: tasa de asistencia simulada 81.3 % frente a 82.2 % medida con los 768 pases reales (menos de un punto de diferencia).
-
-> **Coincidencia que conviene aclarar:** ambos modelos dieron AUC 0.779. Son modelos distintos, con etiquetas distintas y datos distintos.
 
 **Una prueba de que el volumen importa.** Con la mitad de los datos simulados el árbol daba AUC 0.726 y sobreajuste 0.165, y se apoyaba en una variable de ruido (el uniforme entregado). Al duplicar el conjunto esa variable desapareció sola y el sobreajuste bajó a la mitad.
 
@@ -122,9 +124,9 @@ El generador se **calibró** contra la base real: tasa de asistencia simulada 81
 ## Limitaciones
 
 - **No hay modelo real de deserción.** Ningún alumno tiene historial de asistencia y baja conocida a la vez.
-- **El Modelo A usa 154 alumnos** con entre 2 y 12 marcas cada uno: la hoja registra bloques cortos, no la temporada completa.
+- **El Modelo A usa 146 alumnos** con entre 2 y 10 marcas cada uno: la hoja registra bloques cortos, no la temporada completa.
 - **Los pagos de la academia cargada llevan fecha estimada** y no se usaron como atributo del modelo.
-- **Árbol de decisión de profundidad 4**, escrito sin librerías externas. Hay margen para mejorarlo con bosques aleatorios y validación cruzada por alumno.
+- **Árbol de decisión de profundidad 4**, escrito sin librerías externas. Hay margen para mejorarlo con bosques aleatorios; la validación por alumno y fecha (0.630) muestra que el resultado varía entre grupos.
 
 ## Privacidad
 
@@ -136,7 +138,8 @@ Todo está en Python 3 estándar, sin dependencias externas (solo la lectura del
 
 ```bash
 # Modelo A: datos reales
-python3 mineria/validar_real.py
+python3 mineria/vista_minable.py   # necesita los JSON privados
+python3 mineria/entrenar_vista.py
 
 # Modelo B: generar el conjunto simulado y validarlo
 python3 mineria/generar_dataset.py
@@ -145,7 +148,7 @@ python3 mineria/validar_dataset.py
 
 | Ruta | Contenido |
 |---|---|
-| `mineria/real/dataset_real.csv` | Conjunto del Modelo A, anónimo |
+| `mineria/real/vista_minable.csv` | Vista minable del Modelo A, anónima |
 | `mineria/dataset/*.csv` | Conjunto simulado del Modelo B (con columna `origen`) |
 | `mineria/README.md` | Diccionario de datos y detalle de cada modelo |
 | `scripts/extract_serratos.py` | Extractor de la hoja de cálculo |

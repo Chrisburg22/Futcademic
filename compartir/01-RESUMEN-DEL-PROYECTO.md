@@ -25,14 +25,12 @@ Se entrenaron **dos modelos separados**, y la diferencia importa:
 |---|---|---|
 | Pregunta | ¿Faltará a su siguiente sesión? | ¿Abandonará en los próximos 30 días? |
 | Datos | Asistencia real de una academia | Conjunto sintético derivado del esquema real |
-| Filas | 570 (154 alumnos) | 1,731 (230 alumnos) |
-| AUC en prueba | **0.779** | 0.779 |
-| Sobreajuste | **−0.004** | 0.099 |
-| Detección | 7 de cada 10 faltas | 5.7 de cada 10 bajas |
+| Filas | 548 (146 alumnos) | 1,731 (230 alumnos) |
+| AUC en prueba | **0.675** | 0.779 |
+| Sobreajuste | **0.073** | 0.099 |
+| Detección | 5.3 de cada 10 faltas | 5.7 de cada 10 bajas |
 
-Ambos dieron 0.779 **por coincidencia**; son modelos con etiquetas y datos distintos.
-
-**Hallazgo del Modelo A:** una falta llama a otra. Sin racha de faltas la probabilidad de faltar ronda el 12 %; después de una falta sube a cerca del 54 %.
+**Hallazgo del Modelo A:** una falta llama a otra. Sin racha de faltas la probabilidad de faltar es 10.6 %; después de una o más faltas sube a 39.4 %.
 
 ## Por qué hay un modelo simulado
 

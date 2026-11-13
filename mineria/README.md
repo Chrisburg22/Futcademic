@@ -168,31 +168,36 @@ El dataset no contiene datos de menores reales: nombres, fechas de nacimiento y 
 Segundo resultado, **separado del sintético y sin ningún dato simulado**. Usa solo la asistencia real de *Gallos San Rafael Serratos* (hoja de cálculo de la academia, cargada a producción el 22/10/2026).
 
 ```bash
-cd mineria && python3 validar_real.py
+python3 mineria/vista_minable.py   # KDD 1-4 (necesita los JSON privados)
+python3 mineria/entrenar_vista.py  # entrena y contrasta con scikit-learn
 ```
 
 | | |
 |---|---|
-| Filas | 570 (154 alumnos, 18 fechas, 26/mar – 22/oct 2026) |
-| Etiqueta | `falta_siguiente`: el alumno faltó a esa sesión (18.4 % de las filas) |
+| Filas | 548 (146 alumnos, 17 fechas, 26/mar – 22/oct 2026) |
+| Etiqueta | `falta_siguiente`: el alumno faltó a esa sesión (14.1 % de las filas) |
 | Atributos | solo lo ocurrido **antes** de la sesión: edad, sesiones previas, tasa previa y de las últimas 3, racha de faltas, días desde la última, mes, día de la semana |
-| Partición | temporal: entrena hasta el 13/oct, prueba después (213 filas, 40 faltas) |
+| Partición | temporal: entrena antes del 12/oct (300 filas), prueba después (248 filas, 30 faltas) |
 
 **Resultado** (árbol CART, profundidad 4):
 
 ```
-AUC entrenamiento ...... 0.775
-AUC prueba ............. 0.779
-Sobreajuste ............ -0.004
-Marcando al 25 % como "riesgo de falta":
-  precisión 0.547 · recall 0.725 · F1 0.624 · lift 2.91x
+AUC entrenamiento ...... 0.748
+AUC prueba ............. 0.675   (scikit-learn 1.6.1: idéntico)
+Sobreajuste ............ 0.073
+Marcando exactamente al 25 % como "riesgo de falta":
+  precisión 0.258 · recall 0.533 · lift 2.13x
+Solo -tasa_previa (sin modelo): AUC 0.639
+Validación por alumno y fecha (5 pliegues): AUC media 0.630
 ```
 
-**Hallazgo.** Lo más predictivo es la racha de faltas (AUC 0.722): quien faltó la última vez y falta de nuevo supera el 60 % de probabilidad de volver a faltar; quien no tiene racha ronda el 10 %. La tasa previa y la de las últimas 3 sesiones le siguen (AUC ≈ 0.28, es decir 0.72 invertido).
+**Hallazgo.** Lo más predictivo es la racha de faltas (importancia 0.57): sin racha la probabilidad de faltar es 10.6 %; tras una o más faltas seguidas sube a 39.4 %.
+
+**Correcciones de la revisión (12/11/2026).** Se excluyen 18 alumnos sin ninguna asistencia (eran positivos triviales que inflaban el AUC de 0.779); los 6 alumnos repetidos entre pestañas ahora unen sus marcas; el top 25 % marca exactamente el 25 % aunque haya empates; la validación cruzada separa alumno **y** fecha. Las cifras bajaron, pero son las honestas.
 
 **Por qué este modelo y no el de deserción.** Las 33 bajas reales (`deleted_students`) pertenecen a otras academias, que casi no tienen asistencia registrada. Serratos tiene 0 bajas. No existe ningún alumno con historial de asistencia **y** baja conocida, así que la deserción no se puede entrenar con datos reales todavía. El modelo de deserción de las secciones anteriores sigue siendo sintético y está etiquetado así.
 
 **Límites.**
-- Son 154 alumnos con entre 2 y ~12 marcas cada uno; la hoja registra bloques cortos, no toda la temporada.
+- Son 146 alumnos con entre 2 y ~10 marcas cada uno; la hoja registra bloques cortos, no toda la temporada.
 - Las marcas posteriores al 22/oct se excluyeron (fechas aún no ocurridas).
-- El conjunto de datos publicado (`real/dataset_real.csv`) es anónimo: alumno seudonimizado, sin nombre ni fecha de nacimiento.
+- El conjunto de datos publicado (`real/vista_minable.csv`) es anónimo: alumno seudonimizado, sin nombre ni fecha de nacimiento.

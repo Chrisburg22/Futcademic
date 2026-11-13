@@ -1,5 +1,8 @@
 # Presentación: Vista minable — Futcademic
 
+> **Cifras actualizadas (12/11/2026).** Esta presentación se hizo antes de la revisión del modelo. Cifras vigentes: 548 filas, 146 alumnos, 14.1 % de faltas; partición 300/248 (corte 12/oct); AUC prueba 0.675 (scikit-learn igual), recall 0.533 y lift 2.13× marcando exactamente el 25 %; validación por alumno y fecha 0.630; solo tasa previa 0.639. Cambios: se excluyeron 18 alumnos que nunca asistieron y se unieron 6 repetidos. Donde este archivo diga 566 filas, 0.779, 0.725, 2.89× o 0.730, usa las cifras de esta nota.
+
+
 14 diapositivas. Texto de cada una y notas de quien presenta.
 
 ---
