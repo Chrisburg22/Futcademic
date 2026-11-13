@@ -147,7 +147,8 @@ test('venues: crear cancha', async ({ page }) => {
 // --- Student status change ---
 test('students: cambiar status', async ({ page }) => {
   await loginAs(page, { api: API_FX, goto: '/admin/students' });
-  await expect(page.getByText('Carlos López')).toBeVisible();
+  // Acotado a la tabla: el nombre está también en la tarjeta de teléfono.
+  await expect(page.getByRole('table').getByText('Carlos López')).toBeVisible();
   // La columna de estado se renderiza y es ordenable.
   await expect(page.getByRole('columnheader', { name: 'Estado' })).toBeVisible();
 });

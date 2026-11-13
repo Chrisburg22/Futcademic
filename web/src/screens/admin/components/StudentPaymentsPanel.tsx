@@ -1,9 +1,10 @@
 'use client';
 
-import { Alert, Badge, Card, Group, SimpleGrid, Skeleton, Stack, Table, Text } from '@mantine/core';
+import { Alert, Badge, Box, Card, Group, SimpleGrid, Skeleton, Stack, Table, Text } from '@mantine/core';
 import { IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import { useGetAccountStatement } from '../../../hooks/usePayments';
+import { TouchRow } from '../../../components/common/TouchRow';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { formatearMensualidad } from '../../../lib/categories';
 import { normalizarEstado } from '../../../lib/students';
@@ -83,6 +84,22 @@ export function StudentPaymentsPanel({ studentId, estado }: Props) {
         {movimientos.length === 0 ? (
           <EmptyState title="Sin pagos registrados" description="Cuando se cobre una mensualidad aparecerá aquí." />
         ) : (
+          <>
+            {/* En teléfono, filas en vez de una tabla con scroll lateral. */}
+            <Box hiddenFrom="sm" p="md" pt={0}>
+              <Stack gap="xs">
+                {movimientos.map((m, i) => (
+                  <TouchRow
+                    key={`m-${m.date}-${i}`}
+                    title={formatearMensualidad(m.amount)}
+                    subtitle={`${dayjs(m.date).format('D [de] MMMM YYYY')} · ${m.description}`}
+                    withChevron={false}
+                  />
+                ))}
+              </Stack>
+            </Box>
+
+            <Box visibleFrom="sm">
           <Table.ScrollContainer minWidth={380}>
             <Table verticalSpacing="xs">
               <Table.Thead>
@@ -105,6 +122,8 @@ export function StudentPaymentsPanel({ studentId, estado }: Props) {
               </Table.Tbody>
             </Table>
           </Table.ScrollContainer>
+            </Box>
+          </>
         )}
       </Card>
     </Stack>

@@ -23,6 +23,7 @@ import {
   IconLink,
   IconSend,
 } from '@tabler/icons-react';
+import { BottomSheet } from '../../../components/common/BottomSheet';
 import dayjs from 'dayjs';
 import { useCreateEnrollmentInvitation } from '../../../hooks/useEnrollment';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -91,12 +92,11 @@ export function InviteStudentModal({
     : '';
 
   return (
-    <Modal
+    <BottomSheet
       opened={opened}
       onClose={handleClose}
       title={result ? 'Link de inscripción' : 'Invitar alumno'}
-      centered
-      size="md"
+      size="auto"
     >
       {result ? (
         <Stack gap="md">
@@ -206,6 +206,6 @@ export function InviteStudentModal({
           </Group>
         </Stack>
       )}
-    </Modal>
+    </BottomSheet>
   );
 }

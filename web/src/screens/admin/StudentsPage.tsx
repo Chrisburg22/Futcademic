@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActionIcon,
   Button,
   Card,
   Drawer,
@@ -17,6 +18,9 @@ import { useDebouncedValue, useDisclosure } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconDots,
   IconCategory,
   IconDownload,
   IconLink,
@@ -54,6 +58,8 @@ import { useGetUsers } from '../../hooks/useUsers';
 import { useAuth } from '../../contexts/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ActionBar } from '../../components/common/ActionBar';
+import { BottomSheet } from '../../components/common/BottomSheet';
 import { mensajeDeError } from '../../lib/categories';
 import { saveBlob } from '../../lib/download';
 import {
@@ -133,6 +139,7 @@ export function StudentsPage() {
   const [editSucio, setEditSucio] = useState(false);
   const [categoriaMasiva, setCategoriaMasiva] = useState<string | null>(null);
   const [moverOpen, mover] = useDisclosure(false);
+  const [masivasOpen, masivas] = useDisclosure(false);
 
   const uniformMut = useUpdateUniform();
   const statusMut = useUpdateStudentStatus();
@@ -315,6 +322,35 @@ export function StudentsPage() {
       <PageHeader
         title="Alumnos"
         description="Quién entrena, quién debe documentos o pagos, y a quién falta atender."
+        compactOnMobile
+        /*
+         * En teléfono solo «Más» en la cabecera: los tres botones envolvían a
+         * dos filas y empujaban la lista fuera de la pantalla. «Nuevo alumno»
+         * baja a la barra de acción, al alcance del pulgar.
+         */
+        mobileAction={
+          <Menu position="bottom-end" withinPortal shadow="md">
+            <Menu.Target>
+              <ActionIcon variant="default" aria-label="Más acciones">
+                <IconDots size={18} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item
+                leftSection={<IconDownload size={16} />}
+                disabled={filtrados.length === 0}
+                onClick={() =>
+                  exportar(filtrados, `alumnos-${hayFiltros(filtros) ? 'filtrados' : 'todos'}.csv`)
+                }
+              >
+                Exportar
+              </Menu.Item>
+              <Menu.Item leftSection={<IconLink size={16} />} onClick={invite.open}>
+                Invitar alumno
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        }
         actions={
           <Group>
             <Button
@@ -371,6 +407,7 @@ export function StudentsPage() {
           puedeCambiarEstado={puedeAdministrar}
           puedeVerPagos={hayCobranza}
           porAtender={resumen.porAtender}
+          contarConFiltros={(borrador) => filtrarAlumnos(alumnos, borrador, contexto).length}
         />
       )}
 
@@ -383,6 +420,7 @@ export function StudentsPage() {
           shadow="sm"
           role="region"
           aria-label="Acciones para los alumnos seleccionados"
+          visibleFrom="sm"
           style={{ position: 'sticky', top: 8, zIndex: 20 }}
         >
           <Group justify="space-between" wrap="wrap" gap="xs">
@@ -544,16 +582,150 @@ export function StudentsPage() {
             onUniforme={alternarUniforme}
           />
           {paginas > 1 && (
-            <Group justify="space-between" mt="md" wrap="wrap">
-              <Text size="sm" c="dimmed">
-                {(paginaActual - 1) * porPagina + 1}–
-                {Math.min(paginaActual * porPagina, filtrados.length)} de {filtrados.length}
-              </Text>
-              <Pagination value={paginaActual} onChange={setPagina} total={paginas} />
-            </Group>
+            <>
+              {/* La paginación va a la izquierda: el botón flotante del chat
+                  vive abajo a la derecha y se comía los clics del último
+                  control de la página. */}
+              <Group justify="space-between" mt="md" wrap="wrap" visibleFrom="sm">
+                <Pagination value={paginaActual} onChange={setPagina} total={paginas} />
+                <Text size="sm" c="dimmed">
+                  {(paginaActual - 1) * porPagina + 1}–
+                  {Math.min(paginaActual * porPagina, filtrados.length)} de {filtrados.length}
+                </Text>
+              </Group>
+
+              {/* La paginación numérica son objetivos de ~32 px: en teléfono,
+                  dos botones grandes y el recuento en medio. */}
+              <Stack gap="xs" mt="md" hiddenFrom="sm">
+                <Text size="sm" c="dimmed" ta="center">
+                  {(paginaActual - 1) * porPagina + 1}–
+                  {Math.min(paginaActual * porPagina, filtrados.length)} de {filtrados.length}
+                </Text>
+                <Group grow gap="sm">
+                  <Button
+                    variant="default"
+                    disabled={paginaActual <= 1}
+                    leftSection={<IconChevronLeft size={18} />}
+                    onClick={() => setPagina(paginaActual - 1)}
+                  >
+                    Anteriores
+                  </Button>
+                  <Button
+                    variant="default"
+                    disabled={paginaActual >= paginas}
+                    rightSection={<IconChevronRight size={18} />}
+                    onClick={() => setPagina(paginaActual + 1)}
+                  >
+                    Siguientes
+                  </Button>
+                </Group>
+              </Stack>
+            </>
           )}
         </>
       )}
+
+      {/*
+        En teléfono la acción principal vive al pie, no en la cabecera. Con
+        alumnos seleccionados, la barra pasa a ser la de acciones masivas: la
+        versión de escritorio es una barra pegada arriba, que en un teléfono
+        queda lejos del pulgar y además no compensaba el header fijo.
+      */}
+      {hayAlumnos &&
+        (seleccion.size > 0 ? (
+          <ActionBar
+            mobileOnly
+            status={{
+              text: `${seleccion.size} ${seleccion.size === 1 ? 'seleccionado' : 'seleccionados'}`,
+            }}
+            secondary={{ label: 'Quitar', onClick: () => setSeleccion(new Set()) }}
+            primary={{ label: 'Acciones', onClick: masivas.open }}
+          />
+        ) : (
+          <ActionBar
+            mobileOnly
+            primary={{
+              label: 'Nuevo alumno',
+              leftIcon: <IconPlus size={18} />,
+              onClick: openCreate,
+            }}
+          />
+        ))}
+
+      <BottomSheet
+        opened={masivasOpen}
+        onClose={masivas.close}
+        title={`${seleccion.size} ${seleccion.size === 1 ? 'alumno' : 'alumnos'}`}
+        size="auto"
+      >
+        <Stack gap="sm">
+          {paginaSeleccionada && faltanPorSeleccionar > 0 && (
+            <Button
+              variant="light"
+              onClick={() => marcar(filtrados.map((a) => a.id), true)}
+            >
+              Seleccionar los {filtrados.length} alumnos{hayFiltros(filtros) ? ' filtrados' : ''}
+            </Button>
+          )}
+          {puedeAdministrar && (
+            <Menu withinPortal shadow="md" position="top">
+              <Menu.Target>
+                <Button variant="default" fullWidth loading={bulkMut.isPending}>
+                  Cambiar estado
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                {OPCIONES_ESTADO.map((o) => (
+                  <Menu.Item
+                    key={o.value}
+                    onClick={() => {
+                      masivas.close();
+                      ejecutarMasiva(
+                        { tipo: 'status', status: o.value },
+                        `Estado «${o.label}» aplicado a`,
+                      );
+                    }}
+                  >
+                    {o.label}
+                  </Menu.Item>
+                ))}
+              </Menu.Dropdown>
+            </Menu>
+          )}
+          <Button
+            variant="default"
+            leftSection={<IconCategory size={18} />}
+            onClick={() => {
+              setCategoriaMasiva(null);
+              masivas.close();
+              mover.open();
+            }}
+          >
+            Mover de categoría
+          </Button>
+          <Button
+            variant="default"
+            leftSection={<IconShirt size={18} />}
+            loading={bulkMut.isPending}
+            onClick={() => {
+              masivas.close();
+              ejecutarMasiva({ tipo: 'uniform', entregado: true }, 'Uniforme entregado a');
+            }}
+          >
+            Uniforme entregado
+          </Button>
+          <Button
+            variant="default"
+            leftSection={<IconDownload size={18} />}
+            onClick={() => {
+              masivas.close();
+              exportar(seleccionados, 'alumnos-seleccionados.csv');
+            }}
+          >
+            Exportar
+          </Button>
+        </Stack>
+      </BottomSheet>
 
       <StudentWizard
         opened={createOpen}
@@ -562,13 +734,15 @@ export function StudentsPage() {
         parents={parents}
       />
 
-      <Drawer
+      {/* Hoja a pantalla casi completa en teléfono, cajón lateral desde `sm`.
+          La guardia de cambios sin guardar sigue en `cerrarEdicion`. */}
+      <BottomSheet
         opened={!!editing}
         onClose={cerrarEdicion}
-        position="right"
-        size="lg"
+        size="full"
+        desktopVariant="drawer-right"
         title={`Editar a ${editing?.full_name || ''}`}
-        closeButtonProps={{ 'aria-label': 'Cerrar edición' }}
+        closeLabel="Cerrar edición"
       >
         {editing && (
           <StudentEditForm
@@ -583,13 +757,24 @@ export function StudentsPage() {
             onCancel={cerrarEdicion}
           />
         )}
-      </Drawer>
+      </BottomSheet>
 
-      <Modal
+      <BottomSheet
         opened={moverOpen}
         onClose={mover.close}
         title={`Mover ${seleccion.size} ${seleccion.size === 1 ? 'alumno' : 'alumnos'} de categoría`}
-        centered
+        size="auto"
+        primaryAction={{
+          label: 'Mover',
+          disabled: !categoriaMasiva,
+          loading: bulkMut.isPending,
+          onClick: async () => {
+            if (!categoriaMasiva) return;
+            await ejecutarMasiva({ tipo: 'category', category_id: categoriaMasiva }, 'Movidos');
+            mover.close();
+          },
+        }}
+        secondaryAction={{ label: 'Cancelar', onClick: mover.close }}
       >
         <Stack>
           <Select
@@ -601,28 +786,12 @@ export function StudentsPage() {
             onChange={setCategoriaMasiva}
             data-autofocus
           />
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             Su asistencia y mensualidad pasan a la nueva categoría. Los registros anteriores se
             conservan.
           </Text>
-          <Group justify="flex-end">
-            <Button variant="default" onClick={mover.close}>
-              Cancelar
-            </Button>
-            <Button
-              disabled={!categoriaMasiva}
-              loading={bulkMut.isPending}
-              onClick={async () => {
-                if (!categoriaMasiva) return;
-                await ejecutarMasiva({ tipo: 'category', category_id: categoriaMasiva }, 'Movidos');
-                mover.close();
-              }}
-            >
-              Mover
-            </Button>
-          </Group>
         </Stack>
-      </Modal>
+      </BottomSheet>
 
       <InviteStudentModal
         opened={inviteOpen}

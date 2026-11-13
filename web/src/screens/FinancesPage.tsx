@@ -62,6 +62,8 @@ import { useGetStudents, useGetMyChildren } from '../hooks/useStudents';
 import { useGetTeachers } from '../hooks/useUsers';
 import { PageHeader } from '../components/common/PageHeader';
 import { EmptyState } from '../components/common/EmptyState';
+import { TouchRow } from '../components/common/TouchRow';
+import { ErrorState } from '../components/common/ErrorState';
 import { useRegisterChatScreen } from '../contexts/ChatScreenContext';
 import {
   OPCIONES_ORDEN_COBRANZA,
@@ -1214,7 +1216,12 @@ function ParentFinances() {
     if (children.length > 0) setStudentId((children[0] as any).id);
   }, [children, studentId]);
 
-  const { data: statement, isLoading: cargandoEstado } = useGetAccountStatement(
+  const {
+    data: statement,
+    isLoading: cargandoEstado,
+    isError: errorEstado,
+    refetch: recargarEstado,
+  } = useGetAccountStatement(
     studentId || undefined,
   );
   const { data: pagos = [], isLoading: cargandoPagos } = useGetPaymentsByStudent(
@@ -1233,10 +1240,9 @@ function ParentFinances() {
 
   return (
     <>
-      <PageHeader
-        title="Finanzas"
-        description="Estado de cuenta de tus hijos y sus mensualidades"
-      />
+      {/* «Pagos», igual que en la navegación: un padre no administra las
+          finanzas de la academia, consulta sus mensualidades. */}
+      <PageHeader title="Pagos" description="Lo que debes y lo que ya pagaste" />
 
       {cargandoHijos ? (
         <Skeleton height={180} radius="md" />
@@ -1264,7 +1270,14 @@ function ParentFinances() {
             </Card>
           )}
 
-          {cargandoEstado && !statement ? (
+          {errorEstado ? (
+            /* Antes un fallo devolvía `null` y la tarjeta simplemente no se
+               dibujaba: el padre veía la pantalla a medias sin saber por qué. */
+            <ErrorState
+              title="No pudimos cargar el estado de cuenta"
+              onRetry={() => recargarEstado()}
+            />
+          ) : cargandoEstado && !statement ? (
             <Skeleton height={180} radius="md" mb="md" />
           ) : statement ? (
             <Card withBorder padding="lg" radius="md" mb="md">
@@ -1293,34 +1306,42 @@ function ParentFinances() {
                 </Badge>
               </Group>
 
-              <SimpleGrid cols={{ base: 1, xs: 3 }} spacing="md">
+              {/*
+                El adeudo es lo único que un padre viene a mirar, así que va
+                primero y grande. Antes los tres bloques competían en un
+                `SimpleGrid cols={{ base: 1, xs: 3 }}` que en 375 px los apilaba
+                del mismo tamaño, con la etiqueta a 12 px en mayúsculas.
+              */}
+              <Box mb="md">
+                <Text size="sm" c="dimmed" fw={600}>
+                  {Number(statement.pendingAmount) > 0 ? 'Debes' : 'No debes nada'}
+                </Text>
+                <Text
+                  fw={700}
+                  fz={40}
+                  lh={1.1}
+                  c={Number(statement.pendingAmount) > 0 ? 'orange.8' : 'teal.7'}
+                  style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {pesos(statement.pendingAmount)}
+                </Text>
+              </Box>
+
+              <SimpleGrid cols={2} spacing="md">
                 <Box>
-                  <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+                  <Text size="sm" c="dimmed">
                     Cuota mensual
                   </Text>
-                  <Text fw={700} fz={22} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <Text fw={600} fz="lg" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {pesos(statement.monthlyFee)}
                   </Text>
                 </Box>
                 <Box>
-                  <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+                  <Text size="sm" c="dimmed">
                     Pagado este mes
                   </Text>
-                  <Text fw={700} fz={22} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <Text fw={600} fz="lg" style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {pesos(pagadoEsteMes)}
-                  </Text>
-                </Box>
-                <Box>
-                  <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                    Adeudo
-                  </Text>
-                  <Text
-                    fw={700}
-                    fz={22}
-                    c={Number(statement.pendingAmount) > 0 ? 'orange.8' : 'teal.7'}
-                    style={{ fontVariantNumeric: 'tabular-nums' }}
-                  >
-                    {pesos(statement.pendingAmount)}
                   </Text>
                 </Box>
               </SimpleGrid>
@@ -1367,7 +1388,7 @@ function ParentFinances() {
             <Group justify="space-between" p="md" gap="sm" wrap="wrap">
               <Box>
                 <Text fw={600}>Movimientos</Text>
-                <Text size="xs" c="dimmed">
+                <Text size="sm" c="dimmed">
                   Historial de mensualidades de {hijo?.full_name || 'tu hijo/a'}.
                 </Text>
               </Box>
@@ -1389,49 +1410,72 @@ function ParentFinances() {
                 />
               </Box>
             ) : (
-              <Table verticalSpacing="sm" horizontalSpacing="md" highlightOnHover>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>
-                      <Text size="xs" fw={700} tt="uppercase" c="dimmed">
-                        Fecha
-                      </Text>
-                    </Table.Th>
-                    <Table.Th visibleFrom="sm">
-                      <Text size="xs" fw={700} tt="uppercase" c="dimmed">
-                        Concepto
-                      </Text>
-                    </Table.Th>
-                    <Table.Th ta="right">
-                      <Text size="xs" fw={700} tt="uppercase" c="dimmed">
-                        Monto
-                      </Text>
-                    </Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {pagos.map((p: any, i: number) => (
-                    <Table.Tr key={p.id || i}>
-                      <Table.Td>
-                        <Text size="sm">{dayjs(p.payment_date).format('DD MMM YYYY')}</Text>
-                        <Text size="xs" c="dimmed" hiddenFrom="md">
-                          {p.description || 'Mensualidad'}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td visibleFrom="sm">
-                        <Text size="sm" c="dimmed" lineClamp={1}>
-                          {p.description || 'Mensualidad'}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td ta="right">
-                        <Text fw={600} size="sm" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                          {pesos(p.amount)}
-                        </Text>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
+              <>
+                {/* En teléfono, filas tocables: la tabla obligaba a repetir el
+                    concepto bajo la fecha para que entrara en 375 px. */}
+                <Box hiddenFrom="sm" p="md" pt={0}>
+                  <Stack gap="xs">
+                    {pagos.map((p: any, i: number) => (
+                      <TouchRow
+                        key={p.id || i}
+                        leading={
+                          <ThemeIcon size={40} radius="xl" variant="light" color="teal">
+                            <IconCash size={20} />
+                          </ThemeIcon>
+                        }
+                        title={pesos(p.amount)}
+                        subtitle={`${dayjs(p.payment_date).format('D [de] MMMM YYYY')} · ${
+                          p.description || 'Mensualidad'
+                        }`}
+                        withChevron={false}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+
+                <Box visibleFrom="sm">
+                  <Table verticalSpacing="sm" horizontalSpacing="md" highlightOnHover>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>
+                          <Text size="xs" fw={700} tt="uppercase" c="dimmed">
+                            Fecha
+                          </Text>
+                        </Table.Th>
+                        <Table.Th>
+                          <Text size="xs" fw={700} tt="uppercase" c="dimmed">
+                            Concepto
+                          </Text>
+                        </Table.Th>
+                        <Table.Th ta="right">
+                          <Text size="xs" fw={700} tt="uppercase" c="dimmed">
+                            Monto
+                          </Text>
+                        </Table.Th>
+                      </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {pagos.map((p: any, i: number) => (
+                        <Table.Tr key={p.id || i}>
+                          <Table.Td>
+                            <Text size="sm">{dayjs(p.payment_date).format('DD MMM YYYY')}</Text>
+                          </Table.Td>
+                          <Table.Td>
+                            <Text size="sm" c="dimmed" lineClamp={1}>
+                              {p.description || 'Mensualidad'}
+                            </Text>
+                          </Table.Td>
+                          <Table.Td ta="right">
+                            <Text fw={600} size="sm" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                              {pesos(p.amount)}
+                            </Text>
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </Box>
+              </>
             )}
           </Card>
         </>

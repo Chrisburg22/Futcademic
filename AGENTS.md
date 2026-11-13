@@ -86,6 +86,33 @@ Read `landing/README.md` and `landing/AGENTS.md` before touching it: all copy li
 - Env vars are `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`; the API falls back to `http://localhost:3000/api`. `next.config.ts` injects `NEXT_PUBLIC_BUILD_ID` on every build to invalidate the persisted query cache.
 - PWA is **deferred**: there is no service worker or web manifest in this build. `playwright.pwa.config.ts` and `e2e/pwa.spec.ts` are dormant references for phase 2; don't run or extend them until the PWA is reimplemented.
 
+### Mobile UI rules (phone, < 48em)
+
+Added with the November mobile redesign of the students area. `e2e/touch-targets.spec.ts`
+enforces the first rule; the rest are conventions.
+
+- **44 px touch floor comes from CSS, not `defaultProps`.** `src/lib/theme.ts` injects
+  `classNames: { root: 'touch-target' }` (and `touch-row` for Checkbox/Radio/Switch) and
+  `src/styles/globals.css` sets the minimum under `@media (max-width: 48em)`. `defaultProps`
+  loses against an explicit prop, so `size="compact-*"` is still allowed — the floor lifts it
+  on phones — but never build a phone-only control out of a compact size or a `Badge`.
+- **Decide phone vs desktop in CSS**, with `visibleFrom`/`hiddenFrom` or a CSS Module media
+  query. `useMediaQuery` returns `undefined` on the first render and paints the wrong branch;
+  `src/hooks/useEsMovil.ts` is the only allowed use, and only for content that appears after
+  an interaction (a sheet, a popover).
+- **Rendering both branches duplicates text.** `getByRole` ignores hidden elements but
+  `getByText`/`getByLabel` do not, so never render the same heading, label or input twice —
+  scope assertions to the table (`getByRole('cell', …)`) or to a named region instead.
+- **One primary action per screen**, in `components/common/ActionBar`. It sits above the
+  bottom nav by reading `--quick-dock-height`; don't hardcode that offset anywhere.
+- **Stacking order**: content < `MobileNav` 150 < `ActionBar` 160 < chat FAB 190 < Mantine
+  overlays 200. Anything fixed goes below 200 or it covers modals and sheets.
+- **`BottomSheet` instead of `Modal size="lg"`** on phones (`components/common/BottomSheet`,
+  built on Mantine's `Drawer`; `vaul` was considered and rejected).
+- **Information must never live only in a `Tooltip`** — it does not open on touch. Use
+  `components/common/InfoPopover`.
+- Every screen needs loading, empty **and error with retry** (`ErrorState`, `SkeletonPage`).
+
 ## Database
 
 - `schema.sql` is the base schema (18 tables incl. `achievements`, `trainings`, `venues`, `teacher_permissions`, `notifications`); `migrations/*.sql` are incremental and dated (`20260511_…`, `20260709_add_chat_tables.sql`). Apply base first, then migrations in filename order, via the Supabase SQL editor — there is no migration runner.

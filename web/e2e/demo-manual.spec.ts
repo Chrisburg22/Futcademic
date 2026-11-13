@@ -243,10 +243,12 @@ test('03 — Admin: Gestión de alumnos', async ({ page }) => {
   await loginAs(page, { profile: ADMIN_PROFILE, api: FULL_API, goto: '/admin/students' });
   await expect(page.getByRole('heading', { name: 'Alumnos' })).toBeVisible();
   await pause(500);
-  // Tabla con 3 alumnos
-  await expect(page.getByText('Carlos López')).toBeVisible();
-  await expect(page.getByText('Ana Torres')).toBeVisible();
-  await expect(page.getByText('Diego Ramírez')).toBeVisible();
+  // Tabla con 3 alumnos. El listado pinta tabla (escritorio) y tarjetas
+  // (teléfono): se acota al botón de la fila, que vive en la tabla.
+  const tabla = page.getByRole('table');
+  await expect(tabla.getByText('Carlos López')).toBeVisible();
+  await expect(tabla.getByText('Ana Torres')).toBeVisible();
+  await expect(tabla.getByText('Diego Ramírez')).toBeVisible();
   await pause(500);
   // Columnas visibles
   await expect(page.getByRole('columnheader', { name: 'Estado' })).toBeVisible();
@@ -492,7 +494,9 @@ test('15 — Padre: Dashboard con alerta de pago', async ({ page }) => {
   await pause(1000);
   const nav = page.getByRole('navigation');
   await expect(nav.getByRole('link', { name: 'Mis hijos' })).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'Finanzas' })).toBeVisible();
+  // Para el padre la sección se llama «Pagos»: no administra las finanzas de la
+  // academia, consulta sus mensualidades.
+  await expect(nav.getByRole('link', { name: 'Pagos' })).toBeVisible();
   await pause(1000);
 });
 
@@ -512,11 +516,11 @@ test('16 — Padre: Mis hijos + vincular', async ({ page }) => {
   await pause(500);
 });
 
-test('17 — Padre: Estado de cuenta (finanzas)', async ({ page }) => {
+test('17 — Padre: Estado de cuenta (pagos)', async ({ page }) => {
   await loginAs(page, { profile: PADRE_PROFILE, api: FULL_API });
   const nav = page.getByRole('navigation');
-  await nav.getByRole('link', { name: 'Finanzas' }).click();
-  await expect(page.getByText('Estado de cuenta de tus hijos')).toBeVisible();
+  await nav.getByRole('link', { name: 'Pagos' }).click();
+  await expect(page.getByRole('heading', { name: 'Pagos' })).toBeVisible();
   await pause(1500);
 });
 
@@ -541,8 +545,11 @@ test('18 — Alumno: Pantalla de login de alumno', async ({ page }) => {
 
 test('19 — Alumno: Dashboard', async ({ page }) => {
   await loginAs(page, { profile: ALUMNO_PROFILE, api: FULL_API });
-  await expect(page.getByText('Racha')).toBeVisible();
-  await expect(page.getByText('Este mes')).toBeVisible();
+  // Las etiquetas dicen qué es el número: «Racha» o «Este mes» a secas no lo
+  // dicen, y es la pantalla de quien menos usa aplicaciones.
+  await expect(page.getByText('Tu próximo entrenamiento')).toBeVisible();
+  await expect(page.getByText('Sesiones seguidas')).toBeVisible();
+  await expect(page.getByText('Entrenamientos este mes')).toBeVisible();
   await pause(800);
   const nav = page.getByRole('navigation');
   await expect(nav.getByRole('link', { name: 'Mi equipo' })).toBeVisible();
@@ -578,7 +585,7 @@ test('21 — Alumno: Mi equipo', async ({ page }) => {
   await expect(page.getByText('Sub-12').first()).toBeVisible();
   await pause(500);
   // Compañeros
-  await expect(page.getByText('Compañeros')).toBeVisible();
+  await expect(page.getByText('Compañeros', { exact: true })).toBeVisible();
   await expect(page.getByText('Ana Torres')).toBeVisible();
   await expect(page.getByText('Sofía Herrera')).toBeVisible();
   await expect(page.getByText('Pablo Mendoza')).toBeVisible();
@@ -600,8 +607,8 @@ test('22 — Alumno: Mis estadísticas', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Mis estadísticas' })).toBeVisible();
   await pause(500);
   await expect(page.getByText('Racha actual')).toBeVisible();
-  await expect(page.getByText('Racha máx')).toBeVisible();
-  await expect(page.getByText('Este mes')).toBeVisible();
+  await expect(page.getByText('Tu mejor racha')).toBeVisible();
+  await expect(page.getByText('Asististe este mes')).toBeVisible();
   await pause(500);
   await expect(page.getByText('Historial de asistencia')).toBeVisible();
   await pause(1500);

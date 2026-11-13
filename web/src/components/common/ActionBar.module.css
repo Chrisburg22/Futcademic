@@ -1,0 +1,47 @@
+/*
+ * Barra de acción principal.
+ *
+ * Una sola instancia: en teléfono va fija sobre la barra de navegación y la
+ * barra de gestos; desde `sm` se vuelve pegada dentro del flujo, que es lo que
+ * ya hacía la barra de guardado de escritorio. Duplicar el componente por
+ * anchura dejaría dos botones «Guardar» en el DOM.
+ */
+.page {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--quick-dock-height, 0px) + env(safe-area-inset-bottom, 0px));
+  /* Encima de la barra de navegación (150) y por debajo de los overlays de
+     Mantine (200), para que una hoja o un modal la tapen. */
+  z-index: 160;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+@media (min-width: $mantine-breakpoint-sm) {
+  .page {
+    position: sticky;
+    left: auto;
+    right: auto;
+    bottom: 0;
+    z-index: 5;
+  }
+}
+
+.sheet {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.inline {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--mantine-color-body);
+}
+
+/* Solo teléfono: en escritorio la pantalla ya tiene su botón en la cabecera y
+   repetirlo dejaría dos controles con el mismo nombre en el DOM. */
+@media (min-width: $mantine-breakpoint-sm) {
+  .mobileOnly {
+    display: none;
+  }
+}

@@ -1,10 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, Group, Progress, SegmentedControl, SimpleGrid, Skeleton, Table, Text } from '@mantine/core';
+import { Badge, Box, Button, Card, Group, Progress, SegmentedControl, SimpleGrid, Skeleton, Stack, Table, Text } from '@mantine/core';
 import dayjs from 'dayjs';
 import { useGetAttendancesByStudent } from '../../../hooks/useAttendances';
 import { EmptyState } from '../../../components/common/EmptyState';
+import { AttendanceStrip } from '../../../components/attendance/AttendanceStrip';
+import { TouchRow } from '../../../components/common/TouchRow';
 
 const TAMANO_PAGINA = 20;
 
@@ -93,6 +95,14 @@ export function StudentAttendancePanel({ studentId }: { studentId: string }) {
           Sin registros de este tipo.
         </Text>
       ) : (
+        <>
+          {/* La misma tira que ve la familia: la tendencia de un vistazo, sin
+              leer la tabla ni arrastrarla de lado. */}
+          <Box p="md" pt={0}>
+            <AttendanceStrip registros={filtrados} />
+          </Box>
+
+          <Box visibleFrom="sm">
         <Table.ScrollContainer minWidth={360}>
           <Table verticalSpacing="xs">
             <Table.Thead>
@@ -121,6 +131,27 @@ export function StudentAttendancePanel({ studentId }: { studentId: string }) {
             </Table.Tbody>
           </Table>
         </Table.ScrollContainer>
+          </Box>
+
+          <Box hiddenFrom="sm" p="md" pt={0}>
+            <Stack gap="xs">
+              {filtrados.slice(0, visibles).map((a) => (
+                <TouchRow
+                  key={`t-${a.id}`}
+                  title={dayjs(a.date).format('dddd D [de] MMMM')}
+                  subtitle={a.present ? 'Asistió' : 'Faltó'}
+                  tags={
+                    <Badge variant="light" tt="capitalize">
+                      {a.type}
+                    </Badge>
+                  }
+                  tone={a.present ? 'default' : 'warning'}
+                  withChevron={false}
+                />
+              ))}
+            </Stack>
+          </Box>
+        </>
       )}
       {filtrados.length > visibles && (
         <Group justify="center" p="sm">
