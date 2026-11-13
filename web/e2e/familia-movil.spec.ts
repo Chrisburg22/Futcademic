@@ -124,8 +124,9 @@ test('el alumno ve su propia asistencia, no el pase de lista del profesor', asyn
   await expect(page.getByRole('button', { name: 'Guardar asistencias' })).toHaveCount(0);
   await expect(page.getByText('Selecciona una categoría para mostrar alumnos.')).toHaveCount(0);
 
-  // Y sí ve lo suyo: el porcentaje y las sesiones.
-  await expect(page.getByText('2 de 3 sesiones')).toBeVisible();
+  // Y sí ve lo suyo: cuántas sesiones hay y cuántas asistió.
+  await expect(page.getByText('de 3 sesiones')).toBeVisible();
+  await expect(page.getByText('Últimas sesiones')).toBeVisible();
   await sinDesborde(page, '/attendance');
 });
 

@@ -1,199 +1,465 @@
-import { useState, useEffect, useMemo } from 'react';
-import {
-  Card,
-  Group,
-  Select,
-  Stack,
-  Switch,
-  Button,
-  Text,
-  Badge,
-  Title,
-  SegmentedControl,
-  Tabs,
-  Avatar,
-  ThemeIcon,
-} from '@mantine/core';
-import { DateInput } from '@mantine/dates';
-import { notifications } from '@mantine/notifications';
-import { IconCheck, IconX } from '@tabler/icons-react';
-import { useSearchParams } from 'next/navigation';
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Alert, Avatar, Badge, Button, Card, Group, Select, Stack, Tabs, Text } from '@mantine/core';
+import { modals } from '@mantine/modals';
+import { notifications } from '@mantine/notifications';
+import {
+  IconAlertTriangle,
+  IconCalendarCheck,
+  IconChartBar,
+  IconClipboardList,
+} from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import { useAuth } from '../contexts/AuthContext';
 import {
   useGetAttendancesByCategory,
-  useGetAttendancesByStudent,
   useSaveAttendances,
-  useMarkTrainingComplete,
 } from '../hooks/useAttendances';
 import { useCheckAchievements } from '../hooks/useAchievements';
 import { useGetMyCategories, useGetCategories } from '../hooks/useCategories';
 import { useGetStudents, useGetMyChildren } from '../hooks/useStudents';
+import { useGetTrainings } from '../hooks/useEvents';
+import { willQueueOffline } from '../lib/offlineMutations';
 import { PageHeader } from '../components/common/PageHeader';
 import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
 import { CategoryAttendanceHistory } from '../components/attendance/CategoryAttendanceHistory';
-import { AttendanceStrip, type RegistroAsistencia } from '../components/attendance/AttendanceStrip';
-import { ErrorState } from '../components/common/ErrorState';
-import { SkeletonPage } from '../components/common/SkeletonPage';
-import { TouchRow } from '../components/common/TouchRow';
-import { StudentAttendancePage } from './StudentAttendancePage';
+import {
+  AttendanceSessionBar,
+  type SesionDelDia,
+} from '../components/attendance/AttendanceSessionBar';
+import { RollCallList } from '../components/attendance/RollCallList';
+import {
+  RollCallBarraGuardado,
+  RollCallResumen,
+} from '../components/attendance/RollCallStatus';
+import { StudentAttendanceHistory } from '../components/attendance/StudentAttendanceHistory';
+import {
+  ESTADO_ASISTENCIAS_INICIAL,
+  escribirEstadoEnUrl,
+  estadisticasPorAlumno,
+  etiquetaTipo,
+  leerEstadoDeUrl,
+  marcaDe,
+  marcasDeRegistros,
+  mismasMarcas,
+  resumirPaseLista,
+  type EstadoAsistencias,
+  type Marca,
+  type MarcasPorAlumno,
+  type Periodo,
+  type TipoSesion,
+  type VistaHistorico,
+} from '../lib/attendance';
+import { normalizarEstado } from '../lib/students';
+import { mensajeDeError } from '../lib/categories';
+import type { Attendance, Student } from '../types';
+
+// Referencias estables: `data = []` crearía un array nuevo en cada render y
+// los `useMemo` y efectos que dependen de él no pararían nunca.
+const SIN_REGISTROS: Attendance[] = [];
+const SIN_ALUMNOS: Student[] = [];
+const SIN_SESIONES: SesionDelDia[] = [];
 
 export function AttendancePage() {
   const { profile } = useAuth();
   const role = profile?.role;
   if (!role) return <LoadingState />;
 
-  /*
-   * Despacho explícito por rol.
-   *
-   * Antes esto era `if (padre) ... ; return <RollCallView />`, así que **el
-   * alumno caía en el pase de lista del profesor**: selector de categoría,
-   * fecha, tipo de sesión y un switch por compañero. Ahora cada rol ve lo suyo
-   * y un rol nuevo no hereda la pantalla de otro por descuido.
-   */
   if (role === 'padre') return <ParentAttendance />;
-  if (role === 'alumno') return <StudentAttendancePage />;
-  return <RollCallView />;
+  // Un alumno solo puede leer su propio historial (`findStudentForTenant`):
+  // la lista de la categoría le daría 403.
+  if (role === 'alumno') return <OwnAttendance studentId={profile.id} nombre={profile.full_name} />;
+  return <RollCallScreen />;
 }
 
-function RollCallView() {
+function RollCallScreen() {
   const { profile } = useAuth();
-  const isTeacher = profile?.role === 'profesor';
-  const { data: myCategories = [] } = useGetMyCategories(isTeacher);
-  const { data: allCategories = [] } = useGetCategories();
-  const categories = isTeacher ? myCategories : allCategories;
+  const router = useRouter();
+  const params = useSearchParams();
+  const esProfesor = profile?.role === 'profesor';
+  const esAdmin = !esProfesor;
 
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [date, setDate] = useState<Date | null>(new Date());
-  const [type, setType] = useState<'entrenamiento' | 'partido'>('entrenamiento');
-  const [marks, setMarks] = useState<Record<string, boolean>>({});
+  const { data: misCategorias = [] } = useGetMyCategories(esProfesor);
+  const { data: todasCategorias = [] } = useGetCategories(!esProfesor);
+  const categorias = (esProfesor ? misCategorias : todasCategorias) as {
+    id: string;
+    name: string;
+  }[];
 
-  const dateStr = date ? dayjs(date).format('YYYY-MM-DD') : undefined;
-  const { data: students = [], isLoading: loadingStudents } = useGetStudents(
-    categoryId || undefined,
+  // El estado de la pantalla vive en la query: así se comparte "el histórico
+  // de la Sub-12 a 90 días" y el botón atrás no lo pierde.
+  const [estado, setEstado] = useState<EstadoAsistencias>(ESTADO_ASISTENCIAS_INICIAL);
+  const [listo, setListo] = useState(false);
+  const [marcas, setMarcas] = useState<MarcasPorAlumno>({});
+  const [sucio, setSucio] = useState(false);
+  const [sesionId, setSesionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEstado(leerEstadoDeUrl(params.toString()));
+    setListo(true);
+  }, [params]);
+
+  const fecha = estado.fecha || dayjs().format('YYYY-MM-DD');
+  const categoriaId = estado.categoria;
+
+  const aplicar = useCallback(
+    (cambios: Partial<EstadoAsistencias>) => {
+      setEstado((previo) => {
+        const siguiente = { ...previo, ...cambios };
+        window.history.replaceState(null, '', `/attendance${escribirEstadoEnUrl(siguiente)}`);
+        return siguiente;
+      });
+    },
+    [],
   );
-  const { data: existing } = useGetAttendancesByCategory(categoryId || '', dateStr);
+
+  /** Cambiar de lista con marcas sin guardar pide confirmación. */
+  const cambiarContexto = (cambios: Partial<EstadoAsistencias>) => {
+    const hacerlo = () => {
+      setMarcas({});
+      setSucio(false);
+      setSesionId(null);
+      aplicar(cambios);
+    };
+    if (!sucio) return hacerlo();
+    modals.openConfirmModal({
+      title: 'Hay marcas sin guardar',
+      children: (
+        <Text size="sm">
+          Si cambias de categoría, fecha o tipo de sesión se perderá el pase de lista que no has
+          guardado.
+        </Text>
+      ),
+      labels: { confirm: 'Descartar y cambiar', cancel: 'Seguir aquí' },
+      confirmProps: { color: 'red' },
+      onConfirm: hacerlo,
+    });
+  };
+
+  const { data: alumnosData, isLoading: cargandoAlumnos } = useGetStudents(
+    categoriaId || undefined,
+    !!categoriaId,
+  );
+  const { data: delDiaData } = useGetAttendancesByCategory(categoriaId || '', fecha);
+  const { data: historialData } = useGetAttendancesByCategory(categoriaId || '');
+  const { data: sesionesData, isLoading: cargandoSesiones } = useGetTrainings({
+    category_id: categoriaId || undefined,
+    date: categoriaId ? fecha : undefined,
+  });
+  const alumnos = (alumnosData as Student[] | undefined) ?? SIN_ALUMNOS;
+  const delDia = (delDiaData as Attendance[] | undefined) ?? SIN_REGISTROS;
+  const historial = (historialData as Attendance[] | undefined) ?? SIN_REGISTROS;
+  const sesiones = (sesionesData as SesionDelDia[] | undefined) ?? SIN_SESIONES;
   const save = useSaveAttendances();
   const checkAchievements = useCheckAchievements();
 
-  useEffect(() => {
-    if (!existing) return;
-    const map: Record<string, boolean> = {};
-    existing.forEach((a: any) => {
-      map[a.student_id] = a.present;
-    });
-    setMarks(map);
-  }, [existing]);
+  const guardadas = useMemo(
+    () => marcasDeRegistros(delDia, estado.tipo, fecha),
+    [delDia, estado.tipo, fecha],
+  );
+  const yaGuardado = Object.keys(guardadas).length > 0;
+  const guardadoEn = useMemo(() => {
+    const fechas = (delDia as Attendance[])
+      .filter((r) => r.type === estado.tipo)
+      .map((r) => r.created_at)
+      .filter(Boolean)
+      .sort();
+    return fechas.at(-1) || null;
+  }, [delDia, estado.tipo]);
 
-  const onSave = async () => {
-    if (!categoryId || !dateStr) return;
-    await save.mutateAsync({
-      category_id: categoryId,
-      date: dateStr,
-      type,
-      records: students.map((s: any) => ({
-        student_id: s.id,
-        present: !!marks[s.id],
-      })),
+  // Lo guardado se precarga, pero nunca encima de lo que el profesor ya marcó.
+  useEffect(() => {
+    if (sucio) return;
+    setMarcas((previo) => (mismasMarcas(previo, guardadas) ? previo : guardadas));
+  }, [guardadas, sucio]);
+
+  // Elige la sesión agendada del día en cuanto se conoce.
+  useEffect(() => {
+    const delTipo = sesiones.filter((s) => !s.type || s.type === estado.tipo);
+    setSesionId((previo) =>
+      previo && delTipo.some((s) => s.id === previo) ? previo : delTipo[0]?.id || null,
+    );
+  }, [sesiones, estado.tipo]);
+
+  // Avisa antes de perder el pase de lista al recargar o cerrar la pestaña.
+  useEffect(() => {
+    if (!sucio) return;
+    const avisar = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', avisar);
+    return () => window.removeEventListener('beforeunload', avisar);
+  }, [sucio]);
+
+  const estadisticas = useMemo(() => {
+    const previos = historial.filter(
+      (r) => dayjs(r.date).format('YYYY-MM-DD') !== fecha,
+    );
+    return new Map(estadisticasPorAlumno(previos).map((e) => [e.studentId, e]));
+  }, [historial, fecha]);
+
+  /**
+   * A quién cubre este pase de lista. Los inactivos quedan fuera salvo que
+   * alguien los marque a mano: el backend borra y reinserta por alumno, así
+   * que mandarlos sin marca los daría por ausentes en silencio.
+   */
+  const delPase = useMemo(
+    () =>
+      alumnos.filter(
+        (a) => normalizarEstado(a.status) !== 'inactivo' || marcas[a.id] !== undefined,
+      ),
+    [alumnos, marcas],
+  );
+  const resumen = useMemo(() => resumirPaseLista(delPase, marcas), [delPase, marcas]);
+
+  const marcar = (studentId: string, marca: Marca) => {
+    setSucio(true);
+    setMarcas((previo) => {
+      const siguiente = { ...previo };
+      if (marca === 'sin_marcar') delete siguiente[studentId];
+      else siguiente[studentId] = marca === 'presente';
+      return siguiente;
     });
-    notifications.show({ color: 'green', message: 'Asistencias guardadas' });
-    const presentIds = students
-      .filter((s: any) => marks[s.id])
-      .map((s: any) => s.id);
-    for (const sid of presentIds) {
-      checkAchievements.mutate(sid);
+  };
+
+  const marcarVarios = (ids: string[], marca: Marca) => {
+    setSucio(true);
+    setMarcas((previo) => {
+      const siguiente = { ...previo };
+      for (const id of ids) {
+        if (marca === 'sin_marcar') delete siguiente[id];
+        else siguiente[id] = marca === 'presente';
+      }
+      return siguiente;
+    });
+  };
+
+  const enviar = () => {
+    if (!categoriaId) return;
+    const presentes = resumen.presentes;
+    const total = resumen.total;
+    const ids = delPase.filter((a) => marcaDe(marcas, a.id) === 'presente').map((a) => a.id);
+    // Sin red la promesa de la mutación no resuelve hasta que vuelva la conexión:
+    // se pregunta antes de lanzar para poder decir la verdad en el aviso.
+    const enCola = willQueueOffline();
+
+    save.mutate(
+      {
+        category_id: categoriaId,
+        date: fecha,
+        type: estado.tipo,
+        training_id: sesionId || undefined,
+        records: delPase.map((a) => ({
+          student_id: a.id,
+          present: marcaDe(marcas, a.id) === 'presente',
+        })),
+      },
+      {
+        onSuccess: () => {
+          setSucio(false);
+          notifications.show({
+            color: 'green',
+            title: 'Pase de lista guardado',
+            message: `${presentes} presentes y ${total - presentes} ausentes el ${dayjs(fecha).format('DD/MM/YYYY')}.`,
+          });
+          // Si el envío salió desde la cola tras recargar, este callback ya no
+          // existe; los logros se recalculan en la siguiente visita.
+          for (const id of ids) checkAchievements.mutate(id);
+        },
+        onError: (error) => {
+          notifications.show({
+            color: 'red',
+            title: 'No se pudo guardar el pase de lista',
+            message: mensajeDeError(error, 'Revisa tu conexión e inténtalo de nuevo.'),
+          });
+        },
+      },
+    );
+
+    if (enCola) {
+      setSucio(false);
+      notifications.show({
+        color: 'orange',
+        title: 'Guardado sin conexión',
+        message: 'El pase de lista se enviará solo en cuanto haya señal. No cierres sesión.',
+      });
     }
   };
 
-  const [tab, setTab] = useState<string | null>('rollcall');
+  const guardar = () => {
+    if (resumen.sinMarcar === 0) return enviar();
+    // «Sin marcar» no existe en la base: hay que decir qué se va a guardar.
+    modals.openConfirmModal({
+      title: `${resumen.sinMarcar} ${resumen.sinMarcar === 1 ? 'alumno' : 'alumnos'} sin marcar`,
+      children: (
+        <Stack gap="xs">
+          <Text size="sm">
+            Se guardarán como <strong>ausentes</strong>: la asistencia solo distingue entre
+            presente y ausente.
+          </Text>
+          <Text size="sm" c="dimmed">
+            Si alguno no debía estar en la lista, márcalo presente o déjalo para después.
+          </Text>
+        </Stack>
+      ),
+      labels: { confirm: 'Guardar como ausentes', cancel: 'Seguir marcando' },
+      onConfirm: () => void enviar(),
+    });
+  };
+
+  const categoria = categorias.find((c) => c.id === categoriaId);
+
+  if (!listo) return <LoadingState />;
+
+  const selector = (
+    <Card withBorder padding="lg" radius="md">
+      <Select
+        label="Categoría"
+        placeholder="Elige la categoría"
+        searchable
+        nothingFoundMessage="Sin coincidencias"
+        value={categoriaId}
+        onChange={(valor) => cambiarContexto({ categoria: valor })}
+        data={categorias.map((c) => ({ value: c.id, label: c.name }))}
+      />
+    </Card>
+  );
 
   return (
     <>
-      <PageHeader title="Asistencias" description="Pasa lista y consulta el histórico por categoría" />
-      <Tabs value={tab} onChange={setTab} mb="md">
+      <PageHeader
+        title="Asistencias"
+        description="Pasa lista en la cancha y detecta a quién estás perdiendo."
+        actions={
+          categoria ? (
+            <Badge size="lg" variant="light">
+              {categoria.name}
+            </Badge>
+          ) : undefined
+        }
+      />
+
+      <Tabs
+        value={estado.vista}
+        onChange={(valor) => valor && aplicar({ vista: valor as EstadoAsistencias['vista'] })}
+        mb="md"
+        keepMounted={false}
+      >
         <Tabs.List>
-          <Tabs.Tab value="rollcall">Pase de lista</Tabs.Tab>
-          <Tabs.Tab value="history">Histórico</Tabs.Tab>
+          <Tabs.Tab value="pase" leftSection={<IconClipboardList size={16} />}>
+            Pase de lista
+          </Tabs.Tab>
+          <Tabs.Tab value="historico" leftSection={<IconChartBar size={16} />}>
+            Histórico
+          </Tabs.Tab>
         </Tabs.List>
       </Tabs>
 
-      {tab === 'history' ? (
-        <>
-          <Card withBorder padding="lg" radius="md" mb="md">
-            <Select
-              label="Categoría"
-              placeholder="Selecciona"
-              value={categoryId}
-              onChange={setCategoryId}
-              data={categories.map((c: any) => ({ value: c.id, label: c.name }))}
-              searchable
-            />
-          </Card>
-          {!categoryId ? (
-            <EmptyState description="Selecciona una categoría para ver su histórico." />
+      {estado.vista === 'historico' ? (
+        <Stack gap="md">
+          {selector}
+          {!categoriaId ? (
+            <Card withBorder radius="md">
+              <EmptyState
+                title="Elige una categoría"
+                description="El histórico muestra la asistencia de una categoría: quién viene, quién está faltando y cómo salió cada sesión."
+                icon={<IconChartBar size={32} />}
+              />
+            </Card>
           ) : (
-            <CategoryAttendanceHistory categoryId={categoryId} />
+            <CategoryAttendanceHistory
+              categoryId={categoriaId}
+              categoriaNombre={categoria?.name}
+              periodo={estado.periodo}
+              onPeriodo={(periodo: Periodo) => aplicar({ periodo })}
+              vista={estado.detalle}
+              onVista={(detalle: VistaHistorico) => aplicar({ detalle })}
+              onAbrirSesion={(dia, tipo) =>
+                cambiarContexto({ vista: 'pase', fecha: dia, tipo })
+              }
+              onAbrirAlumno={(studentId) => router.push(`/admin/students/${studentId}`)}
+            />
           )}
-        </>
+        </Stack>
       ) : (
-      <>
-      <Card withBorder padding="lg" radius="md" mb="md">
-        <Group grow align="flex-end">
-          <Select
-            label="Categoría"
-            placeholder="Selecciona"
-            value={categoryId}
-            onChange={setCategoryId}
-            data={categories.map((c: any) => ({ value: c.id, label: c.name }))}
-            searchable
+        <Stack gap="md">
+          <AttendanceSessionBar
+            categorias={categorias}
+            categoriaId={categoriaId}
+            onCategoria={(valor) => cambiarContexto({ categoria: valor })}
+            fecha={fecha}
+            onFecha={(valor) => cambiarContexto({ fecha: valor })}
+            tipo={estado.tipo}
+            onTipo={(tipo: TipoSesion) => cambiarContexto({ tipo })}
+            sesiones={sesiones}
+            sesionId={sesionId}
+            onSesion={setSesionId}
+            cargandoSesiones={cargandoSesiones}
           />
-          <DateInput label="Fecha" value={date} onChange={setDate} />
-          <SegmentedControl
-            value={type}
-            onChange={(v) => setType(v as any)}
-            data={[
-              { label: 'Entrenamiento', value: 'entrenamiento' },
-              { label: 'Partido', value: 'partido' },
-            ]}
-          />
-        </Group>
-      </Card>
 
-      {!categoryId ? (
-        <EmptyState description="Selecciona una categoría para mostrar alumnos." />
-      ) : loadingStudents ? (
-        <LoadingState />
-      ) : students.length === 0 ? (
-        <EmptyState description="Sin alumnos en esta categoría." />
-      ) : (
-        <Card withBorder padding="lg" radius="md">
-          <Stack>
-            {students.map((s: any) => (
-              <Group key={s.id} justify="space-between">
-                <div>
-                  <Text fw={500}>{s.full_name}</Text>
-                  <Text size="xs" c="dimmed">
-                    {s.email || '—'}
-                  </Text>
-                </div>
-                <Switch
-                  checked={!!marks[s.id]}
-                  onChange={(e) =>
-                    setMarks((m) => ({ ...m, [s.id]: e.currentTarget.checked }))
-                  }
-                  label={marks[s.id] ? 'Presente' : 'Ausente'}
-                />
-              </Group>
-            ))}
-            <Button onClick={onSave} loading={save.isPending} mt="md">
-              Guardar asistencias
-            </Button>
-          </Stack>
-        </Card>
-      )}
-      </>
+          {!categoriaId ? (
+            <Card withBorder radius="md">
+              <EmptyState
+                title="Elige una categoría"
+                description="Aparecerán sus alumnos para marcar quién vino hoy."
+                icon={<IconCalendarCheck size={32} />}
+              />
+            </Card>
+          ) : cargandoAlumnos ? (
+            <LoadingState label="Cargando la lista…" />
+          ) : alumnos.length === 0 ? (
+            <Card withBorder radius="md">
+              <EmptyState
+                title="Sin alumnos en esta categoría"
+                description="Da de alta alumnos o muévelos a esta categoría para poder pasar lista."
+              />
+            </Card>
+          ) : (
+            <>
+              {yaGuardado && !sucio && (
+                <Alert variant="light" color="blue" py="xs">
+                  Ya hay un pase de lista guardado para el{' '}
+                  {dayjs(fecha).format('DD/MM/YYYY')} ({etiquetaTipo(estado.tipo).toLowerCase()}).
+                  Lo que cambies aquí lo reemplaza.
+                </Alert>
+              )}
+              {dayjs(fecha).isAfter(dayjs(), 'day') && (
+                <Alert
+                  variant="light"
+                  color="orange"
+                  icon={<IconAlertTriangle size={18} />}
+                  py="xs"
+                >
+                  Estás pasando lista de una fecha futura.
+                </Alert>
+              )}
+              <RollCallResumen resumen={resumen} />
+              <RollCallList
+                alumnos={alumnos}
+                marcas={marcas}
+                onMarca={marcar}
+                onMasivo={marcarVarios}
+                estadisticas={estadisticas}
+                puedeVerEstado={esAdmin}
+                onAbrirAlumno={(alumno) => router.push(`/admin/students/${alumno.id}`)}
+              />
+              <RollCallBarraGuardado
+                resumen={resumen}
+                sucio={sucio}
+                guardado={yaGuardado}
+                guardadoEn={guardadoEn}
+                guardando={save.isPending && !save.isPaused}
+                onGuardar={guardar}
+                onDescartar={() => {
+                  setMarcas(guardadas);
+                  setSucio(false);
+                }}
+              />
+            </>
+          )}
+        </Stack>
       )}
     </>
   );
@@ -201,156 +467,92 @@ function RollCallView() {
 
 function ParentAttendance() {
   const consulta = useSearchParams();
-  const { data: children = [], isLoading: cargandoHijos } = useGetMyChildren();
+  const { data: children = [], isLoading } = useGetMyChildren();
   /*
    * Llegar desde Inicio con un hijo concreto tiene que funcionar: el enlace del
-   * tablero trae `?student_id=`, pero esta pantalla arrancaba en `null` y nunca
-   * leía la query, así que el padre caía en un selector vacío. Es el mismo
-   * patrón que ya usaba `ParentFinances`.
+   * tablero trae `?student_id=`, pero esta pantalla arrancaba siempre en `null`
+   * y nunca leía la query, así que con varios hijos el padre caía en un
+   * selector vacío. Es el mismo patrón que ya usaba `ParentFinances`.
    */
   const [studentId, setStudentId] = useState<string | null>(() => consulta.get('student_id'));
+  const hijos = children as { id: string; full_name: string; avatar_url?: string | null }[];
 
   // Con un solo hijo no hay nada que elegir.
-  useEffect(() => {
-    if (studentId) return;
-    if (children.length > 0) setStudentId((children[0] as any).id);
-  }, [children, studentId]);
-
-  const {
-    data: history = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useGetAttendancesByStudent(studentId || undefined);
-
-  const hijo = (children as any[]).find((c) => c.id === studentId);
-
-  const ordenados = useMemo(
-    () =>
-      [...(history as RegistroAsistencia[])].sort(
-        (a, b) => dayjs(b.date).valueOf() - dayjs(a.date).valueOf(),
-      ),
-    [history],
-  );
-
-  const cabecera = (
-    <PageHeader
-      title="Asistencias"
-      description={hijo ? `Historial de ${hijo.full_name}` : 'Historial de tus hijos'}
-    />
-  );
-
-  /*
-   * Con varios hijos, fichas con avatar en vez de un desplegable: tocar una cara
-   * de 44 px es más fácil que abrir un menú y acertar en una línea de lista.
-   */
-  const selector =
-    children.length > 1 ? (
-      <Group gap="xs" wrap="nowrap" mb="md" style={{ overflowX: 'auto', paddingBottom: 4 }}>
-        {(children as any[]).map((c) => {
-          const activo = c.id === studentId;
-          return (
-            <Button
-              key={c.id}
-              variant={activo ? 'filled' : 'default'}
-              onClick={() => setStudentId(c.id)}
-              aria-pressed={activo}
-              leftSection={
-                <Avatar src={c.avatar_url || undefined} size={24} radius="xl">
-                  {c.full_name?.[0]?.toUpperCase()}
-                </Avatar>
-              }
-              style={{ flexShrink: 0 }}
-            >
-              {c.full_name}
-            </Button>
-          );
-        })}
-      </Group>
-    ) : null;
-
-  if (cargandoHijos) {
-    return (
-      <>
-        {cabecera}
-        <SkeletonPage rows={3} />
-      </>
-    );
-  }
-
-  if (children.length === 0) {
-    return (
-      <>
-        {cabecera}
-        <EmptyState
-          title="Sin alumnos vinculados"
-          description="Cuando la academia registre a tu hijo, aquí verás su asistencia."
-          action={
-            <Button component={Link} href="/children">
-              Vincular hijo
-            </Button>
-          }
-        />
-      </>
-    );
-  }
+  const elegido = studentId || (hijos.length === 1 ? hijos[0].id : null);
+  const hijo = hijos.find((c) => c.id === elegido);
 
   return (
     <>
-      {cabecera}
-      {selector}
-      {isError ? (
-        <ErrorState
-          title="No pudimos cargar la asistencia"
-          onRetry={() => refetch()}
-        />
-      ) : isLoading ? (
-        <SkeletonPage rows={3} />
-      ) : ordenados.length === 0 ? (
-        <EmptyState
-          title="Todavía no hay sesiones"
-          description="Cuando el entrenador pase lista, aquí verás si asistió."
-        />
-      ) : (
-        <Stack gap="md">
-          {/* La tendencia de un golpe, antes de las filas: nadie lee cincuenta
-              registros para saber si su hijo está yendo. */}
-          <Card withBorder padding="lg" radius="md">
-            <Stack gap="sm">
-              <Text fw={600}>Últimas sesiones</Text>
-              <AttendanceStrip registros={ordenados} />
-            </Stack>
-          </Card>
-
-          <Stack gap="xs">
-            {ordenados.map((a, i) => (
-              <TouchRow
-                key={a.id ?? `${a.date}-${i}`}
-                leading={
-                  <ThemeIcon
-                    size={40}
-                    radius="xl"
-                    variant="light"
-                    color={a.present ? 'teal' : 'red'}
-                  >
-                    {a.present ? <IconCheck size={20} /> : <IconX size={20} />}
-                  </ThemeIcon>
+      <PageHeader
+        title="Asistencias"
+        description={
+          hijo ? `Historial de ${hijo.full_name}` : 'Cuánto está asistiendo cada hijo/a'
+        }
+      />
+      {hijos.length > 1 && (
+        /*
+         * Fichas con avatar en vez de un desplegable: tocar una cara de 44 px
+         * es más fácil que abrir un menú y acertar en una línea de lista.
+         */
+        <Group
+          gap="xs"
+          wrap="nowrap"
+          mb="md"
+          role="group"
+          aria-label="Elige un hijo/a"
+          style={{ overflowX: 'auto', paddingBottom: 4 }}
+        >
+          {hijos.map((c) => {
+            const activo = c.id === elegido;
+            return (
+              <Button
+                key={c.id}
+                variant={activo ? 'filled' : 'default'}
+                onClick={() => setStudentId(c.id)}
+                aria-pressed={activo}
+                leftSection={
+                  <Avatar src={c.avatar_url || undefined} size={24} radius="xl">
+                    {c.full_name?.[0]?.toUpperCase()}
+                  </Avatar>
                 }
-                title={dayjs(a.date).format('dddd D [de] MMMM')}
-                subtitle={a.present ? 'Asistió' : 'Faltó'}
-                tags={
-                  a.type ? (
-                    <Badge variant="light" tt="capitalize">
-                      {a.type}
-                    </Badge>
-                  ) : undefined
-                }
-                withChevron={false}
-              />
-            ))}
-          </Stack>
-        </Stack>
+                style={{ flexShrink: 0 }}
+              >
+                {c.full_name}
+              </Button>
+            );
+          })}
+        </Group>
       )}
+      {isLoading ? (
+        <LoadingState />
+      ) : hijos.length === 0 ? (
+        <Card withBorder radius="md">
+          <EmptyState
+            title="Sin hijos vinculados"
+            description="Cuando la academia registre a tu hijo, aquí verás su asistencia."
+            action={
+              <Button component={Link} href="/children">
+                Vincular hijo
+              </Button>
+            }
+          />
+        </Card>
+      ) : !elegido ? (
+        <Card withBorder radius="md">
+          <EmptyState description="Selecciona un hijo/a para ver su historial." />
+        </Card>
+      ) : (
+        <StudentAttendanceHistory studentId={elegido} nombre={hijo?.full_name} />
+      )}
+    </>
+  );
+}
+
+function OwnAttendance({ studentId, nombre }: { studentId: string; nombre?: string | null }) {
+  return (
+    <>
+      <PageHeader title="Mi asistencia" description="Cuánto has venido a entrenar" />
+      <StudentAttendanceHistory studentId={studentId} nombre={nombre} />
     </>
   );
 }

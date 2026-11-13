@@ -12,8 +12,8 @@ export default defineConfig({
   testDir: './e2e',
   // e2e/smoke/ golpea PRODUCCIÓN y crea academias reales. Vive en
   // playwright.smoke.config.ts y solo se ejecuta a propósito.
-  // pwa.spec.ts requiere service worker; la PWA está diferida en la migración a
-  // Next (ver playwright.pwa.config.ts).
+  // pwa.spec.ts necesita un build de producción (el service worker no se
+  // registra en `next dev`): vive en playwright.pwa.config.ts → npm run test:pwa.
   testIgnore: ['smoke/**', 'pwa.spec.ts'],
   fullyParallel: false,
   workers: 1,

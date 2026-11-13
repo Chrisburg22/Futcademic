@@ -48,6 +48,7 @@ import {
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dayjs from 'dayjs';
+import { willQueueOffline } from '../lib/offlineMutations';
 import { useAuth } from '../contexts/AuthContext';
 import {
   useGetPayments,
@@ -1071,40 +1072,69 @@ function RegistrarPagoModal({
   }, [opened, preseleccion, mes]);
 
   const elegido = pendientes.find((p) => p.id === form.values.person_id);
-  const guardando = studentMut.isPending || teacherMut.isPending;
+  // Una mutación en cola queda `isPending` hasta que vuelva la red: sin
+  // descontar `isPaused`, el botón se quedaría girando para siempre.
+  const guardando =
+    (studentMut.isPending && !studentMut.isPaused) ||
+    (teacherMut.isPending && !teacherMut.isPaused);
 
-  const onSubmit = async (valores: typeof form.values) => {
+  const onSubmit = (valores: typeof form.values) => {
     const fecha = dayjs(valores.payment_date).format('YYYY-MM-DD');
-    try {
-      if (tipo === 'student') {
-        await studentMut.mutateAsync({
+    const monto = Number(valores.amount);
+    // Se consulta antes de lanzar: sin red la promesa de la mutación no
+    // resuelve hasta que vuelva la conexión, así que no se puede esperar.
+    const enCola = willQueueOffline();
+
+    const callbacks = {
+      onSuccess: () => {
+        notifications.show({
+          color: 'green',
+          title: 'Pago registrado',
+          message: `Se registraron ${pesos(monto)}.`,
+        });
+      },
+      onError: (error: any) => {
+        notifications.show({
+          color: 'red',
+          title: 'No se pudo registrar el pago',
+          message: error?.response?.data?.error || 'Revisa la conexión e inténtalo de nuevo.',
+        });
+      },
+    };
+
+    if (tipo === 'student') {
+      studentMut.mutate(
+        {
           student_id: valores.person_id,
-          amount: Number(valores.amount),
+          amount: monto,
           payment_date: fecha,
           description: valores.description || undefined,
           payment_month: Number(valores.payment_month) || mes,
-        });
-      } else {
-        await teacherMut.mutateAsync({
+        },
+        callbacks,
+      );
+    } else {
+      teacherMut.mutate(
+        {
           teacher_id: valores.person_id,
-          amount: Number(valores.amount),
+          amount: monto,
           payment_date: fecha,
           description: valores.description || undefined,
-        });
-      }
+        },
+        callbacks,
+      );
+    }
+
+    if (enCola) {
       notifications.show({
-        color: 'green',
-        title: 'Pago registrado',
-        message: `Se registraron ${pesos(Number(valores.amount))}.`,
-      });
-      onClose();
-    } catch (error: any) {
-      notifications.show({
-        color: 'red',
-        title: 'No se pudo registrar el pago',
-        message: error?.response?.data?.error || 'Revisa la conexión e inténtalo de nuevo.',
+        color: 'orange',
+        title: 'Cobro guardado sin conexión',
+        message:
+          `Se registrarán ${pesos(monto)} en cuanto haya señal. Hasta entonces el adeudo ` +
+          'sigue apareciendo como pendiente.',
       });
     }
+    onClose();
   };
 
   return (
