@@ -34,7 +34,7 @@ CSV_ML = os.path.join(AQUI, "dataset", "dataset_ml.csv")
 EXCLUIDAS = {"student_id", "fecha_corte", "perfil_latente", "origen", "deserta_30d"}
 CATEGORICAS = {"escuela", "categoria", "status", "origen"}
 
-# Columna objetivo de gini()/construir(). validar_real.py la cambia para reutilizar el arbol.
+# Columna objetivo de gini()/construir(). entrenar_vista.py la cambia para reutilizar el arbol.
 ETIQUETA = "deserta_30d"
 
 PROFUNDIDAD_MAX = 4
