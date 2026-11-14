@@ -15,6 +15,7 @@ import { useDisclosure, useNetwork } from '@mantine/hooks';
 import { IconLogout, IconMoon, IconSun, IconUser, IconWifiOff } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import { Sidebar } from './Sidebar';
+import { MobileNav } from './MobileNav';
 import { InstallButton } from '../pwa/InstallButton';
 import { OfflineQueueBadge, usePendingOfflineCount } from '../pwa/OfflineQueueBadge';
 import { NotificationBell } from './NotificationBell';
@@ -72,7 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MantineAppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group wrap="nowrap" style={{ minWidth: 0 }}>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" className="touch-target" aria-label="Abrir menú" />
             <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
               {profile?.school?.logo_url ? (
                 <Image src={profile.school.logo_url} h={28} w={28} radius="sm" alt="logo" />
@@ -152,6 +153,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MantineAppShell.Main>
         {children}
       </MantineAppShell.Main>
+
+      {/* La barra inferior se monta una vez aquí, no por pantalla. «Más» abre el
+          mismo cajón que el Burger: un solo drawer, cero estado duplicado. */}
+      <MobileNav onMore={toggle} />
 
       {isAdmin && <ChatWidget />}
     </MantineAppShell>

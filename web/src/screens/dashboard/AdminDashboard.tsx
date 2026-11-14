@@ -13,21 +13,18 @@ import {
   Box,
 } from '@mantine/core';
 import {
-  IconCalendarEvent,
   IconCash,
-  IconCategory,
   IconClipboardCheck,
   IconCoin,
   IconPercentage,
   IconSchool,
-  IconUsers,
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
 import { useGetAdminDashboard } from '../../hooks/useDashboard';
 import { useGetStudents } from '../../hooks/useStudents';
 import { useGetPendingPayments } from '../../hooks/usePayments';
-import { QuickActionsDock, type QuickAction } from '../../components/layout/QuickActionsDock';
+import { adminItems, visibleFor, type NavItem } from '../../components/layout/navItems';
 import { enlaceAlListado, resumirAlumnos, type ContextoAlumnos } from '../../lib/students';
 import type { Student } from '../../types';
 import { MetricCard } from './components/MetricCard';
@@ -35,12 +32,15 @@ import { WorkQueueCard } from './components/WorkQueueCard';
 import { AgendaCard, type EventoProximo } from './components/AgendaCard';
 import { RecentStudentsCard } from './components/RecentStudentsCard';
 
-const SHORTCUTS: QuickAction[] = [
-  { to: '/admin/students', label: 'Alumnos', icon: <IconSchool size={22} /> },
-  { to: '/admin/teachers', label: 'Profesores', icon: <IconUsers size={22} /> },
-  { to: '/admin/categories', label: 'Categorías', icon: <IconCategory size={22} /> },
-  { to: '/admin/events', label: 'Agenda', icon: <IconCalendarEvent size={22} /> },
-];
+/*
+ * Accesos rápidos de escritorio. En teléfono esto no se pinta: la navegación
+ * vive en la barra inferior (`MobileNav`), que sale de la misma fuente.
+ */
+const ATAJOS = ['/admin/students', '/admin/teachers', '/admin/categories', '/admin/events'];
+const accesosRapidos = (): NavItem[] =>
+  ATAJOS.map((to) => visibleFor(adminItems, 'admin').find((i) => i.to === to)).filter(
+    (i): i is NavItem => Boolean(i),
+  );
 
 const pesos = (monto: number) => `$${Number(monto).toLocaleString('es-MX')}`;
 
@@ -54,11 +54,12 @@ const hoyEnTexto = () => {
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 };
 
-function ShortcutCard({ to, label, icon }: { to: string; label: string; icon: React.ReactNode }) {
+function ShortcutCard({ item }: { item: NavItem }) {
+  const Icono = item.icon;
   return (
     <Card
       component={Link}
-      href={to}
+      href={item.to}
       withBorder
       padding="lg"
       radius="md"
@@ -66,9 +67,9 @@ function ShortcutCard({ to, label, icon }: { to: string; label: string; icon: Re
     >
       <Group>
         <ThemeIcon size={40} radius="md" variant="light">
-          {icon}
+          <Icono size={22} />
         </ThemeIcon>
-        <Text fw={600}>{label}</Text>
+        <Text fw={600}>{item.label}</Text>
       </Group>
     </Card>
   );
@@ -207,15 +208,13 @@ export function AdminDashboard() {
               Accesos rápidos
             </Title>
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
-              {SHORTCUTS.map((s) => (
-                <ShortcutCard key={s.to} to={s.to} label={s.label} icon={s.icon} />
+              {accesosRapidos().map((item) => (
+                <ShortcutCard key={item.to} item={item} />
               ))}
             </SimpleGrid>
           </Box>
         </Grid.Col>
       </Grid>
-
-      <QuickActionsDock actions={SHORTCUTS} />
     </>
   );
 }

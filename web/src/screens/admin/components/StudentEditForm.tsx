@@ -34,6 +34,8 @@ import {
 } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import { useUpdateStudent } from '../../../hooks/useStudents';
+import { ActionBar } from '../../../components/common/ActionBar';
+import { BirthDateInput } from '../../../components/common/BirthDateInput';
 import { mensajeDeError } from '../../../lib/categories';
 import { calcularEdad } from '../../../lib/students';
 import type { Student } from '../../../types';
@@ -318,14 +320,14 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
             <List size="sm" spacing={2}>
               {errores.map((e) => (
                 <List.Item key={e.campo}>
-                  <Anchor
-                    component="button"
-                    type="button"
-                    size="sm"
+                  <Button
+                    variant="subtle"
+                    size="compact-sm"
+                    px={4}
                     onClick={() => form.getInputNode(e.campo)?.focus()}
                   >
                     {e.mensaje}
-                  </Anchor>
+                  </Button>
                 </List.Item>
               ))}
             </List>
@@ -335,15 +337,13 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
           <TextInput
             label="Nombre completo"
             required
+            autoCapitalize="words"
             autoComplete="off"
             {...form.getInputProps('full_name')}
           />
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <DateInput
-              label="Fecha de nacimiento"
+            <BirthDateInput
               required
-              valueFormat="DD/MM/YYYY"
-              maxDate={new Date()}
               description={edad != null ? `${edad} años` : undefined}
               {...form.getInputProps('birth_date')}
             />
@@ -371,7 +371,11 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
               description="10 dígitos, como 55 1234 5678"
               {...form.getInputProps('phone')}
             />
-            <TextInput label="Dirección" autoComplete="off" {...form.getInputProps('address')} />
+            <TextInput
+              label="Dirección"
+              autoComplete="street-address"
+              {...form.getInputProps('address')}
+            />
           </SimpleGrid>
         </Seccion>
 
@@ -453,47 +457,34 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
           />
         </Seccion>
 
-        <Paper
-          withBorder
-          radius="md"
-          p="sm"
-          // Al pie y pegada: en un formulario largo el botón de guardar no
-          // debería quedar tres pantallas más abajo. Se aparta del dock de
-          // accesos rápidos y del botón flotante del chat.
-          style={{
-            position: 'sticky',
-            bottom: 'calc(var(--quick-dock-height, 0px) + env(safe-area-inset-bottom, 0px))',
-            zIndex: 5,
-            paddingRight: 'calc(var(--mantine-spacing-sm) + 60px)',
-          }}
-        >
-        <Group justify="space-between" wrap="wrap">
-          <Text size="xs" c={sucio ? 'orange' : 'dimmed'} role="status">
-            {sucio ? 'Tienes cambios sin guardar (⌘/Ctrl + S)' : 'Sin cambios pendientes'}
-          </Text>
-          <Group>
-            {onCancel && (
-              <Button variant="default" onClick={onCancel} disabled={update.isPending}>
-                Cancelar
-              </Button>
-            )}
-            {sucio && !onCancel && (
-              <Button variant="default" onClick={() => form.reset()} disabled={update.isPending}>
-                Descartar
-              </Button>
-            )}
-            <Button
-              type="submit"
-              leftSection={<IconDeviceFloppy size={16} />}
-              loading={update.isPending}
-              disabled={!sucio}
-            >
-              Guardar cambios
-            </Button>
-          </Group>
-        </Group>
-        </Paper>
       </Stack>
+
+      {/*
+        `ActionBar` en vez de un `Paper` a `sticky bottom: 0`: así se coloca por
+        encima de la barra de navegación y del área de gestos (antes se
+        solapaban), y el aviso de cambios sin guardar deja de ir a 12 px.
+      */}
+      <ActionBar
+        variant="page"
+        status={{
+          text: sucio ? 'Tienes cambios sin guardar (⌘/Ctrl + S)' : 'Sin cambios pendientes',
+          tone: sucio ? 'warning' : 'neutral',
+        }}
+        secondary={
+          onCancel
+            ? { label: 'Cancelar', onClick: onCancel, disabled: update.isPending }
+            : sucio
+              ? { label: 'Descartar', onClick: () => form.reset(), disabled: update.isPending }
+              : undefined
+        }
+        primary={{
+          label: 'Guardar cambios',
+          type: 'submit',
+          leftIcon: <IconDeviceFloppy size={18} />,
+          loading: update.isPending,
+          disabled: !sucio,
+        }}
+      />
     </form>
   );
 }

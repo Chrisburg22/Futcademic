@@ -79,7 +79,7 @@ test('login page tiene link "Acceso alumno"', async ({ page }) => {
 // --- Alumno dashboard ---
 test('alumno: dashboard muestra stats', async ({ page }) => {
   await loginAs(page, { profile: STUDENT_PROFILE, api: API_FX });
-  await expect(page.getByText('Racha')).toBeVisible();
+  await expect(page.getByText('Sesiones seguidas')).toBeVisible();
   await expect(page.getByText('Mañana 17:00 — Sub-12')).toBeVisible();
 });
 

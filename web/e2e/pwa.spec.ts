@@ -201,6 +201,10 @@ test('02 — Service worker activo y app shell precacheada', async ({ page }) =>
 // 3-6. OFFLINE
 // ═══════════════════════════════════════════════════════════
 
+/** El alumno de prueba, en la fila de la tabla (no en la tarjeta de teléfono). */
+const alumnoEnTabla = (page: Page) =>
+  page.getByRole('cell', { name: 'Abrir ficha de Carlos López' });
+
 test('03 — Con conexión: la app carga y guarda la caché de datos', async ({ page }) => {
   await mockAtContextLevel(page);
   await loginAs(page, { profile: ADMIN_PROFILE, api: API });
@@ -210,7 +214,9 @@ test('03 — Con conexión: la app carga y guarda la caché de datos', async ({ 
   await expect(page.locator('header')).toBeVisible();
 
   await page.goto('/admin/students');
-  await expect(page.getByText('Carlos López')).toBeVisible();
+  // Por la celda de la tabla: el listado monta también las tarjetas de teléfono,
+  // así que el nombre aparece dos veces en el DOM y `getByText` sería ambiguo.
+  await expect(alumnoEnTabla(page)).toBeVisible();
   await caption(page, 'Los datos que consultas se guardan en caché para leerlos sin conexión', 2600);
 
   // El persister escribe con throttle de 1 s.
@@ -236,7 +242,7 @@ test('04 — Sin conexión: la app sigue funcionando con datos guardados', async
   await waitForServiceWorker(page);
 
   await page.goto('/admin/students');
-  await expect(page.getByText('Carlos López')).toBeVisible();
+  await expect(alumnoEnTabla(page)).toBeVisible();
   await page.waitForFunction(() => !!localStorage.getItem('futcademic-query-cache'), null, { timeout: 15_000 });
   await caption(page, 'Ahora cortamos la red por completo…', 1800);
 
@@ -255,7 +261,7 @@ test('04 — Sin conexión: la app sigue funcionando con datos guardados', async
   await expect(page.getByText('Sin conexión')).toBeVisible({ timeout: 15_000 });
 
   // Y los datos siguen ahí, rehidratados desde localStorage.
-  await expect(page.getByText('Carlos López')).toBeVisible({ timeout: 20_000 });
+  await expect(alumnoEnTabla(page)).toBeVisible({ timeout: 20_000 });
   await caption(page, 'Badge "Sin conexión" + los alumnos siguen visibles desde la caché', 3000);
 
   await context.setOffline(false);
@@ -269,7 +275,7 @@ test('05 — Cerrar sesión borra la caché (aislamiento entre academias)', asyn
   await waitForServiceWorker(page);
 
   await page.goto('/admin/students');
-  await expect(page.getByText('Carlos López')).toBeVisible();
+  await expect(alumnoEnTabla(page)).toBeVisible();
   await page.waitForFunction(() => !!localStorage.getItem('futcademic-query-cache'), null, { timeout: 15_000 });
   await caption(page, 'La caché guarda datos de la academia del usuario actual', 2200);
 

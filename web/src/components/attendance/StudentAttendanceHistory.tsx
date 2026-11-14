@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import {
   Alert,
   Badge,
+  Box,
   Button,
   Card,
   Divider,
@@ -23,6 +24,7 @@ import {
   IconAlertTriangle,
   IconCalendarCheck,
   IconCalendarStats,
+  IconCheck,
   IconDownload,
   IconFlame,
   IconPercentage,
@@ -46,6 +48,9 @@ import {
   type TipoSesion,
 } from '../../lib/attendance';
 import { EmptyState } from '../common/EmptyState';
+import { ErrorState } from '../common/ErrorState';
+import { TouchRow } from '../common/TouchRow';
+import { AttendanceStrip } from './AttendanceStrip';
 
 const TAMANO_PAGINA = 20;
 
@@ -98,7 +103,7 @@ function Kpi({
  * del padre, que consultan el mismo endpoint.
  */
 export function StudentAttendanceHistory({ studentId, nombre }: Props) {
-  const { data, isLoading } = useGetAttendancesByStudent(studentId);
+  const { data, isLoading, isError, refetch } = useGetAttendancesByStudent(studentId);
   const [periodo, setPeriodo] = useState<Periodo>('90');
   const [tipo, setTipo] = useState<'todos' | TipoSesion>('todos');
   const [visibles, setVisibles] = useState(TAMANO_PAGINA);
@@ -133,6 +138,21 @@ export function StudentAttendanceHistory({ studentId, nombre }: Props) {
   );
 
   if (isLoading) return <Skeleton height={260} radius="md" />;
+
+  /*
+   * Un fallo de red caía en el estado vacío y decía «Sin asistencias
+   * registradas»: le miente al usuario y además lo deja sin salida.
+   */
+  if (isError) {
+    return (
+      <Card withBorder radius="md">
+        <ErrorState
+          title="No pudimos cargar la asistencia"
+          onRetry={() => refetch()}
+        />
+      </Card>
+    );
+  }
 
   if (todos.length === 0) {
     return (
@@ -240,6 +260,17 @@ export function StudentAttendanceHistory({ studentId, nombre }: Props) {
             />
           </SimpleGrid>
 
+          {/*
+            La tendencia de un golpe, antes de cualquier tabla: ni un alumno ni
+            un padre lee cincuenta filas para saber si está yendo.
+          */}
+          <Card withBorder radius="md" padding="md">
+            <Stack gap="sm">
+              <Text fw={600}>Últimas sesiones</Text>
+              <AttendanceStrip registros={recientes} />
+            </Stack>
+          </Card>
+
           {stat.enRiesgo && (
             <Alert variant="light" color="orange" icon={<IconAlertTriangle size={18} />}>
               Está por debajo del {PORCENTAJE_RIESGO}% de asistencia o lleva{' '}
@@ -289,7 +320,41 @@ export function StudentAttendanceHistory({ studentId, nombre }: Props) {
               </Text>
             </Group>
             <Divider />
-            <Table.ScrollContainer minWidth={360}>
+            {/*
+              En teléfono, filas táctiles: la tabla obligaba a desplazarse a lo
+              ancho (`minWidth={360}`) en una pantalla de 375 px. Las dos ramas
+              se montan siempre y las elige el CSS, para que no haya parpadeo en
+              el primer pintado.
+            */}
+            <Box hiddenFrom="sm" p="sm">
+              <Stack gap="xs">
+                {recientes.slice(0, visibles).map((r) => (
+                  <TouchRow
+                    key={r.id}
+                    leading={
+                      <ThemeIcon
+                        size={40}
+                        radius="xl"
+                        variant="light"
+                        color={r.present ? 'teal' : 'red'}
+                      >
+                        {r.present ? <IconCheck size={20} /> : <IconX size={20} />}
+                      </ThemeIcon>
+                    }
+                    title={dayjs(r.date).format('dddd D [de] MMMM')}
+                    subtitle={r.present ? 'Asistió' : 'Faltó'}
+                    tags={
+                      <Badge variant="light" size="sm">
+                        {etiquetaTipo(r.type)}
+                      </Badge>
+                    }
+                    withChevron={false}
+                  />
+                ))}
+              </Stack>
+            </Box>
+
+            <Box visibleFrom="sm">
               <Table verticalSpacing="xs">
                 <Table.Thead>
                   <Table.Tr>
@@ -316,7 +381,7 @@ export function StudentAttendanceHistory({ studentId, nombre }: Props) {
                   ))}
                 </Table.Tbody>
               </Table>
-            </Table.ScrollContainer>
+            </Box>
             {recientes.length > visibles && (
               <Group justify="center" p="sm">
                 <Button variant="subtle" onClick={() => setVisibles((v) => v + TAMANO_PAGINA)}>

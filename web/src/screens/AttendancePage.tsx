@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Alert, Badge, Card, Select, Stack, Tabs, Text } from '@mantine/core';
+import Link from 'next/link';
+import { Alert, Avatar, Badge, Button, Card, Group, Select, Stack, Tabs, Text } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import {
@@ -465,9 +466,16 @@ function RollCallScreen() {
 }
 
 function ParentAttendance() {
+  const consulta = useSearchParams();
   const { data: children = [], isLoading } = useGetMyChildren();
-  const [studentId, setStudentId] = useState<string | null>(null);
-  const hijos = children as { id: string; full_name: string }[];
+  /*
+   * Llegar desde Inicio con un hijo concreto tiene que funcionar: el enlace del
+   * tablero trae `?student_id=`, pero esta pantalla arrancaba siempre en `null`
+   * y nunca leía la query, así que con varios hijos el padre caía en un
+   * selector vacío. Es el mismo patrón que ya usaba `ParentFinances`.
+   */
+  const [studentId, setStudentId] = useState<string | null>(() => consulta.get('student_id'));
+  const hijos = children as { id: string; full_name: string; avatar_url?: string | null }[];
 
   // Con un solo hijo no hay nada que elegir.
   const elegido = studentId || (hijos.length === 1 ? hijos[0].id : null);
@@ -475,17 +483,45 @@ function ParentAttendance() {
 
   return (
     <>
-      <PageHeader title="Asistencias" description="Cuánto está asistiendo cada hijo/a" />
+      <PageHeader
+        title="Asistencias"
+        description={
+          hijo ? `Historial de ${hijo.full_name}` : 'Cuánto está asistiendo cada hijo/a'
+        }
+      />
       {hijos.length > 1 && (
-        <Card withBorder padding="md" radius="md" mb="md">
-          <Select
-            label="Hijo/a"
-            placeholder="Selecciona"
-            value={elegido}
-            onChange={setStudentId}
-            data={hijos.map((c) => ({ value: c.id, label: c.full_name }))}
-          />
-        </Card>
+        /*
+         * Fichas con avatar en vez de un desplegable: tocar una cara de 44 px
+         * es más fácil que abrir un menú y acertar en una línea de lista.
+         */
+        <Group
+          gap="xs"
+          wrap="nowrap"
+          mb="md"
+          role="group"
+          aria-label="Elige un hijo/a"
+          style={{ overflowX: 'auto', paddingBottom: 4 }}
+        >
+          {hijos.map((c) => {
+            const activo = c.id === elegido;
+            return (
+              <Button
+                key={c.id}
+                variant={activo ? 'filled' : 'default'}
+                onClick={() => setStudentId(c.id)}
+                aria-pressed={activo}
+                leftSection={
+                  <Avatar src={c.avatar_url || undefined} size={24} radius="xl">
+                    {c.full_name?.[0]?.toUpperCase()}
+                  </Avatar>
+                }
+                style={{ flexShrink: 0 }}
+              >
+                {c.full_name}
+              </Button>
+            );
+          })}
+        </Group>
       )}
       {isLoading ? (
         <LoadingState />
@@ -493,7 +529,12 @@ function ParentAttendance() {
         <Card withBorder radius="md">
           <EmptyState
             title="Sin hijos vinculados"
-            description="Pide a la academia que vincule a tus hijos con tu cuenta."
+            description="Cuando la academia registre a tu hijo, aquí verás su asistencia."
+            action={
+              <Button component={Link} href="/children">
+                Vincular hijo
+              </Button>
+            }
           />
         </Card>
       ) : !elegido ? (

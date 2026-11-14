@@ -61,6 +61,10 @@ const COBRANZA = [
   { id: 's1', full_name: 'Ángel Ramírez', monthly_fee: 500, paid_amount: 0, pending_amount: 500 },
 ];
 
+/** La barra de acciones masivas de escritorio. */
+const barraMasiva = (page: Page) =>
+  page.getByRole('region', { name: 'Acciones para los alumnos seleccionados' });
+
 async function abrirLista(page: Page, ruta = '/admin/students') {
   await loginAs(page, {
     goto: ruta,
@@ -167,13 +171,13 @@ test('acciones masivas sobre la selección', async ({ page }) => {
 
   await page.getByRole('checkbox', { name: 'Seleccionar a Ángel Ramírez' }).check();
   await page.getByRole('checkbox', { name: 'Seleccionar a Beatriz Soto' }).check();
-  await expect(page.getByText('2 seleccionados')).toBeVisible();
+  await expect(barraMasiva(page).getByText('2 seleccionados')).toBeVisible();
   await page.screenshot({ path: '/private/tmp/claude-501/shots/lista-seleccion.png' });
 
   await page.getByRole('button', { name: 'Cambiar estado' }).click();
   await page.getByRole('menuitem', { name: 'Inactivo' }).click();
   await expect.poll(() => llamadas.length).toBe(2);
-  await expect(page.getByText('2 seleccionados')).toHaveCount(0);
+  await expect(barraMasiva(page)).toHaveCount(0);
 });
 
 test('edición rápida en panel lateral valida y avisa de cambios sin guardar', async ({ page }) => {
@@ -209,7 +213,9 @@ test('la ficha muestra pendientes y organiza la información en pestañas', asyn
   await page.screenshot({ path: '/private/tmp/claude-501/shots/ficha-resumen.png', fullPage: true });
 
   await page.getByRole('tab', { name: 'Pagos' }).click();
-  await expect(page.getByText('Mensualidad septiembre')).toBeVisible();
+  // El panel pinta tabla (escritorio) y filas táctiles (teléfono); se acota a la
+  // celda, que solo existe en la tabla.
+  await expect(page.getByRole('cell', { name: 'Mensualidad septiembre' })).toBeVisible();
   await page.getByRole('tab', { name: 'Asistencia' }).click();
   // El porcentaje también sale en la tarjeta del resumen: hay que mirar la
   // pestaña de asistencia.
@@ -238,9 +244,9 @@ test('en móvil la tabla se convierte en tarjetas sin scroll horizontal', async 
 test('seleccionar todos los alumnos filtrados, no solo los de la página', async ({ page }) => {
   await abrirLista(page);
   await page.getByRole('checkbox', { name: /Seleccionar todos los alumnos de esta página/ }).check();
-  await expect(page.getByText('25 seleccionados')).toBeVisible();
+  await expect(barraMasiva(page).getByText('25 seleccionados')).toBeVisible();
   await page.getByRole('button', { name: /Seleccionar los 30 alumnos/ }).click();
-  await expect(page.getByText('30 seleccionados')).toBeVisible();
+  await expect(barraMasiva(page).getByText('30 seleccionados')).toBeVisible();
 });
 
 test('recordar al tutor arma el mensaje y abre WhatsApp con la lada de México', async ({ page }) => {
