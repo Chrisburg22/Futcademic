@@ -18,7 +18,6 @@ Esta carpeta reúne todo el proyecto universitario en archivos Markdown. Futcade
 - Validación por alumno y fecha: AUC media 0.630.
 - La tasa de asistencia previa, sola, da 0.639: el árbol la supera.
 - Corrección de la revisión: se excluyeron 18 alumnos que nunca asistieron (inflaban el AUC hasta 0.779) y se unieron las marcas de 6 alumnos repetidos entre pestañas.
-- Las diapositivas y la animación son anteriores a la revisión: llevan una nota con las cifras vigentes.
 
 ## Orden de lectura
 
@@ -32,6 +31,7 @@ Esta carpeta reúne todo el proyecto universitario en archivos Markdown. Futcade
 | 6 | `01-documentacion/06-mineria-datos-proyecto-final.md` | Entregable académico completo |
 | 7 | `01-documentacion/07-README-mineria.md` | Guía técnica de la carpeta de minería |
 | 8 | `04-presentaciones/presentacion-vista-minable.md` | Las 14 diapositivas del avance, con notas de quién presenta |
+| 8b | `04-presentaciones/presentacion-pasos-1-al-4-kdd.md` | Presentación centrada en las etapas 1 a 4 de KDD, archivo por archivo |
 | 9 | `04-presentaciones/animacion-ruta-minable.md` | Paso a paso animado: 4 etapas KDD y entrenamiento |
 | 10 | `02-codigo/*.md` | Código Python completo, un archivo por script |
 | 11 | `03-datos/vista-minable-real.md` | Tabla real completa (566 filas) e informe KDD |
