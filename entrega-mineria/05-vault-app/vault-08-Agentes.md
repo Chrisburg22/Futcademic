@@ -12,7 +12,157 @@ Una entrada por conversación, de la más reciente a la más antigua. Sirve para
 que la siguiente sesión sepa qué se decidió y qué quedó pendiente sin releer el
 historial completo.
 
+## 2026-11-16 · Foto también en el editor del alumno
 
+- **Objetivo:** poder subir la foto desde el editor (pestaña «Datos»), no solo desde la cabecera de la ficha.
+- **Cambios:** `web/src/screens/admin/components/StudentEditForm.tsx` monta `PhotoUploader` al inicio de «Datos del alumno», con estado local para verla al instante. La foto usa su propio endpoint: se guarda al subirla, no con «Guardar cambios», y no marca el formulario como sucio (verificado: no aparece el aviso de cambios sin guardar).
+- **Tests:** `e2e/fotos.spec.ts` pasa a 5 casos (nuevo: subida desde el editor). Al haber dos uploaders en la ficha hubo que acotar los selectores con `.first()` y por `tabpanel`.
+- **Prueba en vivo:** subida y borrado reales desde el editor contra la base real; objeto creado en `avatars/students/...`, `students.avatar_url` actualizado, la cabecera reflejó la foto y luego se quitó. Storage y columna quedaron en 0.
+- **Dos e2e rojos que NO son del cambio:** `demo-manual` (11 — Configuración) y `mobile-layout` (el dock navega) fallan porque el **indicador del dev overlay de Next** (`nextjs-portal`, abajo a la izquierda) intercepta el clic del último enlace del nav y del dock. Comprobado: con una ventana más alta el mismo clic pasa. Apareció al activarse el aviso de vulnerabilidad de Next.
+- **Aviso de Next:** `next build` y `next dev` se detienen una vez mostrando «Your version of Next.js is affected by a known security vulnerability»; al reintentar continúan. Recomiendan `next upgrade --agent=security`.
+- **Pendientes:** nada commiteado; Render sigue sin los endpoints de fotos.
+
+
+
+
+## 2026-11-16 · Materiales de minería con cifras de la base
+
+- **Objetivo:** pasar todos los materiales a las cifras extraídas de la base y añadir el inventario de archivos a «Pasos 1 al 4 KDD».
+- **Cambios:** `mineria/README.md`, `compartir/01,04,05`, `docs/mineria-datos-proyecto-final.md`, `entrega-mineria/` (incluye `02-codigo/extraer_bd.md`) y zip; commit `e979f50` en el PR #20. Deck «Vista minable» v16 (limpieza, embudo e integración reescritas para la base), animación v3, deck «Pasos 1 al 4 KDD» v6 con la diapositiva `archivos`.
+- **Decisiones:** la segunda pregunta del árbol pasa a ser el día de la semana (18.8 % lunes vs 57.7 % mar-jue con racha); el inventario separa base, JSON (privado/informe) y CSV (real/sintético).
+- **Pendientes:** cuaderno de Gemini sin actualizar (falta que el usuario elija la cuenta); revisión visual de las diapositivas nuevas.
+
+## 2026-11-16 · Paso 1 de KDD desde la base de producción
+
+- **Objetivo:** que la vista minable parta de la base (datos actuales) y no de la hoja; rehacer la presentación «Pasos 1 al 4 KDD».
+- **Cambios:** `mineria/extraer_bd.py` (nuevo), `mineria/vista_minable.py` (fuente bd|hoja), `.gitignore` (`mineria/bd/`), README y vista regenerada; commit `049f2bf` en el PR #20. Deck «Pasos 1 al 4 KDD» v5 con las tablas y archivos de la base.
+- **Decisiones:** marcas con `created_at` anterior a su fecha se excluyen (calendario); la extracción no lee nombres, CURP, teléfonos ni notas médicas; se conservan las academias pequeñas.
+- **Pendientes:** el deck «Vista minable», la animación, `compartir/`, `docs/` y `entrega-mineria/` siguen con las cifras de la hoja (548/0.675); el cuaderno de Gemini espera que el usuario elija la cuenta.
+
+## 2026-11-16 · Correcciones del Modelo A y presentación «Pasos 1 al 4 KDD»
+
+- **Objetivo:** aplicar los hallazgos de la revisión, actualizar las presentaciones y crear una centrada en las etapas 1-4 de KDD.
+- **Cambios:** `mineria/vista_minable.py`, `mineria/entrenar_vista.py`, `mineria/validar_dataset.py`, README, `compartir/`, `docs/mineria-datos-proyecto-final.md` y `entrega-mineria/`; se borraron `validar_real.py` y `dataset_real.csv`. Commits `af795b7` y `bbc18ea` en el PR #20. Deck v14, animación v2 y deck nuevo de 11 diapositivas.
+- **Decisiones:** las cifras bajan (AUC 0.779 → 0.675), pero son las honestas; la presentación nueva es un artifact aparte y no reemplaza a la anterior; en las diapositivas, nombres y fechas de nacimiento son de ejemplo.
+- **Pendientes:** el cuaderno de Gemini sigue con los archivos viejos (Chrome abrió la cuenta de exhio; falta que el usuario elija la cuenta); revisión visual de las diapositivas nuevas; checks de Vercel fallando en el PR.
+
+## 2026-11-13 · Migración de fotos aplicada en Supabase
+
+- **Objetivo:** aplicar la migración del trabajo de fotos y probar la subida en vivo.
+- **Hecho:** `migrations/20261113_add_category_logo_and_image_buckets.sql` aplicada al proyecto real `vbuoiysqzyntsharrowf` (Futcademic): `categories.logo_url` creada y buckets `avatars`/`logos` con límite 5 MB y jpeg/png/webp.
+- **Hallazgo:** el bucket **`logos` no existía**; `uploadLogo` escribía en él desde antes, así que subir el logo de la academia fallaba siempre en producción. Queda documentado en [[Fotos e imagenes|Fotos e imágenes]].
+- **Entorno de prueba:** backend local en `:3010` (`npm run dev` en `backend/`) y web en `127.0.0.1:5173` arrancada con `NEXT_PUBLIC_API_URL=http://localhost:3010/api` **solo en el proceso**; `web/.env` apunta a Render y no se tocó.
+- **Prueba en vivo (hecha):** con sesión real de admin en la academia «Gallos San Rafael Serratos», ficha de un alumno → recorte con zoom 1.9x → subida. Resultados verificados por SQL: objeto `students/<school>/<id>-<uuid>.jpg` en el bucket `avatars`, `image/jpeg`, ~5.9 KB desde un PNG de 344 B; al subir una segunda foto **queda un solo objeto** (la anterior se borra); «Quitar foto» deja `avatar_url` en `null` y el bucket sin objetos. Errores reales contra el backend local: PDF renombrado `.jpg` → **415**, archivo de 6 MB → **413**, alumno de otra academia → **404**.
+- **Rastro:** la foto de prueba se quitó; `storage.objects` en `students/%` = 0 y alumnos con `avatar_url` = 0.
+- **Pendientes:** nada commiteado ni en el worktree ni en `backend/`; el backend desplegado en Render **todavía no tiene** estos endpoints (la prueba fue contra `localhost:3010`).
+
+## 2026-11-13 (2) · Fusión de `main` en el PR #21 (rediseño móvil)
+
+- **Objetivo:** resolver los conflictos del [PR #21](https://github.com/Chrisburg22/Futcademic/pull/21) con `main`, que había avanzado seis commits (PR #18, pase de lista de cancha; PR #19, PWA sin conexión).
+- **Decisiones de contenido, no de `git`:**
+  - `AttendancePage.tsx`: manda la pantalla de `main`. Su `OwnAttendance` ya arregla el defecto del alumno, así que `src/screens/StudentAttendancePage.tsx` se **borra** por redundante.
+  - El defecto del padre seguía vivo en `main`: su `ParentAttendance` arrancaba en `null` sin leer `?student_id=`. Se reaplica el inicializador perezoso con `useSearchParams`, el selector pasa a fichas con avatar de 44 px y la cabecera nombra al hijo elegido.
+  - `StudentAttendanceHistory.tsx` (que es de `main` y lo comparten padre, alumno y la ficha del admin) gana la tira `AttendanceStrip`, filas táctiles bajo `sm` en vez de la tabla con `minWidth={360}`, y `ErrorState` con reintento.
+  - `StudentAttendancePanel.tsx`: se acepta el borrado de `main`.
+  - `StudentEditForm.tsx`: se queda el `ActionBar` fijo y se tira el `Paper` a `bottom: 0` de `main`, que se solapaba con la barra de navegación; el aviso conserva el atajo ⌘/Ctrl + S.
+  - `app/(app)/attendance/page.tsx`: se conserva `ProtectedRoute` (convención del resto de rutas) con el `Suspense` que ambas ramas pedían.
+- **Tests tocados:** `e2e/familia-movil.spec.ts` se adapta a los textos de `main` («de 3 sesiones»); `e2e/pwa.spec.ts` acota «Carlos López» a la celda `Abrir ficha de…`, porque el listado monta tarjetas y tabla a la vez y `getByText` daba cinco coincidencias. Es el mismo tropiezo ya documentado en `AGENTS.md`.
+- **Verificación:** `npm run build` limpio, `npm run test:e2e` 146/146, `npm run test:pwa` 6/6. El PR quedó `MERGEABLE`/`CLEAN`.
+- **Pendiente:** probar en el iPhone con la PWA instalada (las áreas seguras nunca se han visto en hardware real); decidir si `e2e/capturas-movil.spec.ts` sigue en la corrida por defecto.
+
+## 2026-11-13 · Subida de fotos (alumnos, profesores, academia, categorías)
+
+- **Objetivo:** que se puedan subir fotos en todos los lugares donde la app ya las pintaba pero nadie podía cargarlas.
+- **Hueco real:** `students.avatar_url` se mostraba en 6 pantallas y ningún endpoint ni UI la escribía; `GET /users` no devolvía `avatar_url` (profesores siempre con iniciales); las categorías no tenían columna de imagen.
+- **Backend:** nuevo `api/services/images.ts` (validación por magic bytes reusando `detectDocumentType`, subida con UUID en el nombre y borrado de la anterior); `upload.controller.ts` reescrito; nuevas rutas `student/:id/photo` y `category/:id/logo` (POST y DELETE) más `DELETE /upload/avatar`; `avatar_url` añadido a los selects de usuarios, entrenadores y categorías. 454 tests en verde, `api-contract.json` regenerado.
+- **Web:** `PhotoUploader` + `ImageCropModal` (`react-easy-crop`, recorte a JPEG 512 px) usados en ficha de alumno, ficha de profesor, Mi perfil, academia y escudo de categoría; foto en el pase de lista; hooks de upload ahora invalidan queries. 125 e2e en verde, incluido `e2e/fotos.spec.ts` nuevo.
+- **Decisiones:** buckets públicos (no firmados) por caché del CDN; foto del alumno solo admin y profesor con `can_manage_students`; recorte interactivo en el cliente en vez de subir el original.
+- **Pendientes:** aplicar `migrations/20261113_add_category_logo_and_image_buckets.sql` en Supabase (añade `categories.logo_url` y versiona los buckets `avatars`/`logos`); nada commiteado; la foto `foto_alumno` del expediente sigue siendo documento privado y no se reutiliza como avatar.
+- **Ojo:** el trabajo está en el worktree `photo-upload-feature-3d7cac` (web + migración) y en `backend/` del checkout base, que es otro repo.
+
+
+
+
+
+## 2026-11-12 · Revisión y PR de minería
+
+- **Objetivo:** revisar el proyecto de minería (ultrareview) y subirlo al repositorio.
+- **Cambios:** commit de `entrega-mineria/`; push de la rama; PR https://github.com/Chrisburg22/Futcademic/pull/20 creado con la cuenta Chrisburg22 (la cuenta activa de gh no es colaboradora).
+- **Decisiones:** no subir el `.zip` ni `entrega-mineria 2/`; no hacer merge.
+- **Pendientes:** corregir los alumnos con cero asistencias, la validación cruzada por fecha y la unión de repetidos; los checks de Vercel fallan (probablemente ajenos); hay credenciales en `scripts/extract_data.py` en `main`.
+
+## 2026-11-13 · Commit y PR #21 del rediseño móvil
+
+- **Objetivo:** commitear el trabajo de las fases 0-5 y abrir PR a `main`.
+- **Hecho:** commit `ac8a11a` (64 archivos; 22 nuevos, `QuickActionsDock` eliminado), rama empujada y [PR #21](https://github.com/Chrisburg22/Futcademic/pull/21) abierto. Los 3 checks en verde.
+- **`gh` con dos cuentas:** la activa era `sifuentesjonath`, que no es colaboradora, y el `pr create` falló con «must be a collaborator». Se cambió a `Chrisburg22`, se creó el PR y **se dejó la cuenta activa como estaba**. El `push` sí funcionó porque va por SSH con otra credencial.
+- **Se revirtió `web/next-env.d.ts`:** lo reescribe `next dev` al arrancar para los tests y el propio archivo dice que no se edita.
+- **El PR está en conflicto con `main`**, que avanzó 6 commits desde la base de la rama (`0a6460b`): entraron el PR #18 (pase de lista de cancha e histórico de deserción) y el #19 (PWA offline). Conflicto en `AttendancePage.tsx`, `app/(app)/attendance/page.tsx`, `StudentEditForm.tsx` y `StudentAttendancePanel.tsx` (este último **borrado** en `main`).
+- **Hallazgo clave:** `main` **ya arregla el defecto del alumno** con `OwnAttendance`, así que `StudentAttendancePage.tsx` sobra; pero **no** arregla el del padre (`ParentAttendance` sigue sin leer `?student_id=`). Al resolver: quedarse con `OwnAttendance`, conservar la corrección del padre, descartar los cambios al panel borrado.
+- **De paso se explica** la contradicción detectada ayer: el `AGENTS.md` de este worktree dice que la PWA está diferida porque la rama es anterior al merge del #19.
+- **Pendientes:** resolver el conflicto (son decisiones de contenido, no de git) y volver a pasar build y suite.
+
+## 2026-11-12 (5) · Cierre de la Fase 4 y Fase 5 (limpieza)
+
+- **Objetivo:** terminar lo que faltaba del módulo del admin y dejar las reglas escritas.
+- **Cambios:** `web/src/screens/admin/components/StudentWizard.tsx` e `InviteStudentModal.tsx` pasan a `BottomSheet` (el alta usa `BirthDateInput`); sección «Mobile UI rules» nueva en el **`AGENTS.md` raíz**; aserciones acotadas en `web/e2e/demo-manual.spec.ts` y `web/e2e/fase1.spec.ts`.
+- **Decisiones:** las reglas van al `AGENTS.md` raíz y **no** a `web/AGENTS.md`, que lo regenera `next dev`. Los 23 `size="compact-*"` se conservan: el suelo CSS los sube a 44 px en teléfono y el spec de toque lo demuestra sin excepciones; barrerlos cambiaría la densidad de escritorio sin ganar nada.
+- **Comprobaciones:** `grep useMediaQuery` devuelve solo `src/hooks/useEsMovil.ts`; `e2e/touch-targets.spec.ts` sin excepciones; `demo-manual` y `fase1` 33/33.
+- **Hallazgo sin tocar:** el `AGENTS.md` del worktree dice que la PWA está diferida y que no hay service worker, mientras la bóveda documenta `public/sw.js` y soporte offline. Una de las dos está desactualizada.
+- **Pasada final:** build en verde y **139 pruebas e2e pasadas, 0 fallos**. Con esto quedan terminadas las fases 0 a 5 del rediseño móvil.
+- **Pendientes:** nada commiteado.
+
+## 2026-11-12 (4) · Fase 4: módulo de alumnos del admin en teléfono
+
+- **Objetivo:** rediseñar para móvil el listado y la ficha de alumnos del admin y el profesor.
+- **Cambios:** `web/src/screens/admin/StudentsPage.tsx`, `components/StudentsToolbar.tsx`, `components/StudentsTable.tsx`, `components/StudentsSummary.tsx`, `components/StudentEditForm.tsx`, `components/StudentPaymentsPanel.tsx`, `components/StudentAttendancePanel.tsx`, `components/TutorReminderModal.tsx`, `StudentDetailPage.tsx`; `components/common/ActionBar.*` (prop `mobileOnly`), `BottomSheet.tsx` (`closeLabel`), `InfoPopover.tsx`, `BirthDateInput.tsx`; `components/chat/ChatWidget.tsx`.
+- **Resultado:** el primer alumno pasó de ~550 px de cromo a ~270 px. `e2e/touch-targets.spec.ts` quedó **sin excepciones**.
+- **Decisiones:** en móvil no se ofrecen columnas ni densidad (son conceptos de la tabla); para ver más alumnos están «Anteriores/Siguientes». El buscador se unificó en una sola instancia. Los filtros secundarios solo se montan en escritorio: en teléfono viven en la hoja, y tenerlos en los dos sitios duplicaría cada etiqueta.
+- **Defectos de capas corregidos:** el botón flotante del chat (z-index 300) se montaba sobre la barra «Nuevo alumno» y sobre la hoja de filtros; bajó a 190 y ahora descuenta `--action-bar-height`. La paginación de escritorio se movió a la izquierda porque el mismo botón interceptaba sus clics.
+- **Coste asumido:** tabla y tarjetas conviven en el DOM, así que varios textos aparecen dos veces y algunas aserciones hubo que acotarlas (`getByRole('cell', …)`, la región de la barra masiva). A cambio desaparece el parpadeo y el desbordamiento horizontal.
+- **Pendientes:** `StudentWizard` e `InviteStudentModal` siguen como `Modal`; falta la Fase 5 (limpieza y reglas en `web/AGENTS.md`). Nada commiteado. Build y suite completa quedaron corriendo al cerrar.
+
+## 2026-11-12 (3) · Suite completa tras la Fase 3: 4 fallos corregidos
+
+- **Objetivo:** dejar en verde build y suite completa después del rediseño móvil y de las correcciones que destaparon las capturas.
+- **Resultado de la primera pasada:** build en verde; e2e 135 pasados / 4 fallos.
+- **Cambios:** `web/src/screens/DashboardPage.tsx` (descripción del alumno a «Lo que viene y cómo vas»); aserciones en `web/e2e/fase4.spec.ts`, `web/e2e/fase5.spec.ts` y `web/e2e/demo-manual.spec.ts`.
+- **Causas de los fallos:** dos eran el renombre de la etiqueta del KPI («Racha» → «Sesiones seguidas») sin propagar a `fase4`/`fase5`; los otros dos, colisiones de `getByText` por subcadena: la descripción del inicio repetía literalmente la etiqueta de la tarjeta (se arregló la **redacción**, no el test) y el encabezado «Compañeros» choca con el badge «3 compañeros» de `CategorySummary` (ahí sí `{ exact: true }`).
+- **Tropiezo:** el reemplazo de `exact: true` alcanzó también al test 04 de `demo-manual` (ficha del admin), que estaba pasando; revertido. `demo-manual` quedó 22/22.
+- **Pasada final:** build en verde y **139 pruebas e2e pasadas, 0 fallos**.
+- **Pendientes:** fases 4 (módulo de alumnos del admin; `StudentsFilterSheet.tsx` escrito pero sin cablear) y 5 (limpieza y `web/AGENTS.md`); nada commiteado.
+
+## 2026-11-12 (2) · Capturas móviles y cuatro defectos que destaparon
+
+- **Objetivo:** ver cómo quedaron las vistas de la Fase 3 en teléfono, con Playwright y backend simulado.
+- **Cambios:** nuevo `web/e2e/capturas-movil.spec.ts` (390×844, 15 PNG por rol en el directorio temporal, no en el repo). Correcciones en `web/src/components/layout/MobileNav.tsx`, `web/src/components/common/ActionBar.module.css`, `web/src/components/common/BottomSheet.tsx`, `web/src/components/attendance/AttendanceStrip.tsx`, `web/src/screens/dashboard/ParentDashboard.tsx`, `web/src/screens/ChildrenPage.tsx`, `web/src/screens/StudentAttendancePage.tsx` y `web/src/screens/FinancesPage.tsx`.
+- **Defectos encontrados mirando las capturas, no por los tests:**
+  1. La barra inferior iba en `z-index: 250` y los overlays de Mantine en 200, así que **tapaba el botón principal de las hojas inferiores**. Barra a 150, `ActionBar` a 160. El test pasaba porque el botón existía y Playwright lo daba por visible.
+  2. `tt="capitalize"` sobre el valor crudo pintaba «Pendiente_pago»; ahora se usa `ESTADOS_ALUMNO`/`normalizarEstado`.
+  3. `AttendanceStrip` arrancaba por la sesión más vieja y las recientes quedaban fuera de pantalla; ahora el scroll empieza al final.
+  4. El título del padre decía «Finanzas» mientras la navegación decía «Pagos»; unificado en «Pagos» (`demo-manual` y `fase3` actualizados).
+- **Decisiones:** se quitó el asa de `BottomSheet` (el `Drawer` pinta la cabecera primero, así que quedaba bajo el título y se leía como separador). El profesor conserva «Asistencias» en la barra: esa pantalla es pase de lista **e** histórico.
+- **Pendientes:** sin cambios respecto a la entrada anterior — fases 4 y 5, y nada commiteado. El resultado del build y la suite completa tras estas correcciones quedó corriendo al cerrar.
+
+## 2026-11-12 · UX/UI móvil de la sección de alumnos (fases 0-3)
+
+- **Objetivo:** rediseñar para teléfono la sección de alumnos —módulo de gestión del admin y vistas del rol alumno/padre—, con prioridad en gente que no usa aplicaciones. Plan de 6 fases aprobado; ejecutadas 0 a 3 en el worktree `estudiantes-mobile-ux-ui-d7e888`.
+- **Fase 0, suelo táctil:** `web/src/lib/theme.ts` y `web/src/styles/globals.css`. El mínimo de 44 px lo pone CSS (`touch-target`/`touch-row` vía `classNames`), no `defaultProps`, que no gana contra un `size="compact-sm"` explícito. Se sobrescriben `--mantine-font-size-{xs,sm,md}` bajo 48em.
+- **Fase 1, navegación:** nuevos `web/src/components/layout/navItems.ts` (fuente única) y `MobileNav.tsx`; eliminado `QuickActionsDock.tsx`; `Sidebar.tsx`, `AppShell.tsx` y `AdminDashboard.tsx` adelgazados. Cuatro destinos por rol + «Más», montada una vez en `AppShell`.
+- **Fase 2, primitivas:** 11 componentes nuevos en `web/src/components/common/` (`ActionBar`, `BottomSheet`, `TouchRow`, `KpiCarousel`, `FilterChip`, `FilterSheet`, `InfoPopover`, `ErrorState`, `SkeletonPage`, `SearchInput`, `BirthDateInput`), más `hooks/useEsMovil.ts`, `components/attendance/AttendanceStrip.tsx` y `PageHeader` ampliado.
+- **Fase 3, alumno y padre:** reescritas `StudentDashboard`, `ParentDashboard`, `StatsPage`, `TeamPage`, `AchievementsPage`, `ChildrenPage`, `DashboardPage`, `OnboardingPage`, `ProfilePage` y el bloque `ParentFinances` de `FinancesPage.tsx`; nueva `StudentAttendancePage.tsx`; `CategorySummary` pone el horario antes que los entrenadores; `AuthLayout.module.css` respeta áreas seguras.
+- **Dos defectos reales corregidos:** el alumno que entraba a `/attendance` veía el pase de lista del profesor (`AttendancePage` no desviaba su rol), y el padre que llegaba con `?student_id=` caía en un selector vacío (`ParentAttendance` nunca leía la query, al contrario que `ParentFinances`).
+- **Decisiones:** no se añade `vaul` (~12-15 kB más Radix, segundo gestor de foco junto al `ModalsProvider` ya montado); `BottomSheet` va sobre el `Drawer` de Mantine. Para el padre `/finances` se llama «Pagos»; el profesor conserva «Asistencias» porque esa pantalla tiene pase de lista **y** histórico. Las etiquetas de KPI del alumno dejan de abreviar («Tu mejor racha» en vez de «Racha máx»).
+- **Pruebas:** nuevos `web/e2e/touch-targets.spec.ts` (lista de excepciones que se vacía por fases) y `web/e2e/familia-movil.spec.ts`; reescrito `mobile-layout.spec.ts`. Verde: build, `mobile-layout` (13), `touch-targets` (2), `familia-movil` (6) y los 14 specs que la Fase 1 rompió (`chat-widget`, `fase2`, `fase3`, `demo-manual`).
+- **Hallazgo de entorno:** el worktree no tiene `web/.env` (gitignorado), así que `npm run build` necesita `NEXT_PUBLIC_SUPABASE_URL`/`_ANON_KEY`/`NEXT_PUBLIC_API_URL` inline. Ojo con `npm run build | tail`: el código de salida es el del `tail`, no el del build.
+- **Pendientes:** re-ejecutar la suite completa tras la Fase 3 (`demo-manual`, `fase1/3/4` tocan pantallas de familia); fases 4 (módulo del admin; `StudentsFilterSheet.tsx` ya escrito pero sin cablear) y 5 (limpieza y `web/AGENTS.md`). «Avisar que ya pagué» por WhatsApp **no se puede hacer**: `schools` solo tiene `contacto_email`, no teléfono. Nada commiteado.
+
+## 2026-11-11 · Cuaderno en Gemini Notebook
+
+- **Objetivo:** pasar el proyecto de minería y la bóveda a Gemini Notebook para generar material de estudio.
+- **Cambios:** bóveda consolidada en `entrega-mineria/05-vault-app/` (9 `.md`, sin frontmatter); cuaderno creado desde Chrome con 27 fuentes.
+- **Decisiones:** el conector `notebooklm-mcp-server` falló al autenticar; se subió vía Chrome. Bóveda revisada sin secretos antes de subir.
+- **Pendientes:** el `.zip` no incluye `05-vault-app/`; nada commiteado.
 
 ## 2026-11-11 · Paquete de minería solo en Markdown (para Gemini)
 

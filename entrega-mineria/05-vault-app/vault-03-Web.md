@@ -162,6 +162,12 @@ Endpoints, *tools* sensibles y tablas del lado servidor: [[Chat IA - backend]].
 
 # Convenciones web
 
+## Dónde están las reglas de UI móvil
+
+En el **`AGENTS.md` del repo raíz**, sección «Mobile UI rules», no en
+`web/AGENTS.md`: ese lo regenera `next dev` y cualquier cosa escrita ahí se
+pierde. La sección de abajo, «Capa móvil», es la versión larga con los porqués.
+
 ## Antes de escribir código Next
 
 `web/AGENTS.md` lo dice explícito: **esta versión de Next no es la que conoces**. Lee la guía relevante en `web/node_modules/next/dist/docs/` antes de usar una API que no tengas clara.
@@ -248,9 +254,86 @@ empezando en lunes (Mantine no lee el locale global de dayjs). Sin eso,
 
 Mantine es la base (tema en `src/lib/theme.ts`); Tailwind se usa para utilidades. `postcss-preset-mantine` está configurado. Evitar CSS global nuevo sin necesidad.
 
+## Capa móvil (teléfono, < 48em)
+
+Añadida el 12-nov junto al rediseño de las vistas de alumno y padre.
+
+- **Suelo táctil de 44 px por CSS, no por `defaultProps`.** `theme.ts` inyecta
+  `classNames: { root: 'touch-target' }` en `Button` y `ActionIcon` (y
+  `touch-row` en `Checkbox`/`Radio`/`Switch`); las reglas viven en
+  `globals.css` bajo `@media (max-width: 48em)`. Hace falta porque
+  `defaultProps` **no** gana contra una prop explícita: un
+  `Button size="compact-sm"` escrito en el código seguiría midiendo ~26 px.
+- **Escala de texto en móvil**: `globals.css` sobrescribe
+  `--mantine-font-size-{xs,sm,md}` en `html:root` bajo 48em (13/15/16 px).
+  Mantine v7 lee los tamaños de esas variables, así que sube de golpe todo el
+  `size="xs"` sin tocar llamadas. `html:root` gana en especificidad a las
+  variables que inyecta `MantineProvider`.
+- **Navegación**: `src/components/layout/navItems.ts` es la **fuente única** de
+  destinos (antes estaban duplicados en `Sidebar.tsx` y en los `SHORTCUTS` de
+  `AdminDashboard.tsx`). `MobileNav.tsx` —que sustituyó a
+  `QuickActionsDock.tsx`— pinta cuatro destinos por rol más «Más», que abre el
+  mismo `useDisclosure` que el Burger. Se monta una sola vez en `AppShell`.
+  `labelFor`/`shortLabelFor` permiten que una pantalla se llame distinto según
+  el rol (`/finances` es «Finanzas» para el admin y «Pagos» para el padre).
+  `esActivo` no usa coincidencia por prefijo en `to: '/'`: `startsWith('/')`
+  marcaría Inicio en toda la app.
+- **Capas (`z-index`)**: contenido < barra de navegación **150** < `ActionBar`
+  fija **160** < overlays de Mantine (modales, drawers, hojas) **200** < botón
+  del chat **190**. La barra estaba en 250 y el botón del chat en 300: los dos
+  se dibujaban **encima** de las hojas inferiores y de los modales, tapando sus
+  campos y su botón principal. El test no lo veía porque el control existía y
+  Playwright lo daba por visible. Cualquier elemento fijo nuevo va por debajo
+  de 200. El botón del chat además descuenta `--action-bar-height`, igual que
+  ya descontaba `--quick-dock-height`.
+- **Alturas de barras, en un solo sitio**: `MobileNav` publica
+  `--quick-dock-height` (60 px) y `ActionBar` publica `--action-bar-height`
+  (72 px) por atributo en el `body`; `.mantine-AppShell-main` suma las dos más
+  `env(safe-area-inset-bottom)`. Cambiar una altura es cambiar la constante del
+  componente y la variable del CSS, nada más.
+- **Detectar móvil**: `visibleFrom`/`hiddenFrom` o media queries en CSS Modules
+  para maquetación; `src/hooks/useEsMovil.ts` (con
+  `getInitialValueInEffect: false`) **solo** para contenido que aparece tras una
+  interacción. `useMediaQuery` sin opciones devuelve `undefined` en el primer
+  render y pinta la rama de escritorio.
+- **Hojas inferiores sobre `Drawer` de Mantine** (`common/BottomSheet.tsx`). Se
+  descartó `vaul`: ~12-15 kB más `@radix-ui/react-dialog`, o sea un segundo
+  gestor de foco junto al `ModalsProvider` que ya está montado, y su ventaja
+  (arrastre con anclaje) no la descubre el público objetivo.
+- **Primitivas compartidas** en `src/components/common/`: `ActionBar`,
+  `BottomSheet`, `TouchRow`, `KpiCarousel`, `FilterChip`, `FilterSheet`,
+  `InfoPopover` (sustituye a los `Tooltip` que eran el único sitio donde vivía
+  un dato: en táctil no se abren), `ErrorState`, `SkeletonPage`, `SearchInput`,
+  `BirthDateInput`. Más `attendance/AttendanceStrip`.
+- **Etiquetas de estado**: nunca pintar el valor de la base con
+  `tt="capitalize"` («Pendiente_pago»). `ESTADOS_ALUMNO` + `normalizarEstado` de
+  `lib/students.ts` dan etiqueta y color.
+- **Hojas inferiores sin asa**: el `Drawer` de Mantine pinta su cabecera
+  primero, así que una barrita bajo el título se lee como separador. El botón de
+  cerrar va a `size="lg"`.
+- **Regla de las dos ramas**: cuando una pantalla pinta tabla en escritorio y
+  filas en móvil, se montan las dos y elige el CSS. `getByRole` de Playwright no
+  ve lo oculto, pero `getByText` sí: no duplicar títulos ni encabezados (por eso
+  `PageHeader` renderiza el título una sola vez y solo cambia `fz`/`mb`).
+
 ## Pruebas
 
-- `npm run build` incluye typecheck: es la verificación mínima.
+- `npm run build` incluye typecheck: es la verificación mínima. **En un
+  worktree hace falta pasarle las variables**, porque `web/.env` está
+  gitignorado y no se copia:
+  `NEXT_PUBLIC_SUPABASE_URL=https://stub.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=test-anon-key NEXT_PUBLIC_API_URL=http://localhost:3000/api npm run build`.
+  Y nunca `npm run build | tail`: el código de salida sería el del `tail`.
+- **`compact-*` se permite**: el suelo CSS lo sube a 44 px en teléfono y
+  `e2e/touch-targets.spec.ts` lo comprueba. Lo que no vale es construir con
+  `compact-*` o con un `Badge` un control que solo exista en el teléfono.
+- **`getByText` es subcadena**, así que dos textos que se solapan rompen por
+  *strict mode*. Pasó dos veces: una descripción de pantalla que repetía la
+  etiqueta de una tarjeta («Tu próximo entrenamiento…») —ahí el arreglo era la
+  redacción, no el test— y el encabezado «Compañeros» contra el badge
+  «3 compañeros» de `CategorySummary`, donde sí toca `{ exact: true }`.
+- `getByRole` **no** ve lo oculto por CSS, pero el cajón lateral de móvil sigue
+  en el árbol de accesibilidad aunque esté fuera del viewport: al buscar un
+  enlace de la pantalla hay que acotar por su etiqueta exacta o por el `main`.
 - `npm run test:e2e` usa backend mockeado y levanta el dev server.
 - `npm run test:smoke` golpea producción y crea academias reales: solo con `ALLOW_PROD_SMOKE=yes` y conciencia del daño.
 
@@ -644,6 +727,42 @@ desaparecía de pendientes de pago). Corregido en el repo del backend, rama
 - El estado de cuenta calcula el mes en curso con la fecha de vencimiento
   `2026-MM-10` escrita a mano.
 
+## Móvil (12-nov)
+
+El módulo se rediseñó para teléfono. Lo que cambió respecto a lo descrito
+arriba:
+
+- **Tarjetas y tabla conviven en el DOM** y elige el CSS
+  (`hiddenFrom`/`visibleFrom`). Antes lo decidía `useMediaQuery`, que en el
+  primer render devuelve `undefined`: se pintaba la tabla —hasta 1392 px de
+  ancho mínimo— y luego saltaba a tarjetas. El coste es marcado duplicado; a
+  cambio desaparece el parpadeo y el desbordamiento horizontal.
+- La tarjeta es `TouchRow`: **toda** la superficie abre la ficha. El menú «…»
+  recupera lo que la tabla tenía en columnas y en teléfono se perdía: llamar,
+  WhatsApp, uniforme y cambiar estado.
+- **Filtros en hoja inferior** (`StudentsFilterSheet`), agrupados por pregunta
+  —¿Quién? ¿Qué le falta? ¿Debe? ¿Desde cuándo?— con borrador y botón
+  «Ver N alumnos». A la vista quedan solo el buscador, «Filtros» y tres atajos:
+  «Por atender», «Debe» y «Expediente incompleto». El orden vive dentro de la
+  hoja.
+- **Una sola instancia del buscador** (`SearchInput`): dos campos con la
+  etiqueta «Buscar» rompían `getByLabel` y dejaban dos controles con el mismo
+  nombre en el documento.
+- Los KPI son `KpiCarousel` con anclaje y puntos, al 46 % de ancho.
+- La acción principal vive en `ActionBar` al pie: «Nuevo alumno», o «Acciones»
+  con alumnos seleccionados (la barra masiva pegada arriba se queda para
+  escritorio). La paginación numérica se sustituye por «Anteriores /
+  Siguientes», y en escritorio pasó a la izquierda porque el botón flotante del
+  chat se comía sus clics.
+- El cajón de edición rápida y el modal de mover categoría son `BottomSheet`
+  (lateral y centrado desde `sm`); `TutorReminderModal` también.
+- Ficha: sin `keepMounted`, cabecera con solo llamar y WhatsApp más un menú
+  «Más», «Resolver» como botón, etiquetas de indicador en `sm` sin mayúsculas y
+  los dos paneles con scroll lateral (pagos y asistencia) con filas táctiles en
+  teléfono; el de asistencia estrena la tira de sesiones.
+- `StudentWizard` e `InviteStudentModal` también son `BottomSheet`, y el alta usa
+  la rueda de fecha nativa del teléfono (`BirthDateInput`).
+
 ---
 
 ## Nota: Modulo Asistencias
@@ -979,6 +1098,34 @@ ese token; ver [[Roles y permisos#Rutas públicas por token]].
 
 > [!warning] `/settings/export` no declara roles
 > La pantalla es visible para cualquier autenticado, pero `GET /export/payments` y `/export/attendance` son solo admin. Un profesor o padre que pulse esos botones recibe error. Ver [[Deriva conocida]].
+
+## Asistencias por rol (13-nov)
+
+`AttendancePage` despacha **explícitamente** por rol:
+
+| Rol | Pantalla |
+| --- | --- |
+| `padre` | `ParentAttendance` (en el mismo archivo) |
+| `alumno` | `OwnAttendance` (en el mismo archivo) |
+| `profesor`, `admin`, `super_admin` | `RollCallScreen` |
+
+Antes era `if (padre) …; return <RollCallView />`, así que **el alumno caía en
+el pase de lista del profesor**: selector de categoría, fecha, tipo de sesión y
+un switch por compañero. `app/(app)/attendance/page.tsx` declara ahora sus
+`roles` y envuelve la pantalla en `<Suspense>`, porque lee categoría, fecha y
+periodo de la query —y el padre su `?student_id=`— con `useSearchParams`.
+
+`ParentAttendance` y `OwnAttendance` son dos cabeceras distintas sobre el mismo
+componente, `components/attendance/StudentAttendanceHistory.tsx`, que consulta
+`/attendances/student/:id`. En teléfono pinta la tira de últimas sesiones
+(`AttendanceStrip`) y filas táctiles; desde `sm`, la tabla. Ahí vive también el
+`ErrorState` con reintento: sin él un fallo de red se leía como «Sin
+asistencias registradas».
+
+El padre llega desde Inicio con `?student_id=`, que `ParentAttendance` lee como
+inicializador perezoso del `useState`. Con varios hijos, el selector son fichas
+con avatar de 44 px, no un desplegable. `StudentAttendancePanel.tsx` ya no
+existe: la ficha del alumno usa el mismo `StudentAttendanceHistory`.
 
 ---
 

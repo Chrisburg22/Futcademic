@@ -23,6 +23,7 @@ que vas a tocar. Si eres un agente, sigue [[Protocolo de busqueda]].
 | Desplegar un cambio | [[Despliegue]] |
 | Endpoints, roles y permisos del backend | [[API - rutas]] · [[Mapa backend]] |
 | Autenticación, tenant y autorización | [[Middlewares y autenticacion]] · [[Auth y usuarios]] |
+| Subir fotos, avatares, logo o escudo | [[Fotos e imagenes\|Fotos e imágenes]] |
 | Alumnos, asistencias, pagos, eventos o categorías | [[Alumnos y acceso]] · [[Asistencias]] · [[Pagos]] · [[Eventos y entrenamientos]] · [[Categorias y equipo]] |
 | Rutas, roles y pantallas web | [[Rutas web]] · [[Pantallas]] · [[Mapa web]] |
 | Qué hook de TanStack llama a qué endpoint | [[Hooks y endpoints]] |
@@ -130,7 +131,7 @@ Llevan `tipo: generado`, `hash` y un comentario de cabecera. **No se editan a ma
 
 # Índice completo
 
-46 notas. Ordenadas por carpeta; el nombre del enlace es el título visible.
+47 notas. Ordenadas por carpeta; el nombre del enlace es el título visible.
 
 ## 00-Inicio
 
@@ -154,6 +155,7 @@ Llevan `tipo: generado`, `hash` y un comentario de cabecera. **No se editan a ma
 - [[Categorias y equipo]]
 - [[Chat IA - backend]]
 - [[Eventos y entrenamientos]]
+- [[Fotos e imagenes|Fotos e imágenes]]
 - [[Mapa backend]]
 - [[Middlewares y autenticacion]]
 - [[Pagos]]

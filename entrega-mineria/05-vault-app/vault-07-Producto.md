@@ -67,6 +67,20 @@ Carpeta `entrega-mineria/` (+ `.zip`, sin seguimiento en git, solo en el worktre
 
 Actualización 2026-11-11: `entrega-mineria/` se rehízo solo con `.md` para pasarla a Gemini (índice `00-LEEME-PRIMERO.md`; código, datos y diapositivas convertidos; cifras corregidas a 566 filas en las copias). Zip de 72 KB.
 
+Cuaderno de estudio (2026-11-11): Gemini Notebook "Futcademic · Minería de Datos D02 2026 B" con 27 fuentes: los 18 `.md` de `entrega-mineria/` + la bóveda consolidada en 9 archivos (`entrega-mineria/05-vault-app/vault-<carpeta>.md`).
+
+PR #20 (2026-11-12): vista minable, entrenamiento y `entrega-mineria/` subidos en la rama `claude/futcademic-university-project-e6e6ec`. Pendientes de la revisión: 6 alumnos sin asistencia inflan el AUC; la validación cruzada no separa fechas; los repetidos entre pestañas deben unir marcas.
+
+## Correcciones de la revisión y presentaciones (2026-11-16)
+
+`vista_minable.py` excluye 18 alumnos sin ninguna asistencia y une las marcas de los 6 repetidos; `entrenar_vista.py` valida por alumno y fecha, marca exactamente el 25 % y lee el corte del informe. Se borraron `validar_real.py` y `real/dataset_real.csv`. Cifras vigentes del Modelo A: 548 filas, 146 alumnos, 14.1 % faltas, corte 12/oct (300/248), AUC prueba 0.675 (scikit-learn igual), recall 0.533, lift 2.13×, CV alumno+fecha 0.630, solo tasa previa 0.639. Presentaciones: deck "Vista minable" y animación actualizados; nueva "Pasos 1 al 4 KDD" (https://claude.ai/artifact/UPXMFATicRBVNLkEK1hwjR), centrada en los archivos de cada etapa.
+
+## Paso 1 desde la base de producción (2026-11-16)
+
+`mineria/extraer_bd.py` lee de Supabase `schools`, `students` (sin nombre ni contacto), `attendances` y `deleted_students` con `SUPABASE_URL`/`SUPABASE_SERVICE_KEY` (o `FUTCADEMIC_ENV`) y escribe `mineria/bd/extraccion_bd.json` (en `.gitignore`). `vista_minable.py` usa la base por defecto (`--fuente hoja` para la ruta vieja) y descarta 31 marcas registradas antes de su fecha. La base trae casi lo mismo que la hoja (la cargó el 22/oct) más 7 marcas del 12/nov. Cifras: 544 filas, 147 alumnos, 18 fechas, 14.3 % faltas, AUC 0.643 (scikit-learn igual), recall 0.542, lift 2.17×, CV 0.620, tasa previa 0.613.
+
+Materiales al día con la base (2026-11-16): deck «Vista minable» v16, animación v3, `compartir/`, `docs/`, README y `entrega-mineria/` usan 544 filas / AUC 0.643 (commit `e979f50`). «Pasos 1 al 4 KDD» v6 añade la diapositiva `archivos` (inventario: base Supabase, `.json`, `.csv`).
+
 ---
 
 ## Nota: Landing
