@@ -1,6 +1,6 @@
 # Presentación: Vista minable — Futcademic
 
-14 diapositivas. Avance de la vista minable y entrenamiento del modelo, con cifras corregidas tras la revisión (12/11/2026). Texto de cada diapositiva y notas de quién presenta.
+14 diapositivas. Avance de la vista minable y entrenamiento del modelo, con datos extraídos de la base de producción (16/11/2026). Texto de cada diapositiva y notas de quién presenta.
 
 ---
 
@@ -53,21 +53,21 @@ La vista minable
 ### Una fila es una sesión de un alumno 
 La pregunta que responde la tabla: ¿faltará este alumno a su siguiente sesión? Cada fila describe lo que se sabía antes de esa sesión y guarda, al final, lo que pasó. 
  | alumno  | fecha  | edad  | n_previas  | tasa_previa  | racha_faltas  | dias_desde  | falta_siguiente 
- | A132  | 2026-10-13  | 10  | 2  | 0.50  | 1  | 5  | 0 
- | A132  | 2026-10-15  | 10  | 3  | 0.67  | 0  | 2  | 0 
- | A132  | 2026-10-22  | 10  | 4  | 0.75  | 0  | 7  | 0 
-548 
+ | A001  | 2026-10-13  | 10  | 2  | 0.50  | 1  | 5  | 0 
+ | A001  | 2026-10-15  | 10  | 3  | 0.67  | 0  | 2  | 0 
+ | A001  | 2026-10-22  | 10  | 4  | 0.75  | 0  | 7  | 0 
+544 
 filas 
-146 
+147 
 alumnos 
 11 
 columnas 
-14.1 % 
+14.3 % 
 de las filas son falta 
-Filas reales, con identificadores seudonimizados · 26 de marzo al 22 de octubre de 2026 
+Filas reales, con identificadores seudonimizados · 26 de marzo al 12 de noviembre de 2026 · extraídas de la base 
 Christian 
 
-> **Notas del presentador:** Presenta: Christian Alejandro Ramos Pérez. Explica la unidad de análisis antes que cualquier etapa: una fila no es un alumno, es un alumno en una sesión concreta. Lee una fila de la tabla: el alumno A132, el 13 de octubre, tiene 10 años, dos sesiones previas, asistió a la mitad, viene de una falta y pasaron 5 días desde su última marca; la última columna, la que se quiere predecir, vale 0 porque ese día sí asistió. La tabla final tiene 548 filas de 146 alumnos y 11 columnas; el 14.1 % de las filas son falta, un desbalance que hay que tener presente. Aclara que los alumnos están seudonimizados (A001, A002…): no hay nombres ni fechas de nacimiento en la vista.
+> **Notas del presentador:** Presenta: Christian Alejandro Ramos Pérez. Explica la unidad de análisis antes que cualquier etapa: una fila no es un alumno, es un alumno en una sesión concreta. Lee una fila de la tabla: el alumno A001, el 13 de octubre, tiene 10 años, dos sesiones previas, asistió a la mitad, viene de una falta y pasaron 5 días desde su última marca; la última columna, la que se quiere predecir, vale 0 porque ese día sí asistió. La tabla final tiene 544 filas de 147 alumnos y 11 columnas, extraídas directo de la base de producción de la app; el 14.3 % de las filas son falta, un desbalance que hay que tener presente. Aclara que los alumnos están seudonimizados (A001, A002…): no hay nombres ni fechas de nacimiento en la vista.
 
 ---
 
@@ -77,22 +77,22 @@ Ruta · KDD
 
 ### Cuatro etapas, cuatro números 
 1 · Limpieza 
-−102 
-alumnos fuera por fecha de nacimiento ausente o imposible, o porque nunca asistieron 
+−208 
+alumnos fuera: edad imposible, sin marcas, nunca asistieron o una sola marca 
 2 · Integración 
-12→1 
-pestañas de la hoja unidas en una sola tabla por alumno y sesión 
+3→1 
+tablas de la base unidas por sus llaves en una tabla alumno × sesión 
 3 · Selección 
 8+1 
 atributos y una etiqueta, con su tipo, sus valores y sus atípicos 
 4 · Transformación 
-548 
+544 
 filas calculadas solo con lo ocurrido antes de cada sesión 
-Todo lo que sigue sale de un script que se puede volver a correr: mineria/vista_minable.py . Si cambia la hoja, cambia la vista. 
+Todo sale de dos scripts que se pueden volver a correr: extraer_bd.py lee la base y vista_minable.py construye la vista. 
 Andrea: etapas 1 y 2 · Sergio: etapas 3 y 4 
 Christian 
 
-> **Notas del presentador:** Presenta: Christian Alejandro Ramos Pérez. Es el mapa de lo que viene; no te detengas en los números, solo anuncia qué etapa deja qué rastro. Limpieza: 79 alumnos sin fecha de nacimiento, 5 con fecha imposible y 18 que nunca asistieron suman 102 que no entran; los 6 repetidos no se pierden, se unen. Integración: la hoja de cálculo tiene una pestaña por categoría, 12 con datos, y se unen en una sola tabla. Selección: 8 atributos y una etiqueta, cada uno descrito. Transformación: 548 filas, calculadas con ventana previa para no mirar el futuro. Pasa la palabra a Andrea para las dos primeras etapas.
+> **Notas del presentador:** Presenta: Christian Alejandro Ramos Pérez. Es el mapa de lo que viene; no te detengas en los números, solo anuncia qué etapa deja qué rastro. Los datos salen directo de la base de producción de la app. Limpieza: de 355 alumnos quedan 147; salen 3 con edad imposible, 147 sin ninguna marca, 23 que nunca asistieron y 35 con una sola marca, en total 208. Integración: tres tablas de la base, asistencias, alumnos y academias, se unen por sus llaves en una sola tabla. Selección: 8 atributos y una etiqueta, cada uno descrito. Transformación: 544 filas, calculadas con ventana previa para no mirar el futuro. Pasa la palabra a Andrea para las dos primeras etapas.
 
 ---
 
@@ -100,22 +100,21 @@ Christian
 
 Etapa 1 · Limpieza de datos 
 
-### Siete problemas encontrados en la hoja 
+### Seis problemas encontrados en la base 
  | Problema  | Casos  | Qué se hizo 
- | Sin fecha de nacimiento  | 79  | Fuera: sin edad no hay atributo y la base la exige 
- | Fecha de nacimiento imposible  | 5  | Fuera: edades de −795, 121 y 24 años 
- | Alumno repetido entre pestañas  | 6  | Se unen sus marcas (llave: nombre + nacimiento) 
- | Alumno que nunca asistió  | 18  | Fuera: ya no está activo e inflaría el modelo 
- | Marca con fecha futura  | 23  | Fuera: son sesiones que aún no ocurren 
- | Código distinto de A o F  | 95  | No es presencia ni falta: no se carga 
- | Pago con mes repetido  | 18  | Se conserva el primero (los pagos no entran a la vista) 
+ | Marca registrada antes de su fecha  | 31  | Fuera: es calendario, no asistencia 
+ | Edad imposible (nacido en 2026)  | 3  | Fuera: fecha de relleno al darlo de alta 
+ | Alumno sin ninguna marca  | 147  | Fuera: su academia aún no pasa lista 
+ | Alumno que nunca asistió  | 23  | Fuera: ya no está activo e inflaría el modelo 
+ | Alumno con una sola marca  | 35  | Fuera: no alcanza para una fila con historia 
+ | Datos sensibles  | —  | Nombre, CURP, teléfono y notas médicas no se leen 
 
 **Regla de la limpieza: lo dudoso se excluye, no se inventa **
 Ningún dato faltante se rellenó con un promedio ni con un valor supuesto. 
-Fuente: hoja de asistencia de Gallos San Rafael Serratos, extraída con scripts/extract_serratos.py 
+Fuente: base de producción de Futcademic, extraída con mineria/extraer_bd.py 
 Andrea 
 
-> **Notas del presentador:** Presenta: Andrea Lizbeth Torres Arana. Cada fila es un problema real que apareció al leer la hoja. 79 alumnos no traían fecha de nacimiento: sin ella no se puede calcular la edad y la base de datos la exige, así que se dejaron fuera en lugar de inventarla. 5 traían fechas imposibles: el año 2821, tres con 1905 y una de 2002 en una categoría de 12 a 13 años; darían edades de menos 795, 121 y 24 años. 6 alumnos aparecían en dos pestañas: se unieron sus marcas para no perder sesiones. 18 alumnos solo tenían faltas, nunca asistieron: ya no están activos, y sus filas serían aciertos triviales que inflaban el modelo, así que se excluyen. 23 marcas tienen fecha de finales de octubre, posterior al corte del 22, así que no son asistencia sino calendario. 95 celdas traen un código que no es A ni F (lesión, Córdica, liga, partido de preparación u otro color) y no se puede decir si fue presencia o falta. 18 pagos repetían mes. Termina con la regla: lo dudoso se excluye, nunca se rellena.
+> **Notas del presentador:** Presenta: Andrea Lizbeth Torres Arana. Cada fila es un problema real que apareció al extraer la base. 31 marcas se guardaron días antes de la fecha que dicen, por ejemplo marcas del 27 y 29 de octubre registradas el 22: no pueden ser asistencia, son calendario, y salen. 3 alumnos tienen fecha de nacimiento en 2026, edad cero: son fechas de relleno que se pusieron al darlos de alta. 147 alumnos están inscritos pero no tienen ninguna marca, porque su academia todavía no pasa lista en la app. 23 solo tienen faltas, nunca asistieron: ya no están activos y sus filas serían aciertos fáciles que inflarían el modelo. 35 tienen una sola marca, que no alcanza para construir una fila con historia. Y la última fila es una decisión de privacidad: la extracción nunca lee nombres, CURP, teléfonos ni notas médicas. Termina con la regla: lo dudoso se excluye, nunca se rellena.
 
 ---
 
@@ -123,29 +122,27 @@ Andrea
 
 Etapa 1 · Resultado de la limpieza 
 
-### De 352 alumnos a 146 
-Alumnos en la hoja 
+### De 355 alumnos a 147 
+Alumnos en la base 
+355 
+Con edad posible 
 352 
-Con fecha de nacimiento 
-273 
-Con fecha posible 
-268 
-Repetidos unidos 
-262 
+Con alguna marca 
+205 
 Con alguna asistencia 
-244 
+182 
 Con al menos 2 marcas 
-146 
+147 
 
 **Por qué hacen falta 2 marcas **
 La primera marca solo sirve de historia: sin una sesión anterior no hay nada que usar para predecir. 
 
-**Las marcas, de 791 a 548 filas **
-791 marcas A/F, 715 al limpiar; la primera de cada alumno no genera fila y quedan 548. 
+**Las marcas, de 809 a 544 filas **
+809 marcas extraídas, 726 al limpiar; la primera de cada alumno no genera fila y quedan 544. 
 Los alumnos descartados no se borran: siguen en la base de producción 
 Andrea 
 
-> **Notas del presentador:** Presenta: Andrea Lizbeth Torres Arana. Es el mismo resultado de la lámina anterior, ahora como embudo. Se parte de 352 alumnos en la hoja; sin fecha de nacimiento quedan 273; sin fechas imposibles, 268; al unir los 6 repetidos, 262; quitando a 18 que nunca asistieron, 244. El último escalón es el más grande: 98 alumnos tienen una sola marca o ninguna, y con una sola marca no se puede construir ni una fila, porque cada fila usa lo ocurrido en sesiones anteriores. Quedan 146 alumnos. Aclara que ninguno de los descartados se borra de la base: solo no entran a esta vista. De las 791 marcas A o F, quedan 715 al limpiar y la vista tiene 548 filas.
+> **Notas del presentador:** Presenta: Andrea Lizbeth Torres Arana. Es el mismo resultado de la lámina anterior, ahora como embudo. Se parte de 355 alumnos en la base; con edad posible quedan 352. El escalón más grande es el siguiente: solo 205 tienen alguna marca, porque muchos alumnos están inscritos en academias que todavía no pasan lista en la app. Quitando a 23 que nunca asistieron quedan 182, y quitando a 35 con una sola marca, 147: con una sola marca no se puede construir ni una fila, porque cada fila usa lo ocurrido en sesiones anteriores. Aclara que ninguno de los descartados se borra de la base: solo no entran a esta vista. De las 809 marcas extraídas quedan 726 al limpiar, y la vista tiene 544 filas.
 
 ---
 
@@ -153,27 +150,27 @@ Andrea
 
 Etapa 2 · Integración de datos 
 
-### Doce pestañas, una sola tabla 
+### Tres tablas, una sola vista 
 Fuente 
 
-**Hoja de la academia **
-14 pestañas, una por categoría; 12 traen datos. La asistencia va como letra A o F, o solo como color de celda. 
+**Base de la app **
+attendances (809 marcas), students (355) y schools (20), extraídas con extraer_bd.py. 
 Reglas de unión 
-Llave del alumno: nombre + fecha de nacimiento; si se repite, se unen sus marcas 
-Cada día de la hoja se resuelve contra el mes del encabezado 
-Las pestañas A y B de un año comparten categoría 
-El nombre se sustituye por un seudónimo (A001, A002…) 
+Cada marca apunta a su alumno por student_id 
+El alumno da la edad (birth_date) y la academia (school_id) 
+Una sola marca por alumno y día: se queda la primera registrada 
+El identificador se sustituye por un seudónimo (A001, A002…) 
 Resultado 
 
 **Alumno × sesión **
 Una fila por marca: alumno, fecha y si estuvo presente. De ahí se calculan los atributos. 
 
 **Lo que todavía no se integra **
-Los pagos (llevan fecha estimada: día 1 del mes) y el tutor del alumno (la hoja no lo trae). Se integrarán para el modelo de morosidad. 
-Los datos ya están cargados en producción; la vista se construye desde el mismo archivo 
+Los pagos y las bajas (deleted_students) ya se extraen, pero no entran a esta vista: servirán para los modelos de morosidad y deserción. 
+Al cargar la hoja en la base, las 12 pestañas ya quedaron unidas: un alumno, un identificador 
 Andrea 
 
-> **Notas del presentador:** Presenta: Andrea Lizbeth Torres Arana. La integración aquí no es juntar bases distintas sino juntar doce pestañas que se parecen pero no son iguales. Primero, la llave: nombre más fecha de nacimiento identifica al alumno aunque aparezca en dos pestañas, y en ese caso se juntan sus marcas de ambas para no perder sesiones. Segundo, las fechas: cada pestaña trae los días sueltos (28, 30, 5, 7…) y cruzan dos meses, así que cada día se resuelve contra el mes del encabezado. Tercero, las pestañas A y B del mismo año comparten categoría, porque la base de datos solo admite una categoría por año de nacimiento en cada academia. Cuarto, el nombre se cambia por un seudónimo, porque son menores de edad. El resultado es una tabla alumno por sesión. Sé honesta con lo pendiente: los pagos tienen fecha estimada y el tutor no viene en la hoja, por eso no están en esta vista.
+> **Notas del presentador:** Presenta: Andrea Lizbeth Torres Arana. Integrar es juntar fuentes distintas en una sola tabla; aquí son tres tablas de la base unidas por sus llaves. Cada marca de asistencia trae el identificador del alumno; con él se busca al alumno, de donde sale su fecha de nacimiento, y con ella la edad, y su academia. Si un alumno tuviera dos marcas el mismo día, se queda la primera que se registró. Antes de escribir cualquier archivo, el identificador se cambia por un seudónimo, porque son menores de edad. El resultado es una tabla alumno por sesión. Menciona que en la base ya no hay que unir pestañas: al cargar la hoja, cada alumno quedó con un solo identificador. Sé honesta con lo pendiente: los pagos y las bajas ya se extraen, pero no están en esta vista; servirán para los modelos de morosidad y deserción.
 
 ---
 
@@ -184,18 +181,18 @@ Etapa 3 · Selección de datos
 ### Ocho atributos y una etiqueta 
  | Atributo  | Tipo  | Qué significa  | Valores observados 
  | edad  | Entero  | Años cumplidos en 2026  | 5 a 15 · mediana 10 
- | n_previas  | Entero  | Sesiones anteriores  | 1 a 9 · mediana 3 
+ | n_previas  | Entero  | Sesiones anteriores  | 1 a 6 · mediana 3 
  | tasa_previa  | Decimal 0–1  | Asistencias ÷ sesiones previas  | 0 a 1 · mediana 1.00 
  | tasa_ultimas3  | Decimal 0–1  | Lo mismo, últimas 3 sesiones  | 0 · 0.33 · 0.5 · 0.67 · 1 
- | racha_faltas  | Entero  | Faltas seguidas justo antes  | 0 a 4 · mediana 0 
- | dias_desde_ultima  | Entero  | Días desde la marca anterior  | 2 · 5 · 7 · 12 · 14 · 166 
- | mes  | Categórico  | Mes de la sesión  | 3 · 4 · 9 · 10 
+ | racha_faltas  | Entero  | Faltas seguidas justo antes  | 0 a 5 · mediana 0 
+ | dias_desde_ultima  | Entero  | Días desde la marca anterior  | 2 · 5 · 7 · 12 · 14 · 105 · 203 
+ | mes  | Categórico  | Mes de la sesión  | 3 · 4 · 9 · 10 · 11 
  | dia_semana  | Categórico  | 0 lunes … 6 domingo  | 0 a 3 (lunes a jueves) 
- | falta_siguiente  | Binario · etiqueta  | 1 si faltó, 0 si asistió  | 0: 471 · 1: 77 
+ | falta_siguiente  | Binario · etiqueta  | 1 si faltó, 0 si asistió  | 0: 466 · 1: 78 
 Fuera de la vista: el identificador y la fecha, que solo sirven para ordenar y particionar 
 Sergio 
 
-> **Notas del presentador:** Presenta: Sergio Samhir Peña Galván. Esta es la tabla que pide la actividad: cada atributo con su tipo, sus valores posibles y lo que realmente se observó. Léela por bloques. Los cuatro primeros describen al alumno y su historial: edad, cuántas sesiones tiene, y qué proporción de ellas asistió, en total y en las últimas tres. Racha de faltas y días desde la última marca describen qué tan reciente es su ausencia. Mes y día de la semana describen cuándo ocurre la sesión. La última fila, en naranja, es la etiqueta: 1 si faltó y 0 si asistió; hay 77 faltas y 471 asistencias. Dos observaciones honestas sobre los valores: los días de la semana solo van de lunes a jueves, porque son los días de entrenamiento de la academia; y el mes casi no varía, porque casi todo ocurre en octubre. Eso lo vuelve un atributo débil, y se revisará antes de minar. Quedan fuera de la vista el identificador del alumno y la fecha: sirven para ordenar y para partir los datos, no para predecir.
+> **Notas del presentador:** Presenta: Sergio Samhir Peña Galván. Esta es la tabla que pide la actividad: cada atributo con su tipo, sus valores posibles y lo que realmente se observó. Léela por bloques. Los cuatro primeros describen al alumno y su historial: edad, cuántas sesiones tiene, y qué proporción de ellas asistió, en total y en las últimas tres. Racha de faltas y días desde la última marca describen qué tan reciente es su ausencia. Mes y día de la semana describen cuándo ocurre la sesión. La última fila, en naranja, es la etiqueta: 1 si faltó y 0 si asistió; hay 78 faltas y 466 asistencias. Dos observaciones honestas sobre los valores: los días de la semana solo van de lunes a jueves, porque son los días de entrenamiento de la academia; y el mes casi no varía, porque casi todo ocurre en octubre. Eso lo vuelve un atributo débil, y se revisará antes de minar. Quedan fuera de la vista el identificador del alumno y la fecha: sirven para ordenar y para partir los datos, no para predecir.
 
 ---
 
@@ -205,23 +202,23 @@ Etapa 3 · Valores atípicos
 
 ### Un error y varios atípicos legítimos 
 El error 
-−795 
-años de edad. La primera versión de la vista traía 4 filas con edades de −795 y 24; venían de fechas de nacimiento imposibles. Se excluyeron y la edad quedó entre 5 y 15. 
+0 
+años de edad: 3 alumnos «nacidos» en 2026, fechas de relleno al darlos de alta. Se excluyeron y la edad quedó entre 5 y 15. 
  | Atributo  | Atípicos  | Qué son 
- | racha_faltas  | 66  | Rachas de 1 a 4 faltas 
- | tasa_ultimas3  | 111  | Alumnos con faltas recientes 
- | tasa_previa  | 123  | Menos de la mitad de asistencia 
- | mes  | 86  | Marzo y abril: el resto es octubre 
- | dias_desde_ultima  | 7  | 12 a 166 días: pausas largas 
+ | racha_faltas  | 68  | Rachas de 1 a 5 faltas 
+ | tasa_ultimas3  | 114  | Alumnos con faltas recientes 
+ | tasa_previa  | 127  | Menos de la mitad de asistencia 
+ | mes  | 83  | Todo lo que no es octubre 
+ | dias_desde_ultima  | 11  | 12 a 203 días: pausas largas 
  | edad, n_previas, dia_semana  | 0–1  | Casi ninguno 
 Criterio: fuera del rango de 1.5 × el rango intercuartil 
 
 **Decisión: se conservan los atípicos de conducta **
-Una racha de 4 faltas no es un error de captura: es el comportamiento que se quiere predecir. Quitarla borraría la señal. 
+Una racha de 5 faltas no es un error de captura: es el comportamiento que se quiere predecir. Quitarla borraría la señal. 
 Detectado al perfilar los atributos con mineria/vista_minable.py 
 Sergio 
 
-> **Notas del presentador:** Presenta: Sergio Samhir Peña Galván. Separa dos cosas que suelen confundirse. Primero, el error: al perfilar la edad en la primera versión de la vista apareció un mínimo de menos 795 años y un máximo de 24 en una categoría de 12 a 13; eran cuatro filas que venían de fechas de nacimiento imposibles en la hoja, y se excluyeron. Es un hallazgo de esta etapa, no algo que ya estuviera limpio. Segundo, los atípicos estadísticos: con el criterio de 1.5 veces el rango intercuartil, cinco atributos marcan valores atípicos, pero ninguno es un error. Racha, tasa de asistencia reciente y tasa total marcan a los alumnos que faltan; el mes marca marzo y abril porque casi toda la vista es de octubre; y de 12 a 166 días son pausas largas, la mayor de un alumno que volvió tras meses en otra pestaña. Decisión: se conservan, porque borrarlos eliminaría justo el comportamiento que se quiere predecir.
+> **Notas del presentador:** Presenta: Sergio Samhir Peña Galván. Separa dos cosas que suelen confundirse. Primero, el error: al perfilar la edad aparecieron tres alumnos con edad cero, nacidos en 2026, que no pueden entrenar en una academia; son fechas de relleno que se pusieron al darlos de alta, y se excluyeron. Con la hoja de cálculo pasaba algo parecido: había edades de menos 795 y 24 años. Segundo, los atípicos estadísticos: con el criterio de 1.5 veces el rango intercuartil, cinco atributos marcan valores atípicos, pero ninguno es un error. Racha, tasa de asistencia reciente y tasa total marcan a los alumnos que faltan; el mes marca todo lo que no es octubre, porque casi toda la vista es de octubre; y de 12 a 203 días son pausas largas: un grupo entrenó en marzo y abril y volvió a pasar lista el 12 de noviembre. Decisión: se conservan, porque borrarlos eliminaría justo el comportamiento que se quiere predecir.
 
 ---
 
@@ -230,7 +227,7 @@ Sergio
 Etapa 4 · Transformación 
 
 ### De marcas sueltas a una fila por sesión 
-Un alumno real, seudonimizado (A132). Cada fila usa solo lo ocurrido antes de esa sesión. 
+Un alumno real, seudonimizado (A001). Cada fila usa solo lo ocurrido antes de esa sesión. 
  | Fecha  | Marca  | n_previas  | tasa_previa  | racha  | días  | falta_siguiente 
  | 2026-10-06  | Asistió  | —  | —  | —  | —  | solo historia 
  | 2026-10-08  | Faltó  | 1  | 1.00  | 0  | 2  | 1 
@@ -242,14 +239,14 @@ Un alumno real, seudonimizado (A132). Cada fila usa solo lo ocurrido antes de es
 falta_siguiente vale 1 si en esa sesión faltó. 
 
 **Partición por fecha **
-Entrena antes del 12 de octubre (300 filas) y prueba después (248). 
+Entrena antes del 13 de octubre (344 filas) y prueba después (200). 
 
 **Sin normalizar **
 El árbol de decisión no lo necesita; se hará con la regresión logística. 
 Se usa la fecha y no un sorteo al azar: un alumno aporta varias filas parecidas entre sí 
 Sergio 
 
-> **Notas del presentador:** Presenta: Sergio Samhir Peña Galván. Este es el ejemplo más importante de la presentación, léelo despacio. El alumno A132 tiene cinco marcas en octubre. La primera, el 6, es solo historia: no hay nada antes de ella, así que no genera fila. La del 8 sí: antes de ella tenía una sesión y la había asistido, por eso su tasa previa es 1.00; ese día faltó, y por eso la etiqueta, en naranja, vale 1. La del 13: antes tenía dos sesiones y una falta, su tasa previa es 0.50 y viene de una falta, así que la racha es 1; esta vez sí asistió y la etiqueta vale 0. Cada fila solo usa información anterior: nunca se mira el futuro para predecir. La partición también respeta el tiempo: se entrena con sesiones anteriores al 12 de octubre y se prueba con las posteriores, porque un mismo alumno aporta varias filas parecidas y un sorteo al azar mezclaría al mismo alumno en entrenamiento y prueba. No se normalizó nada todavía: el árbol de decisión no lo necesita.
+> **Notas del presentador:** Presenta: Sergio Samhir Peña Galván. Este es el ejemplo más importante de la presentación, léelo despacio. El alumno A001 tiene cinco marcas en octubre. La primera, el 6, es solo historia: no hay nada antes de ella, así que no genera fila. La del 8 sí: antes de ella tenía una sesión y la había asistido, por eso su tasa previa es 1.00; ese día faltó, y por eso la etiqueta, en naranja, vale 1. La del 13: antes tenía dos sesiones y una falta, su tasa previa es 0.50 y viene de una falta, así que la racha es 1; esta vez sí asistió y la etiqueta vale 0. Cada fila solo usa información anterior: nunca se mira el futuro para predecir. La partición también respeta el tiempo: se entrena con sesiones anteriores al 13 de octubre y se prueba con las posteriores, porque un mismo alumno aporta varias filas parecidas y un sorteo al azar mezclaría al mismo alumno en entrenamiento y prueba. No se normalizó nada todavía: el árbol de decisión no lo necesita.
 
 ---
 
@@ -261,7 +258,7 @@ Entrenamiento del modelo
 1 
 
 **Partir por fecha **
-Entrena con 300 filas antes del 12 de octubre; prueba con 248 posteriores. 
+Entrena con 344 filas antes del 13 de octubre; prueba con 200 posteriores. 
 2 
 
 **Ajustar el árbol **
@@ -275,15 +272,15 @@ Cada fila recibe una probabilidad de falta, según la hoja del árbol donde cae.
 **Evaluar **
 AUC en la prueba y recall al marcar el 25 % de las sesiones con más riesgo. 
 Lo que aprendió el árbol 
-3 % a 27 % 
+3 % a 25 % 
 de riesgo si no traía faltas seguidas 
-29 % a 63 % 
+19 % a 58 % 
 si venía de una falta o más 
-La racha de faltas pesa 0.57 de la importancia total del modelo. 
+La racha de faltas pesa 0.55 de la importancia total del modelo. 
 Entrenado con mineria/entrenar_vista.py sobre mineria/real/vista_minable.csv 
 Sergio 
 
-> **Notas del presentador:** Presenta: Sergio Samhir Peña Galván. Explica cómo se está entrenando el modelo, en cuatro pasos. Uno: se parte por fecha, no al azar: entrena con 300 filas antes del 12 de octubre y se prueba con las 248 posteriores. Dos: se ajusta un árbol de decisión CART con criterio Gini, profundidad 4 y mínimo de 15 filas por hoja, para que no memorice. Tres: cada fila cae en una hoja del árbol y recibe la probabilidad de falta de esa hoja. Cuatro: se evalúa con AUC en la prueba y con el recall al marcar el 25 % de las sesiones de más riesgo. La razón de usar un árbol es que se lee: lo que aprendió es sencillo. Si el alumno no traía faltas seguidas, el riesgo va de 3 % a 27 %; si venía de una falta o más, sube de 29 % a 63 %. La racha de faltas explica 0.57 de la importancia del modelo.
+> **Notas del presentador:** Presenta: Sergio Samhir Peña Galván. Explica cómo se está entrenando el modelo, en cuatro pasos. Uno: se parte por fecha, no al azar: entrena con 344 filas antes del 13 de octubre y se prueba con las 200 posteriores. Dos: se ajusta un árbol de decisión CART con criterio Gini, profundidad 4 y mínimo de 15 filas por hoja, para que no memorice. Tres: cada fila cae en una hoja del árbol y recibe la probabilidad de falta de esa hoja. Cuatro: se evalúa con AUC en la prueba y con el recall al marcar el 25 % de las sesiones de más riesgo. La razón de usar un árbol es que se lee: lo que aprendió es sencillo. Si el alumno no traía faltas seguidas, el riesgo va de 3 % a 25 %; si venía de una falta o más, sube de 19 % a 58 %, y llega a 58 % de martes a jueves. La racha de faltas explica 0.55 de la importancia del modelo.
 
 ---
 
@@ -293,20 +290,20 @@ Comprobación
 
 ### Dos programas, el mismo resultado 
  | Herramienta  | AUC prueba  | Recall al 25 %  | Lift 
- | Árbol propio, Python estándar  | 0.675  | 0.533  | 2.13× 
- | scikit-learn 1.6.1, DecisionTreeClassifier  | 0.675  | 0.533  | 2.13× 
- | Validación por alumno y fecha, 5 pliegues  | 0.630  | —  | — 
+ | Árbol propio, Python estándar  | 0.643  | 0.542  | 2.17× 
+ | scikit-learn 1.6.1, DecisionTreeClassifier  | 0.643  | 0.542  | 2.17× 
+ | Validación por alumno y fecha, 5 pliegues  | 0.620  | —  | — 
 
 **Cómo repetirlo **
 Un solo comando; si scikit-learn está instalado, hace también el contraste. 
 python3 mineria/entrenar_vista.py 
 
 **Lo que corrigió la revisión **
-Antes daba 0.779, inflado por 18 alumnos que nunca asistieron. Sin ellos, el árbol supera a la tasa previa sola (0.639). La cifra más realista es 0.630. 
-Mismos parámetros, misma partición por fecha: 300 filas de entrenamiento y 248 de prueba 
+Antes daba 0.779, inflado por alumnos que nunca asistieron. Sin ellos, el árbol supera a la tasa previa sola (0.613). La cifra más realista es 0.620. 
+Mismos parámetros, misma partición por fecha: 344 filas de entrenamiento y 200 de prueba 
 Andrea 
 
-> **Notas del presentador:** Presenta: Andrea Lizbeth Torres Arana. Esto responde a cómo se sabe que el resultado es real. El árbol se escribió dos veces: una con Python estándar, sin librerías, y otra con scikit-learn, la biblioteca que usa casi cualquier herramienta de minería. Con los mismos parámetros y la misma partición por fecha dan exactamente lo mismo: AUC de 0.675 en la prueba, recall de 0.533 al marcar exactamente el 25 % de las sesiones y lift de 2.13. Cualquiera lo puede repetir con un comando. La tercera fila es la más exigente: validación por alumno y por fecha, que impide que el mismo alumno o la misma sesión estén en entrenamiento y en prueba; ahí el AUC medio es 0.630, con un rango de 0.457 a 0.741 entre pliegues: con pocos alumnos el resultado varía mucho, y es la cifra más realista. Cuenta la corrección: una revisión del código encontró 18 alumnos que nunca asistieron; sus filas eran aciertos fáciles que subían el AUC a 0.779. Al quitarlos baja a 0.675, pero ahora el árbol sí supera a la tasa de asistencia previa sola, que da 0.639.
+> **Notas del presentador:** Presenta: Andrea Lizbeth Torres Arana. Esto responde a cómo se sabe que el resultado es real. El árbol se escribió dos veces: una con Python estándar, sin librerías, y otra con scikit-learn, la biblioteca que usa casi cualquier herramienta de minería. Con los mismos parámetros y la misma partición por fecha dan exactamente lo mismo: AUC de 0.643 en la prueba, recall de 0.542 al marcar exactamente el 25 % de las sesiones y lift de 2.17. Cualquiera lo puede repetir con un comando. La tercera fila es la más exigente: validación por alumno y por fecha, que impide que el mismo alumno o la misma sesión estén en entrenamiento y en prueba; ahí el AUC medio es 0.620, con un rango de 0.385 a 0.811 entre pliegues: con pocos alumnos el resultado varía mucho, y es la cifra más realista. Cuenta la corrección: una revisión del código encontró alumnos que nunca asistieron; sus filas eran aciertos fáciles que subían el AUC a 0.779. Sin ellos baja, pero el árbol sí supera a la tasa de asistencia previa sola, que da 0.613.
 
 ---
 
@@ -315,23 +312,23 @@ Andrea
 Resultado · Vista minable 
 
 ### Lo que quedó después de las cuatro etapas 
-548 
+544 
 filas 
-146 
+147 
 alumnos 
-17 
+18 
 fechas de sesión 
-14.1 % 
+14.3 % 
 de las filas son falta 
  | Etapa  | Qué quedó 
- | 1 · Limpieza  | 102 alumnos y 23 marcas futuras fuera; 6 repetidos unidos; nada se rellenó 
- | 2 · Integración  | 12 pestañas en una tabla alumno × sesión, con seudónimos 
- | 3 · Selección  | 8 atributos y 1 etiqueta; 4 filas con edad imposible corregidas 
- | 4 · Transformación  | 548 filas con ventana previa; partición por fecha, 300 y 248 
-Del 26 de marzo al 22 de octubre de 2026 · mineria/real/vista_minable.csv 
+ | 1 · Limpieza  | 208 alumnos y 31 marcas de calendario fuera; nada se rellenó 
+ | 2 · Integración  | 3 tablas de la base en una tabla alumno × sesión, con seudónimos 
+ | 3 · Selección  | 8 atributos y 1 etiqueta; 3 alumnos con edad imposible excluidos 
+ | 4 · Transformación  | 544 filas con ventana previa; partición por fecha, 344 y 200 
+Del 26 de marzo al 12 de noviembre de 2026 · mineria/real/vista_minable.csv 
 Christian 
 
-> **Notas del presentador:** Presenta: Christian Alejandro Ramos Pérez. Recoge lo que contaron Andrea y Sergio en una sola lámina. La vista tiene 548 filas de 146 alumnos, repartidas en 17 fechas de sesión entre el 26 de marzo y el 22 de octubre. Detalle importante: el 14.1 % de las filas son faltas, así que no está balanceada y más adelante se evaluará con recall y no solo con exactitud. La tabla de abajo es el resumen de qué dejó cada etapa: la limpieza sacó 102 alumnos y 23 marcas futuras sin rellenar nada; la integración unió las pestañas y las marcas de los 6 repetidos; la selección describió los atributos y corrigió cuatro filas con edad imposible; la transformación calculó las 548 filas y partió por fecha. Todo se puede regenerar con el script mineria/vista_minable.py.
+> **Notas del presentador:** Presenta: Christian Alejandro Ramos Pérez. Recoge lo que contaron Andrea y Sergio en una sola lámina. La vista tiene 544 filas de 147 alumnos, repartidas en 18 fechas de sesión entre el 26 de marzo y el 12 de noviembre, extraídas directo de la base de la app. Detalle importante: el 14.3 % de las filas son faltas, así que no está balanceada y se evalúa con recall y no solo con exactitud. La tabla de abajo resume qué dejó cada etapa: la limpieza sacó 208 alumnos y 31 marcas de calendario sin rellenar nada; la integración unió tres tablas de la base; la selección describió los atributos y excluyó tres alumnos con edad imposible; la transformación calculó las 544 filas y partió por fecha. Todo se regenera con extraer_bd.py y vista_minable.py.
 
 ---
 
@@ -342,20 +339,20 @@ Siguiente paso
 ### Qué falta antes de minar 
 
 **Clase desbalanceada **
-Solo 14.1 % de las filas son falta. Hay que medir con recall y probar un umbral, no solo con exactitud. 
+Solo 14.3 % de las filas son falta. Hay que medir con recall y probar un umbral, no solo con exactitud. 
 
 **Un atributo débil **
-462 de 548 filas caen en octubre, así que el mes casi no distingue. Se evaluará si se descarta. 
+461 de 544 filas caen en octubre, así que el mes casi no distingue. Se evaluará si se descarta. 
 
 **Historial corto **
-La hoja registra bloques cortos: 98 alumnos tienen una sola marca o ninguna y quedaron fuera de la vista. 
+147 alumnos inscritos no tienen ninguna marca y 35 solo una: hace falta que más academias pasen lista. 
 
 **Bajas sin historial **
 Las 33 bajas no tienen asistencia registrada. La deserción necesitará su propia vista. 
 
 **Siguiente: comparar modelos y priorizar el recall **
-Regresión logística y bosque aleatorio frente al árbol; después, integrar pagos y tutor para el modelo de morosidad. 
+Regresión logística y bosque aleatorio frente al árbol; después, integrar pagos y bajas, que ya se extraen de la base. 
 Andrea Lizbeth Torres Arana · Sergio Samhir Peña Galván · Christian Alejandro Ramos Pérez 
 Minería de Datos · D02 2026 B 
 
-> **Notas del presentador:** Presenta: Christian Alejandro Ramos Pérez, con Andrea y Sergio al frente para las preguntas. Cierra con honestidad: la vista está lista, pero no es perfecta. Cuatro cosas quedan abiertas. Uno, la clase está desbalanceada: solo 14.1 % son faltas, así que la métrica clave será el recall, porque una falsa alarma cuesta una llamada y una falta no detectada cuesta más. Dos, el mes es un atributo débil, porque casi todo es octubre. Tres, hay historial corto: la hoja registra bloques de pocas sesiones, y 98 alumnos tienen una sola marca o ninguna. Cuatro, las bajas no tienen asistencia, así que la deserción necesita su propia vista. El árbol de decisión ya está entrenado y comprobado; siguiente paso: compararlo con regresión logística y bosque aleatorio y priorizar el recall. Invita a Andrea a responder dudas de limpieza e integración, y a Sergio sobre atributos y transformación.
+> **Notas del presentador:** Presenta: Christian Alejandro Ramos Pérez, con Andrea y Sergio al frente para las preguntas. Cierra con honestidad: la vista está lista, pero no es perfecta. Cuatro cosas quedan abiertas. Uno, la clase está desbalanceada: solo 14.3 % son faltas, así que la métrica clave será el recall, porque una falsa alarma cuesta una llamada y una falta no detectada cuesta más. Dos, el mes es un atributo débil, porque casi todo es octubre. Tres, hay historial corto: la hoja registra bloques de pocas sesiones, 147 alumnos no tienen ninguna marca y 35 solo una. Cuatro, las bajas no tienen asistencia, así que la deserción necesita su propia vista. El árbol de decisión ya está entrenado y comprobado; siguiente paso: compararlo con regresión logística y bosque aleatorio y priorizar el recall. Invita a Andrea a responder dudas de limpieza e integración, y a Sergio sobre atributos y transformación.

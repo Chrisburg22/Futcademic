@@ -78,21 +78,21 @@ Casi toda la asistencia viene de una academia (751 de 779 pases). Las 33 bajas p
 
 ### Modelo A · datos reales · ¿faltará a su siguiente sesión?
 
-Entrenado solo con la asistencia real de una academia. **Sin ningún dato simulado.**
+Entrenado solo con la asistencia real, extraída directo de la base de producción con `mineria/extraer_bd.py`. **Sin ningún dato simulado.**
 
 | | |
 |---|---|
-| Filas | 548 (146 alumnos, 17 fechas, 26/mar – 22/oct) |
-| Etiqueta | Faltó a esa sesión (14.1 % de las filas) |
+| Filas | 544 (147 alumnos, 18 fechas, 26/mar – 12/nov) |
+| Etiqueta | Faltó a esa sesión (14.3 % de las filas) |
 | Atributos | Solo lo ocurrido **antes** de la sesión: edad, sesiones previas, tasa de asistencia previa y de las últimas 3, racha de faltas, días desde la última, mes, día de la semana |
-| Partición | **Temporal**: entrena antes del 12/oct (300 filas), prueba después (248 filas, 30 faltas) |
-| **AUC en prueba** | **0.675** (entrenamiento 0.748; scikit-learn da lo mismo) |
-| **Sobreajuste** | **0.073** |
-| Marcando exactamente al 25 % de las sesiones | Recall **0.533** · precisión 0.258 · lift **2.13×** |
-| Validación por alumno y fecha | AUC media **0.630** |
-| Sin modelo (solo tasa previa) | AUC 0.639 |
+| Partición | **Temporal**: entrena antes del 13/oct (344 filas), prueba después (200 filas, 24 faltas) |
+| **AUC en prueba** | **0.643** (entrenamiento 0.735; scikit-learn da lo mismo) |
+| **Sobreajuste** | **0.091** |
+| Marcando exactamente al 25 % de las sesiones | Recall **0.542** · precisión 0.260 · lift **2.17×** |
+| Validación por alumno y fecha | AUC media **0.620** |
+| Sin modelo (solo tasa previa) | AUC 0.613 |
 
-**Hallazgo: una falta llama a otra.** La racha de faltas es el mejor predictor. Sin racha, la probabilidad de faltar es **10.6 %**; después de una o más faltas seguidas sube a **39.4 %**.
+**Hallazgo: una falta llama a otra.** La racha de faltas es el mejor predictor. Sin racha, la probabilidad de faltar es **10.9 %**; después de una o más faltas seguidas sube a **38.2 %**.
 
 **Corrección tras la revisión:** se excluyeron 18 alumnos que nunca asistieron (sus filas eran aciertos triviales que inflaban el AUC hasta 0.779) y se unieron las marcas de 6 alumnos repetidos entre pestañas.
 
@@ -124,9 +124,9 @@ El generador se **calibró** contra la base real: tasa de asistencia simulada 81
 ## Limitaciones
 
 - **No hay modelo real de deserción.** Ningún alumno tiene historial de asistencia y baja conocida a la vez.
-- **El Modelo A usa 146 alumnos** con entre 2 y 10 marcas cada uno: la hoja registra bloques cortos, no la temporada completa.
+- **El Modelo A usa 147 alumnos** con entre 2 y 7 marcas cada uno: la hoja registra bloques cortos, no la temporada completa.
 - **Los pagos de la academia cargada llevan fecha estimada** y no se usaron como atributo del modelo.
-- **Árbol de decisión de profundidad 4**, escrito sin librerías externas. Hay margen para mejorarlo con bosques aleatorios; la validación por alumno y fecha (0.630) muestra que el resultado varía entre grupos.
+- **Árbol de decisión de profundidad 4**, escrito sin librerías externas. Hay margen para mejorarlo con bosques aleatorios; la validación por alumno y fecha (0.620) muestra que el resultado varía entre grupos.
 
 ## Privacidad
 
@@ -138,7 +138,8 @@ Todo está en Python 3 estándar, sin dependencias externas (solo la lectura del
 
 ```bash
 # Modelo A: datos reales
-python3 mineria/vista_minable.py   # necesita los JSON privados
+python3 mineria/extraer_bd.py      # extrae de la base (credenciales por variable de entorno)
+python3 mineria/vista_minable.py   # KDD 1-4
 python3 mineria/entrenar_vista.py
 
 # Modelo B: generar el conjunto simulado y validarlo

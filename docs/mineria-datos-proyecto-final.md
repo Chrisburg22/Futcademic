@@ -100,18 +100,18 @@ El resto de las 20 escuelas son entornos de prueba (`Academia Smoke …`, `Test 
 
 La asistencia real es abundante (Serratos aporta 751 de los 779 pases válidos), pero **las 33 bajas pertenecen a otras academias que casi no registran asistencia, y Serratos no registra ninguna**. No existe un solo alumno con historial de asistencia **y** baja conocida. Por eso la deserción —el objetivo principal— **no se puede entrenar todavía con datos reales**, y el proyecto presenta **dos modelos separados**:
 
-**Modelo A · datos reales · ¿faltará a su siguiente sesión?** Entrenado solo con asistencia real de Serratos, sin ningún dato simulado ([`mineria/vista_minable.py`](../mineria/vista_minable.py) y [`mineria/entrenar_vista.py`](../mineria/entrenar_vista.py)).
+**Modelo A · datos reales · ¿faltará a su siguiente sesión?** Entrenado solo con asistencia real extraída de la base de producción (casi toda de Serratos), sin ningún dato simulado ([`mineria/vista_minable.py`](../mineria/vista_minable.py) y [`mineria/entrenar_vista.py`](../mineria/entrenar_vista.py)).
 
 | | |
 |---|---|
-| Filas | 548 (146 alumnos, 17 fechas) |
-| Etiqueta | el alumno faltó a esa sesión (14.1 % de las filas) |
-| Partición | temporal: entrena antes del 12/oct (300 filas), prueba después (248 filas, 30 faltas) |
-| **AUC en prueba** | **0.675** (entrenamiento 0.748; sobreajuste 0.073; scikit-learn idéntico) |
-| Marcando exactamente al 25 % de sesiones | recall 0.533 (detecta 5 de cada 10 faltas), precisión 0.258, lift 2.13x |
-| Validación por alumno y fecha | AUC media 0.630 |
+| Filas | 544 (147 alumnos, 18 fechas) |
+| Etiqueta | el alumno faltó a esa sesión (14.3 % de las filas) |
+| Partición | temporal: entrena antes del 13/oct (344 filas), prueba después (200 filas, 24 faltas) |
+| **AUC en prueba** | **0.643** (entrenamiento 0.735; sobreajuste 0.091; scikit-learn idéntico) |
+| Marcando exactamente al 25 % de sesiones | recall 0.542 (detecta 5 de cada 10 faltas), precisión 0.260, lift 2.17x |
+| Validación por alumno y fecha | AUC media 0.620 |
 
-Hallazgo: **una falta llama a otra.** La racha de faltas es el mejor predictor: sin racha la probabilidad de faltar es 10.6 %, tras una o más faltas sube a 39.4 %. Se excluyeron 18 alumnos que nunca asistieron, porque inflaban el AUC. Límite: son 146 alumnos con entre 2 y 10 marcas cada uno, porque la hoja registra bloques cortos y no la temporada completa.
+Hallazgo: **una falta llama a otra.** La racha de faltas es el mejor predictor: sin racha la probabilidad de faltar es 10.9 %, tras una o más faltas sube a 38.2 %. Se excluyeron 18 alumnos que nunca asistieron, porque inflaban el AUC. Límite: son 147 alumnos con entre 2 y 7 marcas cada uno, porque la hoja registra bloques cortos y no la temporada completa.
 
 **Modelo B · datos simulados · ¿abandonará en 30 días?** Como no hay bajas con historial real, la deserción se modela sobre un conjunto sintético derivado del esquema real ([`mineria/generar_dataset.py`](../mineria/generar_dataset.py), validado con [`mineria/validar_dataset.py`](../mineria/validar_dataset.py)). Se compone de dos grupos, distinguibles por la columna `origen`:
 

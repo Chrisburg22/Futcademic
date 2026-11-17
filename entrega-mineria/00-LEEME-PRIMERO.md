@@ -10,14 +10,15 @@ Esta carpeta reúne todo el proyecto universitario en archivos Markdown. Futcade
 - **Modelo A (datos reales):** ¿faltará el alumno a su siguiente sesión? Usa la hoja de asistencia de la academia Gallos San Rafael Serratos, ya anonimizada.
 - **Modelo B (datos sintéticos):** ¿desertará el alumno en 30 días? Se simula porque las bajas reales no tienen historial de asistencia.
 
-**Cifras vigentes del Modelo A (tras la revisión del 12/11/2026):**
-- 548 filas, 146 alumnos, 14.1 % de faltas.
-- Partición por fecha: 300 filas para entrenar (antes del 12/oct) y 248 para probar.
-- Árbol CART (Gini, profundidad 4, hoja mínima 15): AUC de prueba 0.675; marcando exactamente el 25 %, recall 0.533 y lift 2.13×.
+**Cifras vigentes del Modelo A (datos de la base de producción, 16/11/2026):**
+- Fuente: la base de Futcademic en Supabase, extraída con `extraer_bd.py` (4 tablas, sin datos personales).
+- 544 filas, 147 alumnos, 18 fechas (26/mar – 12/nov), 14.3 % de faltas.
+- Partición por fecha: 344 filas para entrenar (antes del 13/oct) y 200 para probar.
+- Árbol CART (Gini, profundidad 4, hoja mínima 15): AUC de prueba 0.643; marcando exactamente el 25 %, recall 0.542 y lift 2.17×.
 - scikit-learn 1.6.1 da el mismo resultado.
-- Validación por alumno y fecha: AUC media 0.630.
-- La tasa de asistencia previa, sola, da 0.639: el árbol la supera.
-- Corrección de la revisión: se excluyeron 18 alumnos que nunca asistieron (inflaban el AUC hasta 0.779) y se unieron las marcas de 6 alumnos repetidos entre pestañas.
+- Validación por alumno y fecha: AUC media 0.620.
+- La tasa de asistencia previa, sola, da 0.613: el árbol la supera.
+- La limpieza excluye 31 marcas registradas antes de su fecha (calendario) y a los alumnos que nunca asistieron, que inflaban el AUC hasta 0.779.
 
 ## Orden de lectura
 
@@ -40,7 +41,7 @@ Esta carpeta reúne todo el proyecto universitario en archivos Markdown. Futcade
 ## Flujo del código
 
 ```
-Hoja de asistencia (.xlsx) → extract_serratos.py → JSON privado (con nombres, no incluido)
+Base de producción (Supabase) → extraer_bd.py → extraccion_bd.json (privado, no incluido)
   → vista_minable.py (KDD 1-4: limpieza, integración, selección, transformación)
   → vista_minable.csv (anónima) → entrenar_vista.py (usa el árbol de validar_dataset.py + scikit-learn)
 generar_dataset.py → conjunto sintético → validar_dataset.py (Modelo B)

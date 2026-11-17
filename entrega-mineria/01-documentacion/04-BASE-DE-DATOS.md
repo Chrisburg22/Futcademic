@@ -75,7 +75,7 @@ schools ─┬─ users ──── category_teachers ─── categories ─�
 | `deleted_students` | 33 |
 | `categories` | 27 |
 | `trainings` | 192 |
-| `attendances` | 802 (779 hasta el 22/oct; 23 con fecha futura) |
+| `attendances` | 809 al 16/nov (31 registradas antes de su fecha: calendario, no asistencia) |
 | `payments` | 620 |
 | `schools` | 20 (6 con actividad real, 14 de prueba) |
 | `events` · `venues` · `notifications` | 11 · 10 · 3 |
