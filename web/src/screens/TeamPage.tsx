@@ -30,7 +30,7 @@ export function TeamPage() {
             entrenadores={(team.teachers || []).map((t: any) => ({
               id: t.id,
               nombre: t.name,
-              avatar: t.avatar,
+              avatar: t.avatar_url || t.avatar,
             }))}
             horario={(team.schedules || []).map((s: any) => ({
               id: s.id,

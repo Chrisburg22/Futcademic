@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
+  Avatar,
   Card,
   Group,
   Select,
@@ -26,6 +27,7 @@ import { useCheckAchievements } from '../hooks/useAchievements';
 import { useGetMyCategories, useGetCategories } from '../hooks/useCategories';
 import { useGetStudents, useGetMyChildren } from '../hooks/useStudents';
 import { PageHeader } from '../components/common/PageHeader';
+import { iniciales } from '../lib/students';
 import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
 import { CategoryAttendanceHistory } from '../components/attendance/CategoryAttendanceHistory';
@@ -153,12 +155,23 @@ function RollCallView() {
           <Stack>
             {students.map((s: any) => (
               <Group key={s.id} justify="space-between">
-                <div>
-                  <Text fw={500}>{s.full_name}</Text>
-                  <Text size="xs" c="dimmed">
-                    {s.email || '—'}
-                  </Text>
-                </div>
+                <Group gap="sm" wrap="nowrap">
+                  <Avatar
+                    size="md"
+                    radius="xl"
+                    color="initials"
+                    name={s.full_name}
+                    src={s.avatar_url || undefined}
+                  >
+                    {iniciales(s.full_name)}
+                  </Avatar>
+                  <div>
+                    <Text fw={500}>{s.full_name}</Text>
+                    <Text size="xs" c="dimmed">
+                      {s.email || '—'}
+                    </Text>
+                  </div>
+                </Group>
                 <Switch
                   checked={!!marks[s.id]}
                   onChange={(e) =>

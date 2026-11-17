@@ -22,6 +22,8 @@ import { notifications } from '@mantine/notifications';
 import { IconAlertCircle, IconAlertTriangle, IconDeviceFloppy, IconHeartbeat, IconPhoneCall, IconUser, IconUsers } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import { useUpdateStudent } from '../../../hooks/useStudents';
+import { useRemoveStudentPhoto, useUploadStudentPhoto } from '../../../hooks/useUpload';
+import { PhotoUploader } from '../../../components/common/PhotoUploader';
 import { mensajeDeError } from '../../../lib/categories';
 import { calcularEdad } from '../../../lib/students';
 import type { Student } from '../../../types';
@@ -144,6 +146,14 @@ function Seccion({
 
 export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel, onDirtyChange }: Props) {
   const update = useUpdateStudent();
+  const subirFoto = useUploadStudentPhoto();
+  const quitarFoto = useRemoveStudentPhoto();
+
+  // La foto tiene su propio endpoint y se guarda al momento, no con el botón
+  // «Guardar cambios»; por eso vive fuera del formulario y no lo ensucia. El
+  // estado local es para que se vea al instante, antes de que refresque la query.
+  const [foto, setFoto] = useState<string | null>(alumno.avatar_url || null);
+  useEffect(() => setFoto(alumno.avatar_url || null), [alumno.avatar_url]);
   const form = useForm<StudentFormValues>({
     initialValues: valoresInicialesAlumno(alumno),
     validate: validacionAlumno,
@@ -229,6 +239,22 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
           </Alert>
         )}
         <Seccion icono={<IconUser size={18} />} titulo="Datos del alumno">
+          <PhotoUploader
+            src={foto}
+            name={form.values.full_name || alumno.full_name}
+            size={72}
+            hint="La foto se guarda al subirla, sin esperar a «Guardar cambios»"
+            onUpload={async (file) => {
+              const { avatarUrl } = await subirFoto.mutateAsync({ studentId: alumno.id, file });
+              setFoto(avatarUrl);
+              notifications.show({ color: 'green', message: 'Foto actualizada' });
+            }}
+            onRemove={async () => {
+              await quitarFoto.mutateAsync(alumno.id);
+              setFoto(null);
+              notifications.show({ color: 'green', message: 'Foto quitada' });
+            }}
+          />
           <TextInput
             label="Nombre completo"
             required

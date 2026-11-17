@@ -1,23 +1,16 @@
-import { Card, Stack, TextInput, Button, Group, Image, FileButton, Text } from '@mantine/core';
+import { Card, Stack, TextInput, Button } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconUpload } from '@tabler/icons-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUpdateAcademy } from '../../hooks/useSettings';
 import { useUploadLogo } from '../../hooks/useUpload';
 import { PageHeader } from '../../components/common/PageHeader';
+import { PhotoUploader } from '../../components/common/PhotoUploader';
 
 export function EditAcademyPage() {
   const { profile, refreshProfile } = useAuth();
   const update = useUpdateAcademy();
   const uploadLogo = useUploadLogo();
-
-  const handleLogoUpload = async (file: File | null) => {
-    if (!file) return;
-    const { logoUrl } = await uploadLogo.mutateAsync(file);
-    form.setFieldValue('logo_url', logoUrl);
-    notifications.show({ color: 'green', message: 'Logo subido' });
-  };
 
   const form = useForm({
     initialValues: {
@@ -25,6 +18,15 @@ export function EditAcademyPage() {
       logo_url: profile?.school?.logo_url || '',
     },
   });
+
+  // El logo ya queda guardado en la escuela al subirlo; el formulario solo
+  // refleja la URL nueva para que se vea sin recargar.
+  const handleLogoUpload = async (file: File) => {
+    const { logoUrl } = await uploadLogo.mutateAsync(file);
+    form.setFieldValue('logo_url', logoUrl);
+    await refreshProfile();
+    notifications.show({ color: 'green', message: 'Logo actualizado' });
+  };
 
   const onSubmit = async (v: typeof form.values) => {
     if (!profile?.school_id) return;
@@ -44,30 +46,15 @@ export function EditAcademyPage() {
         <form onSubmit={form.onSubmit(onSubmit)}>
           <Stack>
             <TextInput label="Nombre" required {...form.getInputProps('name')} />
-            <Group gap="sm">
-              {form.values.logo_url && (
-                <Image src={form.values.logo_url} h={48} w={48} radius="sm" alt="logo" />
-              )}
-              <Stack gap={4}>
-                <FileButton onChange={handleLogoUpload} accept="image/*">
-                  {(props) => (
-                    <Button
-                      variant="light"
-                      size="xs"
-                      leftSection={<IconUpload size={14} />}
-                      loading={uploadLogo.isPending}
-                      {...props}
-                    >
-                      Subir logo
-                    </Button>
-                  )}
-                </FileButton>
-                <Text size="xs" c="dimmed">
-                  JPG, PNG — max 2 MB
-                </Text>
-              </Stack>
-            </Group>
-            <TextInput label="URL del logo" {...form.getInputProps('logo_url')} />
+            <PhotoUploader
+              variant="image"
+              src={form.values.logo_url}
+              name={form.values.name}
+              size={72}
+              label="Subir logo"
+              hint="Logo de la academia — JPG, PNG o WEBP"
+              onUpload={handleLogoUpload}
+            />
             <Button type="submit" loading={update.isPending}>
               Guardar
             </Button>
