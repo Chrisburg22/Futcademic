@@ -66,7 +66,29 @@ export const useInviteTeacher = () => {
       phone?: string;
       categoryIds?: string[];
       permissions?: Record<string, boolean>;
-    }) => (await api.post('/auth/invite-teacher', payload)).data,
+    }): Promise<InviteResult> => (await api.post('/auth/invite-teacher', payload)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+};
+
+/**
+ * Respuesta de los endpoints de invitación: cuando el correo no sale,
+ * el backend devuelve el enlace de activación para compartirlo a mano.
+ */
+export type InviteResult = {
+  message: string;
+  userId?: string;
+  emailSent: boolean;
+  activationLink?: string | null;
+  accepted?: boolean;
+};
+
+/** Reenviar la invitación de un profesor o admin que no activó su cuenta. */
+export const useResendInvite = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { userId?: string; email?: string }): Promise<InviteResult> =>
+      (await api.post('/auth/resend-invite', payload)).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   });
 };
@@ -74,7 +96,7 @@ export const useInviteTeacher = () => {
 export const useInviteAdmin = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { email: string; fullName: string }) =>
+    mutationFn: async (payload: { email: string; fullName: string }): Promise<InviteResult> =>
       (await api.post('/auth/invite-admin', payload)).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   });
