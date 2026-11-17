@@ -26,6 +26,7 @@ import {
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { iniciales } from '../../lib/students';
 
 export function TeachersPage() {
   const navigate = useRouter();
@@ -109,8 +110,14 @@ export function TeachersPage() {
                   <Table.Tr key={t.id}>
                     <Table.Td>
                       <Group gap="sm">
-                        <Avatar size="sm" radius="xl">
-                          {t.full_name?.[0]?.toUpperCase()}
+                        <Avatar
+                          size="sm"
+                          radius="xl"
+                          color="initials"
+                          name={t.full_name || undefined}
+                          src={t.avatar_url || undefined}
+                        >
+                          {iniciales(t.full_name)}
                         </Avatar>
                         <Text size="sm" fw={500}>
                           {t.full_name || '—'}

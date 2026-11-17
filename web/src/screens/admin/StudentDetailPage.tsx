@@ -63,6 +63,9 @@ import { useEstadisticaAsistencia } from '../../hooks/useAttendances';
 import { useGetCategories, useGetMyCategories } from '../../hooks/useCategories';
 import { useGetUsers } from '../../hooks/useUsers';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGetMyPermissions } from '../../hooks/usePermissions';
+import { PhotoUploader } from '../../components/common/PhotoUploader';
+import { useRemoveStudentPhoto, useUploadStudentPhoto } from '../../hooks/useUpload';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useRegisterChatScreen } from '../../contexts/ChatScreenContext';
@@ -168,6 +171,12 @@ export function StudentDetailPage() {
   const { profile } = useAuth();
   const isTeacher = profile?.role === 'profesor';
   const esAdmin = !isTeacher;
+  const { data: permisos } = useGetMyPermissions(isTeacher);
+  // El backend exige `can_manage_students` al profesor; aquí solo se oculta el
+  // botón para no ofrecer algo que acabaría en 403.
+  const puedeEditarFoto = esAdmin || !!permisos?.can_manage_students;
+  const subirFoto = useUploadStudentPhoto();
+  const quitarFoto = useRemoveStudentPhoto();
 
   const { data: student, isLoading, isError } = useGetStudentDetails(id);
   const { data: stats } = useGetStudentStats(id);
@@ -381,15 +390,21 @@ export function StudentDetailPage() {
       <Card withBorder padding="lg" radius="md">
         <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
           <Group gap="md" wrap="nowrap" align="flex-start">
-            <Avatar
-              size={72}
-              radius="xl"
-              color="initials"
+            <PhotoUploader
+              src={student.avatar_url}
               name={student.full_name}
-              src={student.avatar_url || undefined}
-            >
-              {iniciales(student.full_name)}
-            </Avatar>
+              size={72}
+              canEdit={puedeEditarFoto}
+              hint="Foto del alumno — JPG, PNG o WEBP"
+              onUpload={async (file) => {
+                await subirFoto.mutateAsync({ studentId: id, file });
+                notifications.show({ color: 'green', message: 'Foto actualizada' });
+              }}
+              onRemove={async () => {
+                await quitarFoto.mutateAsync(id);
+                notifications.show({ color: 'green', message: 'Foto quitada' });
+              }}
+            />
             <Stack gap={6}>
               <Title order={2} lh={1.2}>
                 {student.full_name}

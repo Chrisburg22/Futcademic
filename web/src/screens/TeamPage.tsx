@@ -69,7 +69,8 @@ export function TeamPage() {
           entrenadores={(team.teachers || []).map((t: any) => ({
             id: t.id,
             nombre: t.name,
-            avatar: t.avatar,
+            // El backend expone `avatar_url`; `avatar` se mantiene por la app móvil.
+            avatar: t.avatar_url || t.avatar,
           }))}
           horario={(team.schedules || []).map((s: any) => ({
             id: s.id,

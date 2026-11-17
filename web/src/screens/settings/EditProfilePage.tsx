@@ -1,22 +1,33 @@
-import { Card, Stack, TextInput, Button, Group, Avatar, FileButton, Text } from '@mantine/core';
+import { Card, Stack, TextInput, Button, Group } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconUpload } from '@tabler/icons-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUpdateOwnProfile } from '../../hooks/useMe';
-import { useUploadAvatar } from '../../hooks/useUpload';
+import { useRemoveAvatar, useUploadAvatar } from '../../hooks/useUpload';
 import { PageHeader } from '../../components/common/PageHeader';
+import { PhotoUploader } from '../../components/common/PhotoUploader';
 
 export function EditProfilePage() {
   const { profile, refreshProfile } = useAuth();
   const update = useUpdateOwnProfile();
   const upload = useUploadAvatar();
+  const removeAvatar = useRemoveAvatar();
 
-  const handleAvatarUpload = async (file: File | null) => {
-    if (!file || !profile?.id) return;
+  // La foto se guarda sola al subirla; el formulario solo refleja la URL nueva.
+  const handleAvatarUpload = async (file: File) => {
+    if (!profile?.id) return;
     const { avatarUrl } = await upload.mutateAsync({ file, userId: profile.id });
     form.setFieldValue('avatar_url', avatarUrl);
-    notifications.show({ color: 'green', message: 'Foto subida' });
+    await refreshProfile();
+    notifications.show({ color: 'green', message: 'Foto actualizada' });
+  };
+
+  const handleAvatarRemove = async () => {
+    if (!profile?.id) return;
+    await removeAvatar.mutateAsync({ userId: profile.id });
+    form.setFieldValue('avatar_url', '');
+    await refreshProfile();
+    notifications.show({ color: 'green', message: 'Foto quitada' });
   };
 
   const form = useForm({
@@ -65,30 +76,13 @@ export function EditProfilePage() {
                 {...form.getInputProps('emergency_contact_phone')}
               />
             </Group>
-            <Group gap="sm">
-              <Avatar size="lg" radius="xl" src={form.values.avatar_url || undefined}>
-                {profile?.full_name?.[0]?.toUpperCase()}
-              </Avatar>
-              <Stack gap={4}>
-                <FileButton onChange={handleAvatarUpload} accept="image/*">
-                  {(props) => (
-                    <Button
-                      variant="light"
-                      size="xs"
-                      leftSection={<IconUpload size={14} />}
-                      loading={upload.isPending}
-                      {...props}
-                    >
-                      Subir foto
-                    </Button>
-                  )}
-                </FileButton>
-                <Text size="xs" c="dimmed">
-                  JPG, PNG — max 2 MB
-                </Text>
-              </Stack>
-            </Group>
-            <TextInput label="URL de avatar" {...form.getInputProps('avatar_url')} />
+            <PhotoUploader
+              src={form.values.avatar_url}
+              name={profile?.full_name}
+              size={84}
+              onUpload={handleAvatarUpload}
+              onRemove={handleAvatarRemove}
+            />
             <Button type="submit" loading={update.isPending}>
               Guardar
             </Button>

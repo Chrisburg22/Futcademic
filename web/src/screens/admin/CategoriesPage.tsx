@@ -38,6 +38,9 @@ import {
   useUpdateCategoryStatus,
 } from '../../hooks/useCategories';
 import { useGetMyPermissions } from '../../hooks/usePermissions';
+import { useRemoveCategoryLogo, useUploadCategoryLogo } from '../../hooks/useUpload';
+import { PhotoUploader } from '../../components/common/PhotoUploader';
+import { iniciales } from '../../lib/students';
 import { useGetTeachers } from '../../hooks/useUsers';
 import { useAuth } from '../../contexts/AuthContext';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -122,6 +125,8 @@ export function CategoriesPage() {
     [todasLasCategorias],
   );
   const actualizar = useUpdateCategory();
+  const subirEscudo = useUploadCategoryLogo();
+  const quitarEscudo = useRemoveCategoryLogo();
   const cambiarEstado = useUpdateCategoryStatus();
   const [wizardAbierto, { open: abrirWizard, close: cerrarWizard }] = useDisclosure(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -379,16 +384,20 @@ export function CategoriesPage() {
                     <Table.Tr key={c.id}>
                       <Table.Td>
                         <Group gap="sm" wrap="nowrap">
-                          <span
-                            aria-hidden
-                            style={{
-                              width: 10,
-                              height: 10,
-                              borderRadius: 5,
-                              flexShrink: 0,
-                              background: c.color || 'var(--mantine-color-gray-4)',
-                            }}
-                          />
+                          {c.logo_url ? (
+                            <Avatar size="sm" radius="sm" src={c.logo_url} alt="" />
+                          ) : (
+                            <span
+                              aria-hidden
+                              style={{
+                                width: 10,
+                                height: 10,
+                                borderRadius: 5,
+                                flexShrink: 0,
+                                background: c.color || 'var(--mantine-color-gray-4)',
+                              }}
+                            />
+                          )}
                           <div>
                             <Text fw={500}>{c.name}</Text>
                             {c.description && (
@@ -410,8 +419,14 @@ export function CategoriesPage() {
                           <Avatar.Group spacing="xs">
                             {entrenadores.slice(0, 3).map((t) => (
                               <Tooltip key={t.id} label={t.full_name || 'Sin nombre'}>
-                                <Avatar size="sm" radius="xl">
-                                  {t.full_name?.[0]?.toUpperCase() || '?'}
+                                <Avatar
+                                  size="sm"
+                                  radius="xl"
+                                  color="initials"
+                                  name={t.full_name || undefined}
+                                  src={t.avatar_url || undefined}
+                                >
+                                  {iniciales(t.full_name)}
                                 </Avatar>
                               </Tooltip>
                             ))}
@@ -495,6 +510,28 @@ export function CategoriesPage() {
         <form onSubmit={editForm.onSubmit(guardarEdicion)}>
           <Stack>
             <CategoryFormFields form={editForm} teachers={teachers} mostrarEstado={esAdmin} />
+            {esAdmin && editando && (
+              <Stack gap={4}>
+                <Text size="sm" fw={500}>
+                  Escudo del equipo
+                </Text>
+                <PhotoUploader
+                  src={editando.logo_url}
+                  name={editando.name}
+                  size={72}
+                  label="Subir escudo"
+                  hint="Escudo del equipo — JPG, PNG o WEBP"
+                  onUpload={async (file) => {
+                    await subirEscudo.mutateAsync({ categoryId: editando.id, file });
+                    notifications.show({ color: 'green', message: 'Escudo actualizado' });
+                  }}
+                  onRemove={async () => {
+                    await quitarEscudo.mutateAsync(editando.id);
+                    notifications.show({ color: 'green', message: 'Escudo quitado' });
+                  }}
+                />
+              </Stack>
+            )}
             <Group justify="flex-end">
               <Button variant="default" onClick={() => setEditandoId(null)}>
                 Cancelar
