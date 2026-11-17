@@ -1,7 +1,9 @@
 import { Card, Stack, Group, Avatar, Text, Button, Divider, Anchor } from '@mantine/core';
+import { modals } from '@mantine/modals';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
+  IconChevronRight,
   IconUser,
   IconBuilding,
   IconLock,
@@ -70,7 +72,7 @@ export function ProfilePage() {
                       {i.icon}
                       <Text>{i.label}</Text>
                     </Group>
-                    <Text c="dimmed">›</Text>
+                    <IconChevronRight size={18} style={{ color: 'var(--mantine-color-dimmed)' }} />
                   </Group>
                 </Anchor>
                 {idx < arr.length - 1 && <Divider />}
@@ -79,15 +81,30 @@ export function ProfilePage() {
         </Stack>
       </Card>
 
+      {/* Apartada del resto y con confirmación: cerrar sesión borra la caché
+          persistida, incluida la cola de cambios sin enviar. */}
       <Button
-        mt="lg"
+        mt="xl"
         color="red"
         variant="light"
-        leftSection={<IconLogout size={16} />}
-        onClick={async () => {
-          await signOut();
-          navigate.replace('/login');
-        }}
+        leftSection={<IconLogout size={18} />}
+        onClick={() =>
+          modals.openConfirmModal({
+            title: 'Cerrar sesión',
+            children: (
+              <Text size="sm">
+                Se borrarán los datos guardados en este dispositivo. Si tienes cambios sin enviar,
+                se perderán.
+              </Text>
+            ),
+            labels: { confirm: 'Cerrar sesión', cancel: 'Cancelar' },
+            confirmProps: { color: 'red' },
+            onConfirm: async () => {
+              await signOut();
+              navigate.replace('/login');
+            },
+          })
+        }
       >
         Cerrar sesión
       </Button>

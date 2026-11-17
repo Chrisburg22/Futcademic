@@ -33,8 +33,8 @@ import {
   IconPhone,
   IconShirt,
   IconTrash,
+  IconAlertCircle,
 } from '@tabler/icons-react';
-import { useMediaQuery } from '@mantine/hooks';
 import dayjs from 'dayjs';
 import {
   ESTADOS_ALUMNO,
@@ -52,6 +52,8 @@ import {
   type Orden,
 } from '../../../lib/students';
 import type { Student, StudentStatus } from '../../../types';
+import { TouchRow } from '../../../components/common/TouchRow';
+import { InfoPopover } from '../../../components/common/InfoPopover';
 
 export type ColumnaAlumno =
   | 'categoria'
@@ -381,9 +383,28 @@ function Acciones({
   onAbrir,
   onEditar,
   onEliminar,
-}: Pick<Props, 'puedeAdministrar' | 'onAbrir' | 'onEditar' | 'onEliminar'> & { alumno: Student }) {
+  onEstado,
+  onUniforme,
+  /**
+   * En teléfono este menú es la única salida de la tarjeta: la tabla tenía
+   * columnas de contacto, estado y uniforme que ahí no caben, así que entran
+   * aquí en vez de desaparecer.
+   */
+  movil,
+}: Pick<Props, 'puedeAdministrar' | 'onAbrir' | 'onEditar' | 'onEliminar'> & {
+  alumno: Student;
+  onEstado?: Props['onEstado'];
+  onUniforme?: Props['onUniforme'];
+  movil?: boolean;
+}) {
+  const telefono = alumno.parent?.phone || alumno.phone;
+  const digitos = telefono ? soloDigitos(telefono) : '';
+  const whatsapp =
+    digitos.length >= 10 ? `https://wa.me/${digitos.length === 10 ? `52${digitos}` : digitos}` : null;
+  const estado = normalizarEstado(alumno.status);
+
   return (
-    <Menu position="bottom-end" withinPortal shadow="md" width={190}>
+    <Menu position="bottom-end" withinPortal shadow="md" width={230}>
       <Menu.Target>
         <ActionIcon
           variant="subtle"
@@ -402,6 +423,63 @@ function Acciones({
         <Menu.Item leftSection={<IconEdit size={16} />} onClick={() => onEditar(alumno)}>
           Edición rápida
         </Menu.Item>
+
+        {movil && telefono && (
+          <>
+            <Menu.Divider />
+            <Menu.Label>Contacto</Menu.Label>
+            <Menu.Item
+              component="a"
+              href={`tel:${digitos}`}
+              leftSection={<IconPhone size={16} />}
+            >
+              Llamar a {nombreTutor(alumno) || alumno.full_name}
+            </Menu.Item>
+            {whatsapp && (
+              <Menu.Item
+                component="a"
+                href={whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                leftSection={<IconBrandWhatsapp size={16} />}
+              >
+                Escribir por WhatsApp
+              </Menu.Item>
+            )}
+          </>
+        )}
+
+        {movil && onUniforme && (
+          <>
+            <Menu.Divider />
+            <Menu.Item
+              leftSection={<IconShirt size={16} />}
+              onClick={() => onUniforme(alumno)}
+            >
+              {alumno.uniform_delivered ? 'Marcar uniforme sin entregar' : 'Marcar uniforme entregado'}
+            </Menu.Item>
+          </>
+        )}
+
+        {movil && puedeAdministrar && onEstado && (
+          <>
+            <Menu.Divider />
+            <Menu.Label>Cambiar estado</Menu.Label>
+            {OPCIONES_ESTADO.map((o) => (
+              <Menu.Item
+                key={o.value}
+                disabled={o.value === estado}
+                onClick={() => onEstado(alumno, o.value)}
+                leftSection={
+                  <Badge color={ESTADOS_ALUMNO[o.value].color} variant="dot" size="xs" p={0} />
+                }
+              >
+                {o.label}
+              </Menu.Item>
+            ))}
+          </>
+        )}
+
         {puedeAdministrar && (
           <>
             <Menu.Divider />
@@ -530,7 +608,6 @@ export function StudentsTable(props: Props) {
     onEstado,
     onUniforme,
   } = props;
-  const esMovil = useMediaQuery('(max-width: 48em)');
   const compacta = densidad === 'compacta';
 
   const idsVisibles = alumnos.map((a) => a.id);
@@ -579,152 +656,224 @@ export function StudentsTable(props: Props) {
   const propia = (clave: ColumnaAlumno) =>
     clave === 'estado' || clave === 'uniforme' || clave === 'contacto';
 
-  if (esMovil) {
-    return (
-      <Stack gap="xs">
-        {alumnos.map((a) => (
-          <Card
+  /*
+   * Tarjetas en teléfono, tabla en escritorio, y **elige el CSS**.
+   *
+   * Antes esto lo decidía `useMediaQuery`, que en el primer render devuelve
+   * `undefined`: en un teléfono se pintaba primero la tabla —con hasta 1392 px
+   * de ancho mínimo— y luego saltaba a tarjetas, con parpadeo y desbordamiento
+   * horizontal de propina. Además el `return` temprano dejaba fuera
+   * `OpcionesTabla`.
+   *
+   * En móvil no hay columnas ni densidad que configurar (son conceptos de la
+   * tabla); quien quiera ver más alumnos usa «Cargar más» en la paginación.
+   */
+  const tarjetas = (
+    <Stack gap="xs">
+      {alumnos.map((a) => {
+        const deuda = deudaDe(a, contexto);
+        const pendientes = pendientesDelAlumno(a, { deuda });
+        const meta = ESTADOS_ALUMNO[normalizarEstado(a.status)];
+        const faltan = (a as any).expediente_missing as string[] | undefined;
+        const edad = calcularEdad(a.birth_date);
+        const tutor = nombreTutor(a);
+
+        return (
+          <TouchRow
             key={a.id}
-            withBorder
-            padding="sm"
-            radius="md"
-            style={{ borderColor: seleccion.has(a.id) ? 'var(--mantine-color-blue-5)' : undefined }}
-          >
-            <Group justify="space-between" wrap="nowrap" align="flex-start">
-              <Group gap="xs" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
-                <Checkbox
-                  aria-label={`Seleccionar a ${a.full_name}`}
-                  checked={seleccion.has(a.id)}
-                  onChange={(e) => onSeleccion([a.id], e.currentTarget.checked)}
-                />
-                <UnstyledButton
-                  onClick={() => onAbrir(a)}
-                  style={{ minWidth: 0, flex: 1 }}
-                  aria-label={`Abrir ficha de ${a.full_name}`}
-                >
-                  <Identidad alumno={a} />
-                </UnstyledButton>
-              </Group>
-              <Acciones {...props} alumno={a} />
-            </Group>
-            <Group gap="xs" mt="sm" wrap="wrap">
-              <CategoriaBadge alumno={a} />
-              <EstadoMenu alumno={a} editable={puedeAdministrar} onEstado={onEstado} />
-              <Expediente alumno={a} />
-              {puedeAdministrar && deudaDe(a, contexto) > 0 && (
-                <Badge variant="light" color="red">
-                  Debe {pesos(deudaDe(a, contexto))}
+            tone={seleccion.has(a.id) ? 'selected' : pendientes.length ? 'warning' : 'default'}
+            selectable={{
+              checked: seleccion.has(a.id),
+              onChange: (marcado) => onSeleccion([a.id], marcado),
+              label: `Seleccionar a ${a.full_name}`,
+            }}
+            leading={
+              <Avatar
+                size={44}
+                radius="xl"
+                color="initials"
+                name={a.full_name}
+                src={a.avatar_url || undefined}
+              >
+                {iniciales(a.full_name)}
+              </Avatar>
+            }
+            title={a.full_name}
+            subtitle={[edad != null ? `${edad} años` : null, tutor ? `Tutor: ${tutor}` : 'Sin tutor']
+              .filter(Boolean)
+              .join(' · ')}
+            onClick={() => onAbrir(a)}
+            openLabel={`Abrir ficha de ${a.full_name}`}
+            trailing={
+              <Acciones
+                {...props}
+                alumno={a}
+                movil
+                onEstado={onEstado}
+                onUniforme={onUniforme}
+              />
+            }
+            tags={
+              <>
+                <CategoriaBadge alumno={a} />
+                <Badge color={meta.color} variant="light" size="lg">
+                  {meta.label}
                 </Badge>
-              )}
-              <BotonUniforme alumno={a} onUniforme={onUniforme} />
-            </Group>
-          </Card>
-        ))}
-      </Stack>
-    );
-  }
+                <Expediente alumno={a} />
+                {puedeAdministrar && deuda > 0 && (
+                  <Badge variant="light" color="red" size="lg">
+                    Debe {pesos(deuda)}
+                  </Badge>
+                )}
+                {pendientes.length > 0 && (
+                  /* El detalle vivía solo en un Tooltip, que en una pantalla
+                     táctil no se abre: aquí se abre con un toque. */
+                  <InfoPopover
+                    title={`Por atender (${pendientes.length})`}
+                    sheetOnMobile
+                    target={
+                      <Badge
+                        variant="light"
+                        color="orange"
+                        size="lg"
+                        leftSection={<IconAlertTriangle size={14} />}
+                      >
+                        Por atender ({pendientes.length})
+                      </Badge>
+                    }
+                  >
+                    <Stack gap="xs">
+                      {pendientes.map((pendiente, i) => (
+                        <Group key={i} gap="xs" wrap="nowrap" align="flex-start">
+                          <IconAlertCircle
+                            size={18}
+                            style={{ flexShrink: 0, color: 'var(--mantine-color-orange-7)' }}
+                          />
+                          <Text size="sm">{pendiente.mensaje}</Text>
+                        </Group>
+                      ))}
+                      {faltan && faltan.length > 0 && (
+                        <Text size="sm" c="dimmed">
+                          Faltan: {faltan.map(nombreDocumento).join(', ')}
+                        </Text>
+                      )}
+                    </Stack>
+                  </InfoPopover>
+                )}
+              </>
+            }
+          />
+        );
+      })}
+    </Stack>
+  );
 
   return (
-    <Card withBorder padding={0} radius="md">
-      <OpcionesTabla {...props} disponibles={disponibles} />
-      <Divider />
-      <Table.ScrollContainer minWidth={420 + visibles.length * 108}>
-        <Table
-          verticalSpacing={compacta ? 4 : 'xs'}
-          highlightOnHover
-          stickyHeader
-          stickyHeaderOffset={0}
-        >
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th w={44}>
-                <Checkbox
-                  aria-label="Seleccionar todos los alumnos de esta página"
-                  checked={todos}
-                  indeterminate={algunos && !todos}
-                  onChange={(e) => onSeleccion(idsVisibles, e.currentTarget.checked)}
-                />
-              </Table.Th>
-              <EncabezadoOrdenable campo="nombre" orden={orden} onOrden={onOrden}>
-                Alumno
-              </EncabezadoOrdenable>
-              {visibles.map((c) =>
-                c.orden ? (
-                  <EncabezadoOrdenable
-                    key={c.clave}
-                    campo={c.orden}
-                    orden={orden}
-                    onOrden={onOrden}
-                    centrada={c.centrada}
-                  >
-                    {c.titulo}
-                  </EncabezadoOrdenable>
-                ) : (
-                  <Table.Th key={c.clave} ta={c.centrada ? 'center' : undefined}>
-                    {c.titulo}
+    <>
+      <Box hiddenFrom="sm">{tarjetas}</Box>
+      <Box visibleFrom="sm">
+        <Card withBorder padding={0} radius="md">
+          <OpcionesTabla {...props} disponibles={disponibles} />
+          <Divider />
+          <Table.ScrollContainer minWidth={420 + visibles.length * 108}>
+            <Table
+              verticalSpacing={compacta ? 4 : 'xs'}
+              highlightOnHover
+              stickyHeader
+              stickyHeaderOffset={0}
+            >
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th w={44}>
+                    <Checkbox
+                      aria-label="Seleccionar todos los alumnos de esta página"
+                      checked={todos}
+                      indeterminate={algunos && !todos}
+                      onChange={(e) => onSeleccion(idsVisibles, e.currentTarget.checked)}
+                    />
                   </Table.Th>
-                ),
-              )}
-              <Table.Th w={56}>
-                <Box
-                  component="span"
-                  style={{
-                    position: 'absolute',
-                    width: 1,
-                    height: 1,
-                    overflow: 'hidden',
-                    clip: 'rect(0 0 0 0)',
-                  }}
-                >
-                  Acciones
-                </Box>
-              </Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {alumnos.map((a) => (
-              <Table.Tr
-                key={a.id}
-                bg={seleccion.has(a.id) ? 'var(--mantine-color-blue-light)' : undefined}
-                style={{ cursor: 'pointer' }}
-                onClick={() => onAbrir(a)}
-              >
-                <Table.Td onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    aria-label={`Seleccionar a ${a.full_name}`}
-                    checked={seleccion.has(a.id)}
-                    onChange={(e) => onSeleccion([a.id], e.currentTarget.checked)}
-                  />
-                </Table.Td>
-                <Table.Td maw={300}>
-                  <UnstyledButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAbrir(a);
-                    }}
-                    style={{ width: '100%', textAlign: 'left' }}
-                    aria-label={`Abrir ficha de ${a.full_name}`}
+                  <EncabezadoOrdenable campo="nombre" orden={orden} onOrden={onOrden}>
+                    Alumno
+                  </EncabezadoOrdenable>
+                  {visibles.map((c) =>
+                    c.orden ? (
+                      <EncabezadoOrdenable
+                        key={c.clave}
+                        campo={c.orden}
+                        orden={orden}
+                        onOrden={onOrden}
+                        centrada={c.centrada}
+                      >
+                        {c.titulo}
+                      </EncabezadoOrdenable>
+                    ) : (
+                      <Table.Th key={c.clave} ta={c.centrada ? 'center' : undefined}>
+                        {c.titulo}
+                      </Table.Th>
+                    ),
+                  )}
+                  <Table.Th w={56}>
+                    <Box
+                      component="span"
+                      style={{
+                        position: 'absolute',
+                        width: 1,
+                        height: 1,
+                        overflow: 'hidden',
+                        clip: 'rect(0 0 0 0)',
+                      }}
+                    >
+                      Acciones
+                    </Box>
+                  </Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {alumnos.map((a) => (
+                  <Table.Tr
+                    key={a.id}
+                    bg={seleccion.has(a.id) ? 'var(--mantine-color-blue-light)' : undefined}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => onAbrir(a)}
                   >
-                    <Identidad alumno={a} compacta={compacta} />
-                  </UnstyledButton>
-                </Table.Td>
-                {visibles.map((c) => (
-                  <Table.Td
-                    key={c.clave}
-                    ta={c.centrada ? 'center' : undefined}
-                    onClick={propia(c.clave) ? (e) => e.stopPropagation() : undefined}
-                  >
-                    {celda(c.clave, a)}
-                  </Table.Td>
+                    <Table.Td onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        aria-label={`Seleccionar a ${a.full_name}`}
+                        checked={seleccion.has(a.id)}
+                        onChange={(e) => onSeleccion([a.id], e.currentTarget.checked)}
+                      />
+                    </Table.Td>
+                    <Table.Td maw={300}>
+                      <UnstyledButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAbrir(a);
+                        }}
+                        style={{ width: '100%', textAlign: 'left' }}
+                        aria-label={`Abrir ficha de ${a.full_name}`}
+                      >
+                        <Identidad alumno={a} compacta={compacta} />
+                      </UnstyledButton>
+                    </Table.Td>
+                    {visibles.map((c) => (
+                      <Table.Td
+                        key={c.clave}
+                        ta={c.centrada ? 'center' : undefined}
+                        onClick={propia(c.clave) ? (e) => e.stopPropagation() : undefined}
+                      >
+                        {celda(c.clave, a)}
+                      </Table.Td>
+                    ))}
+                    <Table.Td>
+                      <Acciones {...props} alumno={a} />
+                    </Table.Td>
+                  </Table.Tr>
                 ))}
-                <Table.Td>
-                  <Acciones {...props} alumno={a} />
-                </Table.Td>
-              </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
-      </Table.ScrollContainer>
-    </Card>
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
+            </Card>
+      </Box>
+    </>
   );
 }

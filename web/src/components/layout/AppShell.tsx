@@ -13,8 +13,11 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useNetwork } from '@mantine/hooks';
 import { IconLogout, IconMoon, IconSun, IconUser, IconWifiOff } from '@tabler/icons-react';
+import { modals } from '@mantine/modals';
 import { Sidebar } from './Sidebar';
+import { MobileNav } from './MobileNav';
 import { InstallButton } from '../pwa/InstallButton';
+import { OfflineQueueBadge, usePendingOfflineCount } from '../pwa/OfflineQueueBadge';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../contexts/AuthContext';
 import { ChatProvider } from '../../contexts/ChatContext';
@@ -27,10 +30,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const router = useRouter();
   const { online } = useNetwork();
+  const pendingOffline = usePendingOfflineCount();
 
-  const handleLogout = async () => {
+  const doLogout = async () => {
     await signOut();
     router.replace('/login');
+  };
+
+  // Cerrar sesión borra la caché persistida, y con ella la cola: lo que no se
+  // haya enviado se pierde. Hay que decirlo antes, no después.
+  const handleLogout = () => {
+    if (pendingOffline === 0) {
+      void doLogout();
+      return;
+    }
+    modals.openConfirmModal({
+      title: 'Hay cambios sin enviar',
+      centered: true,
+      children: (
+        <Text size="sm">
+          {pendingOffline === 1
+            ? 'Un cambio sigue guardado en este dispositivo y aún no se ha enviado.'
+            : `${pendingOffline} cambios siguen guardados en este dispositivo y aún no se han enviado.`}{' '}
+          Si cierras la sesión ahora se perderán. Conéctate a internet y espera a que
+          desaparezca el aviso «por enviar».
+        </Text>
+      ),
+      labels: { confirm: 'Cerrar sesión y perderlos', cancel: 'Esperar' },
+      confirmProps: { color: 'red' },
+      onConfirm: () => void doLogout(),
+    });
   };
 
   const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
@@ -44,7 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MantineAppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group wrap="nowrap" style={{ minWidth: 0 }}>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" className="touch-target" aria-label="Abrir menú" />
             <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
               {profile?.school?.logo_url ? (
                 <Image src={profile.school.logo_url} h={28} w={28} radius="sm" alt="logo" />
@@ -55,6 +84,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Group>
           </Group>
           <Group gap="xs" wrap="nowrap">
+            <OfflineQueueBadge />
             {!online && (
               <Badge
                 color="gray"
@@ -123,6 +153,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MantineAppShell.Main>
         {children}
       </MantineAppShell.Main>
+
+      {/* La barra inferior se monta una vez aquí, no por pantalla. «Más» abre el
+          mismo cajón que el Burger: un solo drawer, cero estado duplicado. */}
+      <MobileNav onMore={toggle} />
 
       {isAdmin && <ChatWidget />}
     </MantineAppShell>

@@ -51,7 +51,7 @@ export function CategorySummary({
         <Text fw={600}>{nombre}</Text>
         {anios && <Badge variant="light">{anios}</Badge>}
         {jugadores != null && (
-          <Badge variant="light" color="blue" leftSection={<IconUsers size={12} />}>
+          <Badge variant="light" color="blue" leftSection={<IconUsers size={16} />}>
             {jugadores} compañero{jugadores === 1 ? '' : 's'}
           </Badge>
         )}
@@ -65,7 +65,39 @@ export function CategorySummary({
 
       <Stack gap="xs">
         <div>
-          <Text size="xs" c="dimmed" tt="uppercase" fw={600} mb={4}>
+          <Text size="sm" c="dimmed" fw={600} mb={4}>
+            Horario
+          </Text>
+          {horario.length === 0 ? (
+            <Text size="sm" c="dimmed">
+              Sin horario recurrente
+            </Text>
+          ) : (
+            <Stack gap={4}>
+              {horario.map((h) => (
+                <Group key={h.id} gap="xs" wrap="wrap">
+                  <Text size="sm">{h.nombre || 'Entrenamiento'}</Text>
+                  {h.hora && (
+                    <Badge variant="light" leftSection={<IconClock size={16} />}>
+                      {h.hora}
+                    </Badge>
+                  )}
+                  {h.cancha && (
+                    <Badge
+                      variant="light"
+                      color="gray"
+                      leftSection={<IconMapPin size={16} />}
+                    >
+                      {h.cancha}
+                    </Badge>
+                  )}
+                </Group>
+              ))}
+            </Stack>
+          )}
+        </div>
+        <div>
+          <Text size="sm" c="dimmed" fw={600} mb={4}>
             Entrenadores
           </Text>
           {entrenadores.length === 0 ? (
@@ -86,39 +118,6 @@ export function CategorySummary({
           )}
         </div>
 
-        <div>
-          <Text size="xs" c="dimmed" tt="uppercase" fw={600} mb={4}>
-            Horario
-          </Text>
-          {horario.length === 0 ? (
-            <Text size="sm" c="dimmed">
-              Sin horario recurrente
-            </Text>
-          ) : (
-            <Stack gap={4}>
-              {horario.map((h) => (
-                <Group key={h.id} gap="xs" wrap="wrap">
-                  <Text size="sm">{h.nombre || 'Entrenamiento'}</Text>
-                  {h.hora && (
-                    <Badge variant="light" size="sm" leftSection={<IconClock size={11} />}>
-                      {h.hora}
-                    </Badge>
-                  )}
-                  {h.cancha && (
-                    <Badge
-                      variant="light"
-                      size="sm"
-                      color="gray"
-                      leftSection={<IconMapPin size={11} />}
-                    >
-                      {h.cancha}
-                    </Badge>
-                  )}
-                </Group>
-              ))}
-            </Stack>
-          )}
-        </div>
       </Stack>
     </Card>
   );

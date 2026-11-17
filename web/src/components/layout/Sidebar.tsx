@@ -1,144 +1,45 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NavLink, ScrollArea, Stack, Text, Divider } from '@mantine/core';
-import {
-  IconHome,
-  IconCalendarCheck,
-  IconCash,
-  IconUser,
-  IconUsers,
-  IconSchool,
-  IconCategory,
-  IconCalendarEvent,
-  IconSettings,
-  IconBuildingStadium,
-  IconHeart,
-  IconTrophy,
-  IconChartBar,
-  IconMessageChatbot,
-  IconClipboardList,
-} from '@tabler/icons-react';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Role } from '../../types';
+import {
+  adminItems,
+  esActivo,
+  labelFor,
+  mainItems,
+  settingsItems,
+  visibleFor,
+  type NavItem,
+} from './navItems';
 
-type Item = { to: string; label: string; icon: React.ReactNode; roles?: Role[] };
-
-const mainItems: Item[] = [
-  { to: '/', label: 'Inicio', icon: <IconHome size={18} /> },
-  {
-    to: '/attendance',
-    label: 'Asistencias',
-    icon: <IconCalendarCheck size={18} />,
-  },
-  {
-    to: '/finances',
-    label: 'Finanzas',
-    icon: <IconCash size={18} />,
-    roles: ['super_admin', 'admin', 'padre'],
-  },
-  {
-    to: '/children',
-    label: 'Mis hijos',
-    icon: <IconHeart size={18} />,
-    roles: ['padre'],
-  },
-  {
-    to: '/team',
-    label: 'Mi equipo',
-    icon: <IconUsers size={18} />,
-    roles: ['alumno'],
-  },
-  {
-    to: '/achievements',
-    label: 'Logros',
-    icon: <IconTrophy size={18} />,
-    roles: ['alumno'],
-  },
-  {
-    to: '/stats',
-    label: 'Estadísticas',
-    icon: <IconChartBar size={18} />,
-    roles: ['alumno'],
-  },
-  { to: '/profile', label: 'Perfil', icon: <IconUser size={18} /> },
-];
-
-const adminItems: Item[] = [
-  {
-    to: '/admin/chat',
-    label: 'Asistente IA',
-    icon: <IconMessageChatbot size={18} />,
-    roles: ['super_admin', 'admin'],
-  },
-  {
-    to: '/admin/students',
-    label: 'Alumnos',
-    icon: <IconSchool size={18} />,
-    roles: ['super_admin', 'admin', 'profesor'],
-  },
-  {
-    to: '/admin/enrollments',
-    label: 'Inscripciones',
-    icon: <IconClipboardList size={18} />,
-    roles: ['super_admin', 'admin', 'profesor'],
-  },
-  {
-    to: '/admin/teachers',
-    label: 'Profesores',
-    icon: <IconUsers size={18} />,
-    roles: ['super_admin', 'admin'],
-  },
-  {
-    to: '/admin/categories',
-    label: 'Categorías',
-    icon: <IconCategory size={18} />,
-    roles: ['super_admin', 'admin', 'profesor'],
-  },
-  {
-    to: '/admin/events',
-    label: 'Agenda',
-    icon: <IconCalendarEvent size={18} />,
-    roles: ['super_admin', 'admin'],
-  },
-  {
-    to: '/admin/venues',
-    label: 'Canchas',
-    icon: <IconBuildingStadium size={18} />,
-    roles: ['super_admin', 'admin'],
-  },
-];
-
-const settingsItems: Item[] = [
-  {
-    to: '/settings/edit-academy',
-    label: 'Academia',
-    icon: <IconSettings size={18} />,
-    roles: ['super_admin', 'admin'],
-  },
-  { to: '/settings/edit-profile', label: 'Mi perfil', icon: <IconUser size={18} /> },
-  { to: '/settings/security', label: 'Seguridad', icon: <IconSettings size={18} /> },
-];
-
+/**
+ * Cajón lateral: en escritorio es la navegación; en teléfono es «todo lo
+ * demás», lo que no entra en la barra inferior (`MobileNav`). Los destinos
+ * salen de `navItems.ts`, que es la única fuente.
+ */
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { profile } = useAuth();
   const role = profile?.role;
   const pathname = usePathname();
 
-  const visible = (items: Item[]) =>
-    items.filter((i) => !i.roles || (role && i.roles.includes(role)));
-
-  const renderItems = (items: Item[]) =>
-    visible(items).map((i) => (
-      <NavLink
-        key={i.to}
-        component={Link}
-        href={i.to}
-        label={i.label}
-        leftSection={i.icon}
-        active={pathname === i.to}
-        onClick={onNavigate}
-      />
-    ));
+  const renderItems = (items: NavItem[]) =>
+    visibleFor(items, role).map((i) => {
+      const Icono = i.icon;
+      return (
+        <NavLink
+          key={i.to}
+          component={Link}
+          href={i.to}
+          // El mínimo táctil de 44 px en teléfono (`globals.css`); el NavLink
+          // de Mantine se queda en 41 px.
+          className="touch-target"
+          label={labelFor(i, role)}
+          leftSection={<Icono size={18} />}
+          active={esActivo(i, pathname)}
+          onClick={onNavigate}
+        />
+      );
+    });
 
   return (
     <ScrollArea h="100%">
@@ -148,7 +49,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </Text>
         {renderItems(mainItems)}
 
-        {visible(adminItems).length > 0 && (
+        {visibleFor(adminItems, role).length > 0 && (
           <>
             <Divider my="xs" />
             <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="sm">

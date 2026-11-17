@@ -1,6 +1,7 @@
 'use client';
 
 import { MantineProvider } from '@mantine/core';
+import { DatesProvider } from '@mantine/dates';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -13,6 +14,9 @@ import {
   shouldPersistQueryKey,
 } from '@/lib/queryClient';
 import { AuthProvider } from '@/contexts/AuthContext';
+// Import con efecto: registra los defaults de las mutaciones en cola antes del
+// primer render, que es cuando el provider rehidrata lo que quedó pendiente.
+import '@/lib/offlineMutations';
 // Import con efecto: registra el listener de `beforeinstallprompt` antes del
 // primer render, que es cuando el navegador lo dispara.
 import '@/lib/pwaInstall';
@@ -29,6 +33,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <MantineProvider theme={theme} defaultColorScheme="light">
       <Notifications position="top-right" />
+      <DatesProvider settings={{ locale: 'es', firstDayOfWeek: 1, weekendDays: [0, 6] }}>
       <ModalsProvider>
         <PersistQueryClientProvider
           client={queryClient}
@@ -39,12 +44,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
             dehydrateOptions: {
               shouldDehydrateQuery: (query) =>
                 query.state.status === 'success' && shouldPersistQueryKey(query.queryKey),
+              // El criterio de fábrica (solo las pausadas) es justo el que
+              // queremos: las escrituras que no salieron por falta de red se
+              // guardan y las demás no.
             },
           }}
+          // Al acabar de rehidratar se reintenta lo que quedó en cola. Mientras
+          // siga sin haber red se vuelven a pausar solas, y `onlineManager` las
+          // reanuda cuando vuelva.
+          onSuccess={() => queryClient.resumePausedMutations()}
         >
           <AuthProvider>{children}</AuthProvider>
         </PersistQueryClientProvider>
       </ModalsProvider>
+      </DatesProvider>
     </MantineProvider>
   );
 }

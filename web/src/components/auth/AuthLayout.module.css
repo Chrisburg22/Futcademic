@@ -58,11 +58,19 @@
   max-width: 30rem;
 }
 
+/*
+ * Áreas seguras: el layout declara `viewportFit: 'cover'` (app/layout.tsx), así
+ * que sin esto el botón de entrar puede quedar bajo la barra de gestos del
+ * iPhone y el contenido debajo del notch en horizontal.
+ */
 .main {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: calc(var(--mantine-spacing-xl) * 1.5) var(--mantine-spacing-md);
+  padding: calc(var(--mantine-spacing-xl) * 1.5 + env(safe-area-inset-top, 0px))
+    calc(var(--mantine-spacing-md) + env(safe-area-inset-right, 0px))
+    calc(var(--mantine-spacing-xl) * 1.5 + env(safe-area-inset-bottom, 0px))
+    calc(var(--mantine-spacing-md) + env(safe-area-inset-left, 0px));
 }
 
 .card {

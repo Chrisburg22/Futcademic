@@ -62,11 +62,21 @@ export function ChatWidget() {
   return (
     <Affix
       position={{
-        // Se aparta del dock de accesos rápidos y de la barra de gestos.
-        bottom: 'calc(16px + var(--quick-dock-height, 0px) + env(safe-area-inset-bottom, 0px))',
+        /*
+         * Se aparta de la barra de navegación, de la barra de acción principal
+         * y del área de gestos. Sin `--action-bar-height` el botón se montaba
+         * encima de «Nuevo alumno» y le robaba los toques.
+         */
+        bottom:
+          'calc(16px + var(--quick-dock-height, 0px) + var(--action-bar-height, 0px) + env(safe-area-inset-bottom, 0px))',
         right: 16,
       }}
-      zIndex={300}
+      /*
+       * Por debajo de los overlays de Mantine (200): con 300 el botón se
+       * dibujaba encima de los modales y de las hojas inferiores, y tapaba sus
+       * campos.
+       */
+      zIndex={190}
     >
       {open ? (
         <Paper

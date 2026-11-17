@@ -9,21 +9,35 @@ import {
   Group,
   List,
   Paper,
+  Progress,
   Select,
   SimpleGrid,
   Stack,
   Text,
   TextInput,
   Textarea,
+  Tooltip,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconAlertCircle, IconAlertTriangle, IconDeviceFloppy, IconHeartbeat, IconPhoneCall, IconUser, IconUsers } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconAlertTriangle,
+  IconCircleCheck,
+  IconCopy,
+  IconDeviceFloppy,
+  IconHeartbeat,
+  IconPhoneCall,
+  IconUser,
+  IconUsers,
+} from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import { useUpdateStudent } from '../../../hooks/useStudents';
 import { useRemoveStudentPhoto, useUploadStudentPhoto } from '../../../hooks/useUpload';
 import { PhotoUploader } from '../../../components/common/PhotoUploader';
+import { ActionBar } from '../../../components/common/ActionBar';
+import { BirthDateInput } from '../../../components/common/BirthDateInput';
 import { mensajeDeError } from '../../../lib/categories';
 import { calcularEdad } from '../../../lib/students';
 import type { Student } from '../../../types';
@@ -115,6 +129,34 @@ type Props = {
   onDirtyChange?: (sucio: boolean) => void;
 };
 
+/**
+ * Lo que falta por llenar de la ficha. No son errores (se puede guardar sin
+ * ellos), pero son los datos que la academia acaba necesitando: un teléfono al
+ * que llamar, un tutor que reciba los avisos.
+ */
+const datosQueFaltan = (v: StudentFormValues) => {
+  const lleno = (texto: string) => texto.trim().length > 0;
+  const campos: { campo: string; titulo: string; completo: boolean }[] = [
+    { campo: 'full_name', titulo: 'Nombre', completo: lleno(v.full_name) },
+    { campo: 'birth_date', titulo: 'Fecha de nacimiento', completo: !!v.birth_date },
+    { campo: 'category_id', titulo: 'Categoría', completo: !!v.category_id },
+    { campo: 'parent_id', titulo: 'Tutor', completo: !!v.parent_id },
+    { campo: 'phone', titulo: 'Teléfono', completo: lleno(v.phone) },
+    { campo: 'address', titulo: 'Dirección', completo: lleno(v.address) },
+    {
+      campo: 'emergency_contact_phone',
+      titulo: 'Contacto de emergencia',
+      completo: lleno(v.emergency_contact_name) && lleno(v.emergency_contact_phone),
+    },
+  ];
+  return {
+    campos,
+    completos: campos.filter((c) => c.completo).length,
+    total: campos.length,
+    faltantes: campos.filter((c) => !c.completo),
+  };
+};
+
 function Seccion({
   icono,
   titulo,
@@ -176,6 +218,14 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
 
   const edad = calcularEdad(form.values.birth_date ? dayjs(form.values.birth_date).format('YYYY-MM-DD') : null);
   const categoriaCambio = form.values.category_id !== (alumno.category_id || null);
+  const completitud = datosQueFaltan(form.values);
+  const porcentaje = Math.round((completitud.completos / completitud.total) * 100);
+  const tutorElegido = tutores.find((t) => t.id === form.values.parent_id);
+  // El teléfono del tutor solo se conoce del tutor que ya tiene asignado.
+  const telefonoTutor =
+    form.values.parent_id && form.values.parent_id === alumno.parent_id
+      ? alumno.parent?.phone || null
+      : null;
 
   // Un formulario largo necesita decir de golpe qué falta: el resumen junta
   // los errores y manda el foco al primer campo que hay que corregir.
@@ -206,6 +256,20 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
     },
   );
 
+  // Guardar con el atajo de siempre: en un formulario largo el teclado es más
+  // rápido que bajar a la barra.
+  useEffect(() => {
+    const atajo = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if (form.isDirty()) guardar();
+      }
+    };
+    window.addEventListener('keydown', atajo);
+    return () => window.removeEventListener('keydown', atajo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sucio]);
+
   const opcionesCategoria = categorias.map((c) => ({
     value: c.id,
     label: c.birth_year ? `${c.name} · ${c.birth_year}` : c.name,
@@ -214,6 +278,47 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
   return (
     <form onSubmit={guardar} noValidate>
       <Stack gap="lg">
+        <Paper withBorder radius="md" p="sm">
+          <Group justify="space-between" wrap="wrap" gap="xs" mb={6}>
+            <Group gap={6}>
+              {completitud.faltantes.length === 0 ? (
+                <IconCircleCheck size={16} color="var(--mantine-color-green-6)" />
+              ) : (
+                <IconAlertCircle size={16} color="var(--mantine-color-orange-6)" />
+              )}
+              <Text size="sm" fw={600}>
+                Ficha completa al {porcentaje}%
+              </Text>
+            </Group>
+            <Text size="xs" c="dimmed">
+              {completitud.completos} de {completitud.total} datos
+            </Text>
+          </Group>
+          <Progress
+            value={porcentaje}
+            color={porcentaje === 100 ? 'green' : porcentaje >= 70 ? 'yellow' : 'orange'}
+            size="sm"
+            aria-label={`Ficha completa al ${porcentaje}%`}
+          />
+          {completitud.faltantes.length > 0 && (
+            <Group gap={6} mt="xs" wrap="wrap">
+              <Text size="xs" c="dimmed">
+                Falta:
+              </Text>
+              {completitud.faltantes.map((c) => (
+                <Anchor
+                  key={c.campo}
+                  component="button"
+                  type="button"
+                  size="xs"
+                  onClick={() => form.getInputNode(c.campo)?.focus()}
+                >
+                  {c.titulo}
+                </Anchor>
+              ))}
+            </Group>
+          )}
+        </Paper>
         {errores.length > 0 && (
           <Alert
             color="red"
@@ -225,14 +330,14 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
             <List size="sm" spacing={2}>
               {errores.map((e) => (
                 <List.Item key={e.campo}>
-                  <Anchor
-                    component="button"
-                    type="button"
-                    size="sm"
+                  <Button
+                    variant="subtle"
+                    size="compact-sm"
+                    px={4}
                     onClick={() => form.getInputNode(e.campo)?.focus()}
                   >
                     {e.mensaje}
-                  </Anchor>
+                  </Button>
                 </List.Item>
               ))}
             </List>
@@ -258,15 +363,13 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
           <TextInput
             label="Nombre completo"
             required
+            autoCapitalize="words"
             autoComplete="off"
             {...form.getInputProps('full_name')}
           />
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <DateInput
-              label="Fecha de nacimiento"
+            <BirthDateInput
               required
-              valueFormat="DD/MM/YYYY"
-              maxDate={new Date()}
               description={edad != null ? `${edad} años` : undefined}
               {...form.getInputProps('birth_date')}
             />
@@ -294,7 +397,11 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
               description="10 dígitos, como 55 1234 5678"
               {...form.getInputProps('phone')}
             />
-            <TextInput label="Dirección" autoComplete="off" {...form.getInputProps('address')} />
+            <TextInput
+              label="Dirección"
+              autoComplete="street-address"
+              {...form.getInputProps('address')}
+            />
           </SimpleGrid>
         </Seccion>
 
@@ -323,6 +430,26 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
           titulo="Contacto de emergencia"
           ayuda="A quién llamar si pasa algo durante el entrenamiento."
         >
+          {telefonoTutor && (
+            <Group>
+              <Tooltip label={`Copiar ${tutorElegido?.full_name || 'el tutor'} y ${telefonoTutor}`}>
+                <Button
+                  size="compact-sm"
+                  variant="light"
+                  leftSection={<IconCopy size={14} />}
+                  onClick={() => {
+                    form.setFieldValue(
+                      'emergency_contact_name',
+                      tutorElegido?.full_name || form.values.emergency_contact_name,
+                    );
+                    form.setFieldValue('emergency_contact_phone', telefonoTutor);
+                  }}
+                >
+                  Usar los datos del tutor
+                </Button>
+              </Tooltip>
+            </Group>
+          )}
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <TextInput
               label="Nombre"
@@ -356,41 +483,34 @@ export function StudentEditForm({ alumno, categorias, tutores, onSaved, onCancel
           />
         </Seccion>
 
-        <Paper
-          withBorder
-          radius="md"
-          p="sm"
-          // Al pie y pegada: en un formulario largo el botón de guardar no
-          // debería quedar tres pantallas más abajo.
-          style={{ position: 'sticky', bottom: 0, zIndex: 5 }}
-        >
-        <Group justify="space-between" wrap="wrap">
-          <Text size="xs" c={sucio ? 'orange' : 'dimmed'} role="status">
-            {sucio ? 'Tienes cambios sin guardar' : 'Sin cambios pendientes'}
-          </Text>
-          <Group>
-            {onCancel && (
-              <Button variant="default" onClick={onCancel} disabled={update.isPending}>
-                Cancelar
-              </Button>
-            )}
-            {sucio && !onCancel && (
-              <Button variant="default" onClick={() => form.reset()} disabled={update.isPending}>
-                Descartar
-              </Button>
-            )}
-            <Button
-              type="submit"
-              leftSection={<IconDeviceFloppy size={16} />}
-              loading={update.isPending}
-              disabled={!sucio}
-            >
-              Guardar cambios
-            </Button>
-          </Group>
-        </Group>
-        </Paper>
       </Stack>
+
+      {/*
+        `ActionBar` en vez de un `Paper` a `sticky bottom: 0`: así se coloca por
+        encima de la barra de navegación y del área de gestos (antes se
+        solapaban), y el aviso de cambios sin guardar deja de ir a 12 px.
+      */}
+      <ActionBar
+        variant="page"
+        status={{
+          text: sucio ? 'Tienes cambios sin guardar (⌘/Ctrl + S)' : 'Sin cambios pendientes',
+          tone: sucio ? 'warning' : 'neutral',
+        }}
+        secondary={
+          onCancel
+            ? { label: 'Cancelar', onClick: onCancel, disabled: update.isPending }
+            : sucio
+              ? { label: 'Descartar', onClick: () => form.reset(), disabled: update.isPending }
+              : undefined
+        }
+        primary={{
+          label: 'Guardar cambios',
+          type: 'submit',
+          leftIcon: <IconDeviceFloppy size={18} />,
+          loading: update.isPending,
+          disabled: !sucio,
+        }}
+      />
     </form>
   );
 }

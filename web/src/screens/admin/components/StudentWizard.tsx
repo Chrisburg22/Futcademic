@@ -30,6 +30,8 @@ import {
   IconShieldCheck,
   IconUpload,
 } from '@tabler/icons-react';
+import { BottomSheet } from '../../../components/common/BottomSheet';
+import { BirthDateInput } from '../../../components/common/BirthDateInput';
 import dayjs from 'dayjs';
 import { useCreateStudent } from '../../../hooks/useStudents';
 import { useInviteParent } from '../../../hooks/useUsers';
@@ -294,16 +296,15 @@ export function StudentWizard({ opened, onClose, categories, parents }: Props) {
     : '';
 
   return (
-    <Modal opened={opened} onClose={handleClose} title="Nuevo alumno" centered size="lg">
+    /* Hoja a pantalla completa en teléfono: es un alta de varios pasos con
+       teclado abierto, y un modal centrado deja el botón fuera de vista. */
+    <BottomSheet opened={opened} onClose={handleClose} title="Nuevo alumno" size="full">
       <Stepper active={step} size="xs" mb="md">
         <Stepper.Step label="Alumno" description="Datos básicos">
           <Stack mt="md">
             <TextInput label="Nombre completo" required {...studentForm.getInputProps('full_name')} />
-            <DateInput
-              label="Fecha de nacimiento"
+            <BirthDateInput
               required
-              maxDate={new Date()}
-              valueFormat="DD/MM/YYYY"
               {...studentForm.getInputProps('birth_date')}
             />
             <TextInput label="Correo" type="email" required {...studentForm.getInputProps('email')} />
@@ -640,6 +641,6 @@ export function StudentWizard({ opened, onClose, categories, parents }: Props) {
           </Stack>
         </Stepper.Step>
       </Stepper>
-    </Modal>
+    </BottomSheet>
   );
 }

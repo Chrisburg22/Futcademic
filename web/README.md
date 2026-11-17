@@ -50,16 +50,62 @@ cd ../backend && npm run dev   # http://localhost:3000
 
 `super_admin`, `admin`, `profesor`, `padre`, `alumno` — el sidebar y los wrappers de ruta filtran por rol.
 
-## PWA (diferida)
+## PWA y uso sin conexión
 
-La migración a Next no incluye service worker ni manifest todavía: los iconos de
-`public/` existen, pero nada los registra. `playwright.pwa.config.ts` y
-`e2e/pwa.spec.ts` quedan como referencia para la segunda fase.
+- `app/manifest.ts` → `/manifest.webmanifest` (Next inyecta el `<link rel="manifest">`).
+- `public/sw.js` → service worker escrito a mano, sin Workbox ni Serwist:
+  - `futcademic-assets`: cache-first para `/_next/static` y archivos estáticos
+    (llevan hash, son inmutables). No se purgan entre despliegues: son lo que
+    mantiene viva la versión instalada cuando no hay red.
+  - `futcademic-docs`: network-first para documentos HTML y payloads RSC, con
+    clave sin query string (para no guardar tokens de invitación).
+  - `/offline` como último recurso al navegar a una pantalla nunca abierta.
+  - `/api/**` y los otros orígenes (Supabase, backend de Render) nunca se
+    cachean: de los datos se encarga la caché persistida de TanStack Query.
+- `src/components/pwa/ServiceWorkerRegistration.tsx` lo registra **solo en
+  producción** (en desarrollo desinstala el que hubiera: un SW sirviendo chunks
+  viejos rompe el HMR) y le pasa los recursos de la primera carga, para que la
+  app abra sin red ya tras la primera visita.
+- `src/lib/offlineAuth.ts` es lo que permite arrancar sin conexión:
+  `getSession()` devuelve `null` cuando el refresh del token no tiene red, así
+  que se cae a la sesión escrita en localStorage por supabase-js y al último
+  perfil descargado. Ambas cosas se borran al cerrar sesión.
+- `InstallButton` cubre la instalación (prompt nativo, pasos de iOS y de
+  escritorio sin evento).
 
-Para retomarla (Serwist u equivalente) hay que reproducir lo que hacía
-`vite-plugin-pwa`: precache del build, `NetworkFirst` para GET `/api` (excluyendo
-`/api/chat`, que es SSE), `CacheFirst` para Supabase Storage, y el aviso de
-"nueva versión disponible" que antes vivía en `ReloadPrompt`.
+### Escribir sin conexión
+
+No hay cola propia: TanStack Query ya trae una. Con `networkMode: 'online'` una
+mutación lanzada sin red no falla, queda **pausada**; el persister la guarda
+junto a la caché y `onlineManager` la reanuda al volver la conexión.
+
+- `src/lib/offlineMutations.ts` registra con `setMutationDefaults` la
+  `mutationFn`, el optimista y los `invalidateQueries` de lo que entra en cola
+  (pase de lista, completar entrenamiento, cobro de alumno y pago a profesor).
+  **Tienen que vivir en los defaults**: una mutación rehidratada tras recargar
+  solo conserva su `mutationKey`, no la función ni los callbacks del hook.
+- Los hooks (`useSaveAttendances`, `useRegisterStudentPayment`…) solo declaran
+  `mutationKey`.
+- Las pantallas no pueden `await mutateAsync`: sin red esa promesa no resuelve
+  hasta que vuelva la conexión. Usan `mutate` con callbacks y consultan
+  `willQueueOffline()` antes de lanzar para avisar de que el dato sigue en el
+  dispositivo.
+- `OfflineQueueBadge` muestra «N por enviar» en la cabecera y avisa cuando la
+  cola se vacía; cerrar sesión con cola pendiente pide confirmación, porque
+  `clearPersistedCache` también la borra.
+- `queryClient.ts` sincroniza `onlineManager` con `navigator.onLine` al
+  arrancar. Sin eso, una app abierta **ya sin red** se cree conectada (los
+  eventos `online`/`offline` nunca llegaron) y ejecuta la cola contra el vacío,
+  perdiéndola.
+
+Lo que sigue sin funcionar sin conexión: iniciar sesión (lo valida Supabase) y
+cualquier escritura que no esté en `offlineMutations.ts`.
+
+Verificación: `npm run test:pwa` (build de producción en el puerto 4173 +
+`e2e/pwa.spec.ts`: manifest, service worker, corte de red real, cola de
+escrituras con recarga incluida y borrado de caché al cerrar sesión).
+`playwright.config.ts` lo sigue ignorando porque esa suite necesita un build, no
+`next dev`.
 
 Los iconos se regeneran desde `public/icon.svg`:
 

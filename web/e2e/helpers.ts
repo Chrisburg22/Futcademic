@@ -43,6 +43,8 @@ export interface ApiFixtures {
   venues?: any[];
   events?: any[];
   trainings?: any[];
+  /** Marcas de asistencia; se reparten por categoría y por alumno. */
+  attendances?: any[];
   achievements?: any;
   permissions?: any;
   dashboards?: Record<string, any>;
@@ -285,6 +287,21 @@ export async function mockApi(page: Page, fx: ApiFixtures) {
       }
       if (path.startsWith('/payments')) return json(fx.payments ?? []);
       if (path.startsWith('/venues')) return json(fx.venues ?? []);
+      const asistencias = fx.attendances ?? [];
+      const porCategoria = path.match(/^\/attendances\/category\/([^/]+)$/);
+      if (porCategoria) {
+        const date = url.searchParams.get('date');
+        return json(
+          asistencias.filter(
+            (a: any) =>
+              a.category_id === porCategoria[1] && (!date || String(a.date).startsWith(date)),
+          ),
+        );
+      }
+      const porAlumno = path.match(/^\/attendances\/student\/([^/]+)$/);
+      if (porAlumno) {
+        return json(asistencias.filter((a: any) => a.student_id === porAlumno[1]));
+      }
       if (path.startsWith('/attendances')) return json([]);
       if (path.startsWith('/events/trainings')) return json(fx.trainings ?? []);
       if (path.startsWith('/events')) return json(fx.events ?? []);
