@@ -1,35 +1,40 @@
 #!/usr/bin/env python3
 """
-Vista minable (etapas 1-4 de KDD) del Modelo A: ¿faltara a su siguiente sesion?
+Vista minable (etapas 1-4 de KDD) del Modelo A: ¿faltará a su siguiente sesión?
 
-Parte de la hoja de calculo de Gallos San Rafael Serratos ya extraida a JSON y
-deja una tabla lista para minar, contando que se pierde en cada etapa.
+Por defecto parte de la base de producción (extraída con mineria/extraer_bd.py);
+con --fuente hoja parte de la hoja de cálculo de Serratos ya convertida a JSON.
+Deja una tabla lista para minar y cuenta qué se pierde en cada etapa.
 
-  1. Limpieza        fechas futuras, fechas de nacimiento imposibles, alumnos repetidos
-  2. Integracion     12 pestanas -> una sola tabla alumno/sesion (llave: nombre + nacimiento; repetidos se unen)
-  3. Seleccion       atributos, tipo, valores posibles y valores atipicos (IQR)
-  4. Transformacion  atributos derivados con ventana previa, etiqueta, seudonimo, particion
+  1. Limpieza        sin nacimiento, edad imposible, marcas futuras o registradas
+                     antes de ocurrir, duplicadas, alumnos que nunca asistieron
+  2. Integración     asistencias + alumnos + escuelas por sus llaves -> una tabla
+                     alumno/sesión (en la hoja: 12 pestañas, repetidos se unen)
+  3. Selección       atributos, tipo, valores posibles y valores atípicos (IQR)
+  4. Transformación  atributos con ventana previa, etiqueta, seudónimo, partición
 
-Entrada : scripts/serratos_data.json           (contiene nombres: NO se publica)
-          scripts/serratos_data_filtrado.json  (solo alumnos con fecha de nacimiento)
-Salida  : mineria/real/vista_minable.csv       (anonima)
+Entrada : mineria/bd/extraccion_bd.json        (privada)
+          o scripts/serratos_data*.json        (privada, con --fuente hoja)
+Salida  : mineria/real/vista_minable.csv       (anónima)
           mineria/real/vista_minable_informe.json
 
-Uso:  python3 mineria/vista_minable.py
+Uso:  python3 mineria/vista_minable.py [--fuente bd|hoja]
 """
+import argparse
 import csv
 import json
 import os
 import statistics as st
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import date
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
+BD = os.path.join(AQUI, "bd", "extraccion_bd.json")
 CRUDO = os.path.join(AQUI, "..", "scripts", "serratos_data.json")
 FILTRADO = os.path.join(AQUI, "..", "scripts", "serratos_data_filtrado.json")
 SALIDA = os.path.join(AQUI, "real")
 
-HOY = "2026-10-22"
+ANIO = 2026                           # la edad se mide en años cumplidos en 2026
 EDAD_MIN, EDAD_MAX = 3, 18            # rango plausible de una academia infantil y juvenil
 COLUMNAS = ["alumno", "fecha", "edad", "n_previas", "tasa_previa", "tasa_ultimas3",
             "racha_faltas", "dias_desde_ultima", "mes", "dia_semana", "falta_siguiente"]
@@ -41,33 +46,67 @@ def dias(a, b):
     return (date.fromisoformat(a) - date.fromisoformat(b)).days
 
 
-def main():
-    inf = {}
+def cargar_bd(inf):
+    """Paso 1 y 2 desde la base: une asistencias, alumnos y escuelas por llave."""
+    d = json.load(open(BD, encoding="utf-8"))
+    hoy = d["extraido_en"][:10]
+    inf["fuente"] = "base de producción (Supabase)"
+    inf["extraido_en"] = d["extraido_en"]
+    inf["escuelas_bd"] = len(d["schools"])
+    inf["alumnos_bd"] = len(d["students"])
+    inf["bajas_bd"] = len(d["deleted_students"])
+    inf["marcas_bd"] = len(d["attendances"])
+
+    alumnos_bd = {s["id"]: s for s in d["students"]}
+    inf["sin_fecha_nacimiento"] = sum(1 for s in d["students"] if not s["birth_date"])
+    validos, imposibles = {}, 0
+    for s in d["students"]:
+        if not s["birth_date"]:
+            continue
+        edad = ANIO - int(s["birth_date"][:4])
+        if not (EDAD_MIN <= edad <= EDAD_MAX):
+            imposibles += 1
+            continue
+        validos[s["id"]] = {"escuela": s["school_id"], "edad": edad, "por_fecha": {}}
+    inf["edad_fuera_de_rango"] = imposibles
+
+    c = Counter()
+    for a in sorted(d["attendances"], key=lambda x: x["created_at"]):
+        if a["student_id"] not in alumnos_bd:
+            c["marcas_sin_alumno"] += 1
+        elif a["student_id"] not in validos:
+            c["marcas_de_alumnos_excluidos"] += 1
+        elif a["date"] > hoy:
+            c["marcas_futuras"] += 1
+        elif a["created_at"][:10] < a["date"]:
+            # Se registró antes de que ocurriera la sesión: es calendario, no asistencia.
+            c["marcas_registradas_antes_de_ocurrir"] += 1
+        elif a["date"] in validos[a["student_id"]]["por_fecha"]:
+            c["marcas_duplicadas"] += 1
+        else:
+            validos[a["student_id"]]["por_fecha"][a["date"]] = {"fecha": a["date"], "present": a["present"]}
+    inf.update(c)
+    inf["escuelas_con_marcas"] = len({v["escuela"] for v in validos.values() if v["por_fecha"]})
+    return [{"escuela": v["escuela"], "edad": v["edad"],
+             "marcas": [v["por_fecha"][f] for f in sorted(v["por_fecha"])]} for v in validos.values()]
+
+
+def cargar_hoja(inf):
+    """Paso 1 y 2 desde la hoja: 12 pestañas, repetidos unidos por nombre + nacimiento."""
+    hoy = "2026-10-22"
     crudo = json.load(open(CRUDO, encoding="utf-8"))
     filtrado = json.load(open(FILTRADO, encoding="utf-8"))
-
-    # ---------- 1. LIMPIEZA ----------
+    inf["fuente"] = "hoja de cálculo de Serratos"
     inf["pestanas_con_datos"] = len(filtrado["hojas"])
-    inf["pestanas_total"] = len(crudo["hojas"])
     inf["alumnos_hoja"] = sum(len(h["alumnos"]) for h in crudo["hojas"])
     inf["sin_fecha_nacimiento"] = sum(1 for h in crudo["hojas"] for a in h["alumnos"] if not a.get("fecha_nac"))
     inf["marcas_AF"] = sum(len(a["asistencias"]) for h in filtrado["hojas"] for a in h["alumnos"])
     inf["marcas_futuras"] = sum(1 for h in filtrado["hojas"] for a in h["alumnos"]
-                                for x in a["asistencias"] if x["fecha"] > HOY)
-    otros = Counter()
-    for h in crudo["hojas"]:
-        for a in h["alumnos"]:
-            for k, n in (a.get("sin_clasificar") or {}).items():
-                otros[k] += n if isinstance(n, int) else 1
-    inf["codigos_no_asistencia"] = dict(otros)
-
-    # Integración: un alumno que aparece en varias pestañas se une por la llave
-    # (nombre, nacimiento) y sus marcas se combinan; si dos pestañas marcan la
-    # misma fecha, se conserva la primera.
+                                for x in a["asistencias"] if x["fecha"] > hoy)
     por_clave, imposibles, repetidos = {}, 0, 0
     for h in filtrado["hojas"]:
         for a in h["alumnos"]:
-            edad = 2026 - int(a["fecha_nac"][:4])
+            edad = ANIO - int(a["fecha_nac"][:4])
             if not (EDAD_MIN <= edad <= EDAD_MAX):
                 imposibles += 1
                 continue
@@ -75,22 +114,30 @@ def main():
             if clave in por_clave:
                 repetidos += 1
             else:
-                por_clave[clave] = {"hoja": h["hoja"], "edad": edad, "por_fecha": {}}
+                por_clave[clave] = {"escuela": "serratos", "edad": edad, "por_fecha": {}}
             pf = por_clave[clave]["por_fecha"]
             for x in a["asistencias"]:
-                if x["fecha"] <= HOY:
+                if x["fecha"] <= hoy:
                     pf.setdefault(x["fecha"], x)
-    alumnos = [{"hoja": v["hoja"], "edad": v["edad"],
-                "marcas": [v["por_fecha"][f] for f in sorted(v["por_fecha"])]}
-               for v in por_clave.values()]
     inf["edad_fuera_de_rango"] = imposibles
     inf["alumnos_repetidos_unidos"] = repetidos
-    # Quien nunca asistió ya no está activo: sus filas son positivos triviales
-    # (tasa 0, etiqueta 1) que inflarían el AUC. Se excluyen.
-    sin_asistencia = [a for a in alumnos if a["marcas"] and not any(x["present"] for x in a["marcas"])]
-    inf["alumnos_sin_ninguna_asistencia"] = len(sin_asistencia)
+    return [{"escuela": v["escuela"], "edad": v["edad"],
+             "marcas": [v["por_fecha"][f] for f in sorted(v["por_fecha"])]} for v in por_clave.values()]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fuente", choices=["bd", "hoja"], default="bd")
+    inf = {}
+    alumnos = (cargar_bd if ap.parse_args().fuente == "bd" else cargar_hoja)(inf)
+
+    # ---------- 1. LIMPIEZA (común a las dos fuentes) ----------
     inf["alumnos_unicos"] = len(alumnos)
     inf["alumnos_sin_marcas"] = sum(1 for a in alumnos if not a["marcas"])
+    # Quien nunca asistió ya no está activo: sus filas son positivos triviales
+    # (tasa 0, etiqueta 1) que inflarían el AUC. Se excluyen.
+    inf["alumnos_sin_ninguna_asistencia"] = sum(
+        1 for a in alumnos if a["marcas"] and not any(x["present"] for x in a["marcas"]))
     alumnos = [a for a in alumnos if not a["marcas"] or any(x["present"] for x in a["marcas"])]
     inf["alumnos_limpios"] = len(alumnos)
     inf["marcas_limpias"] = sum(len(a["marcas"]) for a in alumnos)

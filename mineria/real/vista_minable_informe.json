@@ -1,40 +1,36 @@
 {
-  "pestanas_con_datos": 12,
-  "pestanas_total": 12,
-  "alumnos_hoja": 352,
-  "sin_fecha_nacimiento": 79,
-  "marcas_AF": 791,
-  "marcas_futuras": 23,
-  "codigos_no_asistencia": {
-    "theme6": 7,
-    "FFFF9900": 27,
-    "FFFF00FF": 50,
-    "texto": 1,
-    "FFCCCCCC": 10
-  },
-  "edad_fuera_de_rango": 5,
-  "alumnos_repetidos_unidos": 6,
-  "alumnos_sin_ninguna_asistencia": 18,
-  "alumnos_unicos": 262,
-  "alumnos_sin_marcas": 77,
-  "alumnos_limpios": 244,
-  "marcas_limpias": 715,
-  "alumnos_con_1_marca_o_menos": 98,
-  "alumnos_en_vista": 146,
-  "filas": 548,
-  "fechas": 17,
+  "fuente": "base de producción (Supabase)",
+  "extraido_en": "2026-11-17T00:17:22+00:00",
+  "escuelas_bd": 20,
+  "alumnos_bd": 355,
+  "bajas_bd": 33,
+  "marcas_bd": 809,
+  "sin_fecha_nacimiento": 0,
+  "edad_fuera_de_rango": 3,
+  "marcas_registradas_antes_de_ocurrir": 31,
+  "marcas_de_alumnos_excluidos": 1,
+  "escuelas_con_marcas": 4,
+  "alumnos_unicos": 352,
+  "alumnos_sin_marcas": 147,
+  "alumnos_sin_ninguna_asistencia": 23,
+  "alumnos_limpios": 329,
+  "marcas_limpias": 726,
+  "alumnos_con_1_marca_o_menos": 182,
+  "alumnos_en_vista": 147,
+  "filas": 544,
+  "fechas": 18,
   "primera_fecha": "2026-03-26",
-  "ultima_fecha": "2026-10-22",
-  "faltas": 77,
-  "tasa_falta": 0.1405,
-  "corte_temporal": "2026-10-12",
-  "filas_entrenamiento": 300,
-  "filas_prueba": 248,
+  "ultima_fecha": "2026-11-12",
+  "faltas": 78,
+  "tasa_falta": 0.1434,
+  "corte_temporal": "2026-10-13",
+  "filas_entrenamiento": 344,
+  "filas_prueba": 200,
   "perfil": {
     "edad": {
       "min": 5.0,
       "max": 15.0,
-      "media": 9.619,
+      "media": 9.643,
       "mediana": 10.0,
       "q1": 7.0,
       "q3": 12.0,
@@ -56,36 +52,34 @@
     },
     "n_previas": {
       "min": 1.0,
-      "max": 9.0,
-      "media": 2.703,
+      "max": 6.0,
+      "media": 2.667,
       "mediana": 3.0,
       "q1": 1.0,
       "q3": 4.0,
-      "atipicos_iqr": 1,
-      "distintos": 9,
+      "atipicos_iqr": 0,
+      "distintos": 6,
       "valores": [
         1.0,
         2.0,
         3.0,
         4.0,
         5.0,
-        6.0,
-        7.0,
-        8.0,
-        9.0
+        6.0
       ]
     },
     "tasa_previa": {
       "min": 0.0,
       "max": 1.0,
-      "media": 0.895,
+      "media": 0.89,
       "mediana": 1.0,
       "q1": 1.0,
       "q3": 1.0,
-      "atipicos_iqr": 123,
-      "distintos": 11,
+      "atipicos_iqr": 127,
+      "distintos": 13,
       "valores": [
         0.0,
+        0.1667,
         0.2,
         0.25,
         0.3333,
@@ -95,17 +89,18 @@
         0.6667,
         0.75,
         0.8,
+        0.8333,
         1.0
       ]
     },
     "tasa_ultimas3": {
       "min": 0.0,
       "max": 1.0,
-      "media": 0.89,
+      "media": 0.884,
       "mediana": 1.0,
       "q1": 1.0,
       "q3": 1.0,
-      "atipicos_iqr": 111,
+      "atipicos_iqr": 114,
       "distintos": 5,
       "valores": [
         0.0,
@@ -117,59 +112,62 @@
     },
     "racha_faltas": {
       "min": 0.0,
-      "max": 4.0,
-      "media": 0.161,
+      "max": 5.0,
+      "media": 0.178,
       "mediana": 0.0,
       "q1": 0.0,
       "q3": 0.0,
-      "atipicos_iqr": 66,
-      "distintos": 5,
+      "atipicos_iqr": 68,
+      "distintos": 6,
       "valores": [
         0.0,
         1.0,
         2.0,
         3.0,
-        4.0
+        4.0,
+        5.0
       ]
     },
     "dias_desde_ultima": {
       "min": 2.0,
-      "max": 166.0,
-      "media": 4.341,
+      "max": 203.0,
+      "media": 5.719,
       "mediana": 2.0,
       "q1": 2.0,
       "q3": 5.0,
-      "atipicos_iqr": 7,
-      "distintos": 6,
+      "atipicos_iqr": 11,
+      "distintos": 7,
       "valores": [
         2.0,
         5.0,
         7.0,
         12.0,
         14.0,
-        166.0
+        105.0,
+        203.0
       ]
     },
     "mes": {
       "min": 3.0,
-      "max": 10.0,
-      "media": 9.531,
+      "max": 11.0,
+      "media": 9.627,
       "mediana": 10.0,
       "q1": 10.0,
       "q3": 10.0,
-      "atipicos_iqr": 86,
-      "distintos": 4,
+      "atipicos_iqr": 83,
+      "distintos": 5,
       "valores": [
         3.0,
         4.0,
         9.0,
-        10.0
+        10.0,
+        11.0
       ]
     },
     "dia_semana": {
       "min": 0.0,
       "max": 3.0,
-      "media": 1.69,
+      "media": 1.688,
       "mediana": 2.0,
       "q1": 1.0,
       "q3": 3.0,
@@ -185,11 +183,11 @@
     "falta_siguiente": {
       "min": 0.0,
       "max": 1.0,
-      "media": 0.141,
+      "media": 0.143,
       "mediana": 0.0,
       "q1": 0.0,
       "q3": 0.0,
-      "atipicos_iqr": 77,
+      "atipicos_iqr": 78,
       "distintos": 2,
       "valores": [
         0.0,
@@ -200,7 +198,7 @@
   "racha_distribucion": [
     [
       0,
-      482
+      476
     ],
     [
       1,
@@ -216,13 +214,17 @@
     ],
     [
       4,
+      2
+    ],
+    [
+      5,
       1
     ]
   ],
   "edad_distribucion": [
     [
       5,
-      30
+      31
     ],
     [
       6,
@@ -234,19 +236,19 @@
     ],
     [
       8,
-      37
+      27
     ],
     [
       9,
-      61
+      62
     ],
     [
       10,
-      80
+      83
     ],
     [
       11,
-      54
+      55
     ],
     [
       12,
@@ -276,7 +278,7 @@
     ],
     [
       7,
-      63
+      55
     ],
     [
       12,
@@ -287,18 +289,22 @@
       4
     ],
     [
-      166,
-      2
+      105,
+      1
+    ],
+    [
+      203,
+      5
     ]
   ],
   "mes_distribucion": [
     [
       3,
-      6
+      5
     ],
     [
       4,
-      27
+      20
     ],
     [
       9,
@@ -306,17 +312,21 @@
     ],
     [
       10,
-      462
+      461
+    ],
+    [
+      11,
+      5
     ]
   ],
   "clase_distribucion": [
     [
       0,
-      471
+      466
     ],
     [
       1,
-      77
+      78
     ]
   ]
 }

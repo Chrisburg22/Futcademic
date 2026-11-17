@@ -168,7 +168,8 @@ El dataset no contiene datos de menores reales: nombres, fechas de nacimiento y 
 Segundo resultado, **separado del sintético y sin ningún dato simulado**. Usa solo la asistencia real de *Gallos San Rafael Serratos* (hoja de cálculo de la academia, cargada a producción el 22/10/2026).
 
 ```bash
-python3 mineria/vista_minable.py   # KDD 1-4 (necesita los JSON privados)
+python3 mineria/extraer_bd.py      # paso 1: extrae de la base (SUPABASE_URL y SUPABASE_SERVICE_KEY)
+python3 mineria/vista_minable.py   # KDD 1-4 desde la base (--fuente hoja: desde la hoja)
 python3 mineria/entrenar_vista.py  # entrena y contrasta con scikit-learn
 ```
 
@@ -201,3 +202,5 @@ Validación por alumno y fecha (5 pliegues): AUC media 0.630
 - Son 146 alumnos con entre 2 y ~10 marcas cada uno; la hoja registra bloques cortos, no toda la temporada.
 - Las marcas posteriores al 22/oct se excluyeron (fechas aún no ocurridas).
 - El conjunto de datos publicado (`real/vista_minable.csv`) es anónimo: alumno seudonimizado, sin nombre ni fecha de nacimiento.
+
+**Fuente desde la base (16/11/2026).** El paso 1 ya no parte de la hoja: `extraer_bd.py` lee de Supabase solo `schools`, `students` (sin nombre ni contacto), `attendances` y `deleted_students` y escribe `mineria/bd/extraccion_bd.json` (privado, en `.gitignore`). La limpieza descarta además las marcas registradas antes de su fecha (31: calendario, no asistencia). Resultado: 544 filas, 147 alumnos, 18 fechas hasta el 12/nov, 14.3 % faltas; AUC prueba 0.643 (scikit-learn igual), recall 0.542, lift 2.17×, validación por alumno y fecha 0.620, solo tasa previa 0.613.
