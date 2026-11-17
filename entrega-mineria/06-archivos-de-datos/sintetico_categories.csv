@@ -1,0 +1,26 @@
+category_id,school_id,school_name,name,birth_year,monthly_fee,cuota_imputada,origen
+CAT-0001,SCH-0001,Master Fut MR,Categoria 20/21,2020-2021,450,True,espejo_real
+CAT-0002,SCH-0001,Master Fut MR,Categoria 18/19,2018-2019,500,True,espejo_real
+CAT-0003,SCH-0001,Master Fut MR,Categoria 16/17,2016-2017,600,True,espejo_real
+CAT-0004,SCH-0001,Master Fut MR,Categoria 14/15,2014-2015,1200,True,espejo_real
+CAT-0005,SCH-0001,Master Fut MR,Categoria 12/13,2012-2013,1300,True,espejo_real
+CAT-0006,SCH-0001,Master Fut MR,Categoria 10/11 +,2010-2011,1500,True,espejo_real
+CAT-0007,SCH-0002,Alcones Rayados,SUB16,2016,350,False,espejo_real
+CAT-0008,SCH-0002,Alcones Rayados,SUB-15,2015,400,False,espejo_real
+CAT-0009,SCH-0002,Alcones Rayados,SUB14,2014,350,False,espejo_real
+CAT-0010,SCH-0002,Alcones Rayados,Sub13,2013,320,False,espejo_real
+CAT-0011,SCH-0002,Alcones Rayados,Sub14,2012,320,False,espejo_real
+CAT-0012,SCH-0003,Gallos Verdes FC,Sub-13,2013,1200,True,espejo_real
+CAT-0013,SCH-0004,Demo Test Academy 2,Sub-2014-2015,2014-2015,1200,True,espejo_real
+CAT-0014,SCH-0005,Academia Demo 2,Categoria sub 122,2014,1200,True,espejo_real
+CAT-0015,SCH-0006,Gallos San Rafael,Sub-8,2018,400,False,simulada
+CAT-0016,SCH-0006,Gallos San Rafael,Sub-10,2016,450,False,simulada
+CAT-0017,SCH-0006,Gallos San Rafael,Sub-12,2014,500,False,simulada
+CAT-0018,SCH-0006,Gallos San Rafael,Sub-14,2012,550,False,simulada
+CAT-0019,SCH-0006,Gallos San Rafael,Sub-16,2010,600,False,simulada
+CAT-0020,SCH-0007,Master Fut MR Aguascalientes,Categoria 20/21,2020-2021,450,False,simulada
+CAT-0021,SCH-0007,Master Fut MR Aguascalientes,Categoria 18/19,2018-2019,500,False,simulada
+CAT-0022,SCH-0007,Master Fut MR Aguascalientes,Categoria 16/17,2016-2017,550,False,simulada
+CAT-0023,SCH-0007,Master Fut MR Aguascalientes,Categoria 14/15,2014-2015,600,False,simulada
+CAT-0024,SCH-0007,Master Fut MR Aguascalientes,Categoria 12/13,2012-2013,650,False,simulada
+CAT-0025,SCH-0007,Master Fut MR Aguascalientes,Categoria 10/11,2010-2011,700,False,simulada
