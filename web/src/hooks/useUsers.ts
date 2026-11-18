@@ -79,6 +79,7 @@ export type InviteResult = {
   message: string;
   userId?: string;
   emailSent: boolean;
+  emailError?: string;
   activationLink?: string | null;
   accepted?: boolean;
 };

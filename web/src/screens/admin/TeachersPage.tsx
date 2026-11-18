@@ -40,7 +40,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { iniciales } from '../../lib/students';
 
 /** Enlace que hay que compartir a mano cuando el correo no salió. */
-type FallbackLink = { email: string; link: string };
+type FallbackLink = { email: string; link: string; reason?: string };
 
 export function TeachersPage() {
   const navigate = useRouter();
@@ -70,7 +70,7 @@ export function TeachersPage() {
       autoClose: 8000,
       message: 'La cuenta se creó, pero el correo no salió. Comparte el enlace de activación.',
     });
-    if (result.activationLink) setFallback({ email, link: result.activationLink });
+    if (result.activationLink) setFallback({ email, link: result.activationLink, reason: result.emailError });
   };
 
   const adminForm = useForm({
@@ -261,7 +261,8 @@ export function TeachersPage() {
       >
         <Stack>
           <Alert color="yellow" icon={<IconAlertTriangle size={16} />}>
-            El correo a {fallback?.email} no se pudo enviar. Pásale este enlace por otro medio;
+            El correo a {fallback?.email} no se pudo enviar
+            {fallback?.reason ? ` (${fallback.reason})` : ''}. Pásale este enlace por otro medio;
             con él crea su contraseña y entra.
           </Alert>
           <Code block style={{ wordBreak: 'break-all' }}>
