@@ -1,6 +1,6 @@
 'use client';
 
-import { Skeleton, Text, ThemeIcon, UnstyledButton, Group } from '@mantine/core';
+import { Box } from '@mantine/core';
 import {
   IconAlertTriangle,
   IconCash,
@@ -10,6 +10,7 @@ import {
   IconUsers,
   IconUserOff,
 } from '@tabler/icons-react';
+import { KpiCarousel } from '../../../components/common/KpiCarousel';
 import type { FiltrosAlumnos, ResumenAlumnos } from '../../../lib/students';
 
 type Tarjeta = {
@@ -125,61 +126,30 @@ export function StudentsSummary({
   ];
   const tarjetas = todas.filter((t) => !t.ocultar);
 
+  /*
+   * Carrusel con anclaje en vez de un `div` con `overflow-x: auto` y tarjetas
+   * de 150 px: en 375 px se veían dos de siete, sin anclaje, sin puntos y sin
+   * ninguna señal de que hubiera más. Desde `sm` vuelve a ser una rejilla.
+   */
   return (
-    <div
-      // En pantallas chicas las tarjetas se deslizan en una sola fila.
-      style={{
-        display: 'flex',
-        gap: 'var(--mantine-spacing-sm)',
-        overflowX: 'auto',
-        marginBottom: 'var(--mantine-spacing-md)',
-        paddingBottom: 4,
-      }}
-    >
-      {tarjetas.map((t) => (
-        <UnstyledButton
-          key={t.clave}
-          onClick={() => onFiltro(t.filtro)}
-          aria-pressed={t.activa}
-          aria-label={`${t.titulo}: ${t.valor}. ${t.filtro ? 'Filtrar la lista' : 'Quitar filtros'}`}
-          style={{
-            border: `1px solid var(--mantine-color-${t.activa ? t.color : 'default-border'}${t.activa ? '-6' : ''})`,
-            borderRadius: 'var(--mantine-radius-md)',
-            padding: 'var(--mantine-spacing-sm) var(--mantine-spacing-md)',
-            background: t.activa
-              ? `var(--mantine-color-${t.color}-light)`
-              : 'var(--mantine-color-body)',
-            cursor: 'pointer',
-            transition: 'border-color 150ms ease, background-color 150ms ease',
-            minHeight: 64,
-            flex: '1 0 150px',
-            textAlign: 'left',
-          }}
-        >
-          <Group gap="sm" wrap="nowrap">
-            <ThemeIcon size={36} radius="md" variant="light" color={t.color}>
-              {t.icono}
-            </ThemeIcon>
-            <div style={{ minWidth: 0 }}>
-              {cargando ? (
-                <Skeleton height={22} width={36} mb={4} />
-              ) : (
-                <Text fw={700} size="xl" lh={1.1} style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {t.valor}
-                </Text>
-              )}
-              <Text size="xs" c="dimmed" lh={1.3}>
-                {t.titulo}
-              </Text>
-              {t.pie && (
-                <Text size="xs" c="dimmed" lh={1.3} truncate>
-                  {t.pie}
-                </Text>
-              )}
-            </div>
-          </Group>
-        </UnstyledButton>
-      ))}
-    </div>
+    <Box mb="md">
+      <KpiCarousel
+        aria-label="Resumen de alumnos. Cada tarjeta filtra la lista."
+        // Son siete y hacen de filtros: con tarjetas al 78 % harían falta siete
+        // deslizamientos. Al 46 % entran dos y se asoma la tercera.
+        itemWidth="46%"
+        loading={cargando}
+        items={tarjetas.map((t) => ({
+          key: t.clave,
+          label: t.titulo,
+          value: t.valor,
+          footer: t.pie,
+          icon: t.icono,
+          color: t.color,
+          active: t.activa,
+          onSelect: () => onFiltro(t.filtro),
+        }))}
+      />
+    </Box>
   );
 }

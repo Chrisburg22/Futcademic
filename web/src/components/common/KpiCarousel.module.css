@@ -1,0 +1,71 @@
+/*
+ * Carrusel de indicadores.
+ *
+ * En teléfono se desliza con anclaje; desde `sm` pasa a rejilla. El cambio es
+ * puro CSS a propósito: decidirlo en JS pintaría la rama equivocada en el primer
+ * render.
+ */
+.track {
+  display: flex;
+  gap: var(--mantine-spacing-sm);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+  /* El sangrado deja que la primera y la última tarjeta lleguen al borde de la
+     pantalla, en vez de quedarse dentro del margen del contenido. */
+  margin-inline: calc(-1 * var(--mantine-spacing-md));
+  padding-inline: var(--mantine-spacing-md);
+  scroll-padding-inline: var(--mantine-spacing-md);
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  scroll-snap-align: start;
+  /* Menos del 100 %: así siempre se ve el borde de la siguiente tarjeta y queda
+     claro que hay más a la derecha. Con los 150 px de antes solo se veían dos de
+     siete y nada indicaba que hubiera scroll. */
+  flex: 0 0 var(--kpi-item-width, 78%);
+  min-height: 88px;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--mantine-color-default-border);
+  transition: background-color 150ms ease;
+}
+
+.dotActive {
+  background: var(--mantine-color-futcamedic-6);
+}
+
+@media (min-width: $mantine-breakpoint-sm) {
+  .track {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    overflow: visible;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+
+  .item {
+    flex: initial;
+  }
+
+  .dots {
+    display: none;
+  }
+}

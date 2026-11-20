@@ -25,6 +25,7 @@ export type CategoryStatus = 'activa' | 'inactiva' | 'archivada';
 export interface CategoryTeacherRef {
   id: string;
   full_name?: string | null;
+  avatar_url?: string | null;
 }
 
 export interface Category {
@@ -38,6 +39,8 @@ export interface Category {
    */
   birth_year: string;
   color?: string | null;
+  /** Escudo del equipo. Se sube por `/upload/category/:id/logo`. */
+  logo_url?: string | null;
   monthly_fee?: number | null;
   max_students?: number | null;
   status: CategoryStatus;
@@ -135,6 +138,7 @@ export interface Attendance {
   date: string;
   type: EventType;
   present: boolean;
+  created_at?: string;
   student?: Student;
 }
 

@@ -4,7 +4,6 @@ import {
   Group,
   Stack,
   Text,
-  Avatar,
   Badge,
   Button,
   Switch,
@@ -18,6 +17,8 @@ import {
   useUpdateTeacherPermissions,
 } from '../../hooks/usePermissions';
 import { PageHeader } from '../../components/common/PageHeader';
+import { PhotoUploader } from '../../components/common/PhotoUploader';
+import { useRemoveAvatar, useUploadAvatar } from '../../hooks/useUpload';
 import { LoadingState } from '../../components/common/LoadingState';
 import type { TeacherPermissions } from '../../types';
 import { useState, useEffect } from 'react';
@@ -38,6 +39,8 @@ export function TeacherDetailPage() {
   const { data: teacher, isLoading } = useGetTeacherDetails(id);
   const { data: perms } = useGetTeacherPermissions(id);
   const updatePerms = useUpdateTeacherPermissions();
+  const subirFoto = useUploadAvatar();
+  const quitarFoto = useRemoveAvatar();
   const [local, setLocal] = useState<TeacherPermissions | null>(null);
 
   useRegisterChatScreen(
@@ -81,9 +84,20 @@ export function TeacherDetailPage() {
 
       <Card withBorder padding="lg" radius="md" mb="md">
         <Group>
-          <Avatar size="xl" radius="xl" src={teacher.avatar_url || undefined}>
-            {teacher.full_name?.[0]?.toUpperCase()}
-          </Avatar>
+          <PhotoUploader
+            src={teacher.avatar_url}
+            name={teacher.full_name}
+            size={84}
+            hint="Foto del profesor — JPG, PNG o WEBP"
+            onUpload={async (file) => {
+              await subirFoto.mutateAsync({ file, userId: id });
+              notifications.show({ color: 'green', message: 'Foto actualizada' });
+            }}
+            onRemove={async () => {
+              await quitarFoto.mutateAsync({ userId: id });
+              notifications.show({ color: 'green', message: 'Foto quitada' });
+            }}
+          />
           <Stack gap={4}>
             <Text fw={700} size="lg">
               {teacher.full_name}

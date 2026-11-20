@@ -22,6 +22,7 @@ import { useGetStudents, useUpdateStudent } from '../../../hooks/useStudents';
 import { useAssignTeacher, useUnassignTeacher } from '../../../hooks/useCategories';
 import { useGetTeachers } from '../../../hooks/useUsers';
 import { EmptyState } from '../../../components/common/EmptyState';
+import { iniciales } from '../../../lib/students';
 import { LoadingState } from '../../../components/common/LoadingState';
 import { estaLlena, mensajeDeError } from '../../../lib/categories';
 import type { CategoryDetail } from '../../../types';
@@ -329,8 +330,14 @@ export function CategoryCoachesPanel({
                 <Table.Tr key={t.id}>
                   <Table.Td>
                     <Group gap="sm">
-                      <Avatar size="sm" radius="xl">
-                        {t.full_name?.[0]?.toUpperCase() || '?'}
+                      <Avatar
+                        size="sm"
+                        radius="xl"
+                        color="initials"
+                        name={t.full_name || undefined}
+                        src={t.avatar_url || undefined}
+                      >
+                        {iniciales(t.full_name)}
                       </Avatar>
                       <Text size="sm" fw={500}>
                         {t.full_name || 'Sin nombre'}

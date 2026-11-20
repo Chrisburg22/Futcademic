@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
+  Box,
   ActionIcon,
   Alert,
   Anchor,
@@ -24,6 +25,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import {
+  IconDots,
   IconAlertTriangle,
   IconBrandWhatsapp,
   IconCalendar,
@@ -57,9 +59,13 @@ import {
   useUpdateUniform,
 } from '../../hooks/useStudents';
 import { useGetAccountStatement } from '../../hooks/usePayments';
+import { useEstadisticaAsistencia } from '../../hooks/useAttendances';
 import { useGetCategories, useGetMyCategories } from '../../hooks/useCategories';
 import { useGetUsers } from '../../hooks/useUsers';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGetMyPermissions } from '../../hooks/usePermissions';
+import { PhotoUploader } from '../../components/common/PhotoUploader';
+import { useRemoveStudentPhoto, useUploadStudentPhoto } from '../../hooks/useUpload';
 import { LoadingState } from '../../components/common/LoadingState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useRegisterChatScreen } from '../../contexts/ChatScreenContext';
@@ -83,7 +89,8 @@ import type { Student, StudentStatus } from '../../types';
 import { StudentExpediente } from './components/StudentExpediente';
 import { StudentEditForm } from './components/StudentEditForm';
 import { StudentPaymentsPanel } from './components/StudentPaymentsPanel';
-import { StudentAttendancePanel } from './components/StudentAttendancePanel';
+import { StudentAttendanceHistory } from '../../components/attendance/StudentAttendanceHistory';
+import { StudentAttendanceCard } from '../../components/attendance/StudentAttendanceCard';
 import { TutorReminderModal } from './components/TutorReminderModal';
 
 type Pestana = 'resumen' | 'datos' | 'expediente' | 'pagos' | 'asistencia';
@@ -107,7 +114,7 @@ function Stat({
           {icon}
         </ThemeIcon>
         <div>
-          <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
+          <Text size="sm" c="dimmed" fw={600} lh={1.25}>
             {label}
           </Text>
           <Text fw={700} size="lg" style={{ fontVariantNumeric: 'tabular-nums' }}>
@@ -164,6 +171,12 @@ export function StudentDetailPage() {
   const { profile } = useAuth();
   const isTeacher = profile?.role === 'profesor';
   const esAdmin = !isTeacher;
+  const { data: permisos } = useGetMyPermissions(isTeacher);
+  // El backend exige `can_manage_students` al profesor; aquí solo se oculta el
+  // botón para no ofrecer algo que acabaría en 403.
+  const puedeEditarFoto = esAdmin || !!permisos?.can_manage_students;
+  const subirFoto = useUploadStudentPhoto();
+  const quitarFoto = useRemoveStudentPhoto();
 
   const { data: student, isLoading, isError } = useGetStudentDetails(id);
   const { data: stats } = useGetStudentStats(id);
@@ -174,6 +187,9 @@ export function StudentDetailPage() {
   const { data: todasCategorias = [] } = useGetCategories(!isTeacher);
   const categorias = isTeacher ? misCategorias : todasCategorias;
   const { data: users = [] } = useGetUsers();
+  // La asistencia de los últimos 90 días: alimenta el resumen y el aviso de la
+  // pestaña. Comparte consulta con el historial, así que no cuesta otra.
+  const { estadistica: asistencia } = useEstadisticaAsistencia(id, '90');
   const tutores = users.filter((u: any) => u.role === 'padre');
 
   // Revisar alumnos de uno en uno es lo normal al cerrar expedientes o cobrar:
@@ -374,15 +390,21 @@ export function StudentDetailPage() {
       <Card withBorder padding="lg" radius="md">
         <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
           <Group gap="md" wrap="nowrap" align="flex-start">
-            <Avatar
-              size={72}
-              radius="xl"
-              color="initials"
+            <PhotoUploader
+              src={student.avatar_url}
               name={student.full_name}
-              src={student.avatar_url || undefined}
-            >
-              {iniciales(student.full_name)}
-            </Avatar>
+              size={72}
+              canEdit={puedeEditarFoto}
+              hint="Foto del alumno — JPG, PNG o WEBP"
+              onUpload={async (file) => {
+                await subirFoto.mutateAsync({ studentId: id, file });
+                notifications.show({ color: 'green', message: 'Foto actualizada' });
+              }}
+              onRemove={async () => {
+                await quitarFoto.mutateAsync(id);
+                notifications.show({ color: 'green', message: 'Foto quitada' });
+              }}
+            />
             <Stack gap={6}>
               <Title order={2} lh={1.2}>
                 {student.full_name}
@@ -440,14 +462,21 @@ export function StudentDetailPage() {
                   type="button"
                   onClick={() => irAPestana('expediente')}
                 >
-                  Expediente: {expediente.label.toLowerCase()}
-                  {faltanDocumentos ? ` (faltan ${faltanDocumentos})` : ''}
+                  {/* Sin el prefijo «Expediente:» cabe en un teléfono; el
+                      icono y el color ya dicen de qué se trata. */}
+                  {expediente.label}
+                  {faltanDocumentos ? ` · faltan ${faltanDocumentos}` : ''}
                 </Badge>
               </Group>
             </Stack>
           </Group>
 
           <Group gap="xs">
+            {/*
+              En la cancha solo se usan estos dos. Estado, expediente, uniforme,
+              editar y eliminar eran cinco iconos sin texto apretados en la
+              cabecera; en teléfono viven ahora en «Más».
+            */}
             {telefonoTutor && (
               <Tooltip label={`Llamar a ${tutor || 'el tutor'}: ${telefonoTutor}`}>
                 <ActionIcon
@@ -478,37 +507,77 @@ export function StudentDetailPage() {
                 </ActionIcon>
               </Tooltip>
             )}
-            <Tooltip
-              label={student.uniform_delivered ? 'Uniforme entregado (clic para deshacer)' : 'Marcar uniforme entregado'}
-            >
-              <ActionIcon
-                size="lg"
-                variant={student.uniform_delivered ? 'filled' : 'light'}
-                color={student.uniform_delivered ? 'green' : 'gray'}
-                aria-pressed={!!student.uniform_delivered}
-                aria-label={`Uniforme ${student.uniform_delivered ? 'entregado' : 'pendiente'}`}
-                onClick={alternarUniforme}
-                loading={uniformMut.isPending}
-              >
-                <IconShirt size={18} />
-              </ActionIcon>
-            </Tooltip>
-            <Button variant="default" leftSection={<IconEdit size={16} />} onClick={() => irAPestana('datos')}>
-              Editar datos
-            </Button>
-            {esAdmin && (
-              <Tooltip label="Eliminar alumno">
-                <ActionIcon
-                  size="lg"
-                  variant="subtle"
-                  color="red"
-                  aria-label="Eliminar alumno"
-                  onClick={eliminar}
+            <Box visibleFrom="sm">
+              <Group gap="xs">
+                <Tooltip
+                  label={student.uniform_delivered ? 'Uniforme entregado (clic para deshacer)' : 'Marcar uniforme entregado'}
                 >
-                  <IconTrash size={18} />
-                </ActionIcon>
-              </Tooltip>
-            )}
+                  <ActionIcon
+                    size="lg"
+                    variant={student.uniform_delivered ? 'filled' : 'light'}
+                    color={student.uniform_delivered ? 'green' : 'gray'}
+                    aria-pressed={!!student.uniform_delivered}
+                    aria-label={`Uniforme ${student.uniform_delivered ? 'entregado' : 'pendiente'}`}
+                    onClick={alternarUniforme}
+                    loading={uniformMut.isPending}
+                  >
+                    <IconShirt size={18} />
+                  </ActionIcon>
+                </Tooltip>
+                <Button
+                  variant="default"
+                  leftSection={<IconEdit size={16} />}
+                  onClick={() => irAPestana('datos')}
+                >
+                  Editar datos
+                </Button>
+                {esAdmin && (
+                  <Tooltip label="Eliminar alumno">
+                    <ActionIcon
+                      size="lg"
+                      variant="subtle"
+                      color="red"
+                      aria-label="Eliminar alumno"
+                      onClick={eliminar}
+                    >
+                      <IconTrash size={18} />
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </Group>
+            </Box>
+
+            <Box hiddenFrom="sm">
+              <Menu position="bottom-end" withinPortal shadow="md" width={240}>
+                <Menu.Target>
+                  <ActionIcon variant="default" aria-label="Más acciones">
+                    <IconDots size={18} />
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item leftSection={<IconEdit size={16} />} onClick={() => irAPestana('datos')}>
+                    Editar datos
+                  </Menu.Item>
+                  <Menu.Item leftSection={<IconShirt size={16} />} onClick={alternarUniforme}>
+                    {student.uniform_delivered
+                      ? 'Marcar uniforme sin entregar'
+                      : 'Marcar uniforme entregado'}
+                  </Menu.Item>
+                  {esAdmin && (
+                    <>
+                      <Menu.Divider />
+                      <Menu.Item
+                        color="red"
+                        leftSection={<IconTrash size={16} />}
+                        onClick={eliminar}
+                      >
+                        Eliminar alumno
+                      </Menu.Item>
+                    </>
+                  )}
+                </Menu.Dropdown>
+              </Menu>
+            </Box>
           </Group>
         </Group>
       </Card>
@@ -526,7 +595,8 @@ export function StudentDetailPage() {
         deuda={deuda}
       />
 
-      <Tabs value={pestana} onChange={irAPestana} keepMounted>
+      {/* Sin `keepMounted`: montaba los cinco paneles a la vez. */}
+      <Tabs value={pestana} onChange={irAPestana} keepMounted={false}>
         <Tabs.List style={{ overflowX: 'auto', flexWrap: 'nowrap' }}>
           <Tabs.Tab value="resumen" leftSection={<IconUser size={16} />}>
             Resumen
@@ -572,7 +642,17 @@ export function StudentDetailPage() {
               Pagos
             </Tabs.Tab>
           )}
-          <Tabs.Tab value="asistencia" leftSection={<IconCalendarCheck size={16} />}>
+          <Tabs.Tab
+            value="asistencia"
+            leftSection={<IconCalendarCheck size={16} />}
+            rightSection={
+              asistencia.enRiesgo ? (
+                <Badge size="xs" variant="light" color="orange">
+                  {asistencia.porcentaje}%
+                </Badge>
+              ) : undefined
+            }
+          >
             Asistencia
           </Tabs.Tab>
         </Tabs.List>
@@ -717,6 +797,10 @@ export function StudentDetailPage() {
                     </Stack>
                   </Card>
                 )}
+                <StudentAttendanceCard
+                  estadistica={asistencia}
+                  onVer={() => irAPestana('asistencia')}
+                />
                 <Card withBorder padding="lg" radius="md" style={{ flex: 1 }}>
                   <Group gap="xs" mb="md">
                     <IconUsers size={18} />
@@ -795,7 +879,7 @@ export function StudentDetailPage() {
         )}
 
         <Tabs.Panel value="asistencia" pt="md">
-          <StudentAttendancePanel studentId={id} />
+          <StudentAttendanceHistory studentId={id} nombre={student.full_name} />
         </Tabs.Panel>
       </Tabs>
     </Stack>
@@ -828,12 +912,16 @@ function Pendientes({
     >
       <Stack gap={4}>
         {pendientes.map((p) => (
-          <Group key={p.clave} gap="xs" wrap="nowrap" align="baseline">
-            <Text size="sm">{p.mensaje}</Text>
+          <Group key={p.clave} gap="xs" wrap="wrap" align="center" justify="space-between">
+            <Text size="sm" style={{ flex: '1 1 160px', minWidth: 0 }}>
+              {p.mensaje}
+            </Text>
             {p.destino && (
-              <Anchor component="button" type="button" size="sm" onClick={() => onIr(p.destino!)}>
+              /* Era un `Anchor` sin padding: la zona táctil medía lo que el
+                 texto. */
+              <Button variant="subtle" size="compact-sm" onClick={() => onIr(p.destino!)}>
                 Resolver
-              </Anchor>
+              </Button>
             )}
           </Group>
         ))}
@@ -841,10 +929,9 @@ function Pendientes({
           <div>
             <Button
               mt="xs"
-              size="compact-sm"
               variant="light"
               color="orange"
-              leftSection={<IconBrandWhatsapp size={14} />}
+              leftSection={<IconBrandWhatsapp size={18} />}
               onClick={onRecordar}
             >
               Recordar al tutor

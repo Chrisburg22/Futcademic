@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Checkbox, CopyButton, Group, Modal, Stack, Text, Textarea } from '@mantine/core';
 import { IconAlertCircle, IconBrandWhatsapp, IconCheck, IconCopy } from '@tabler/icons-react';
+import { BottomSheet } from '../../../components/common/BottomSheet';
 import {
   MOTIVOS_RECORDATORIO,
   construirRecordatorio,
@@ -57,7 +58,7 @@ export function TutorReminderModal({ opened, onClose, alumno, academia, deuda = 
   const enlace = enlaceWhatsapp(telefono, mensaje);
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Recordar al tutor" centered size="lg">
+    <BottomSheet opened={opened} onClose={onClose} title="Recordar al tutor" size="tall">
       <Stack>
         {!telefono && (
           <Alert color="orange" variant="light" icon={<IconAlertCircle size={16} />}>
@@ -93,10 +94,13 @@ export function TutorReminderModal({ opened, onClose, alumno, academia, deuda = 
             setEditado(true);
           }}
         />
-        <Text size="xs" c="dimmed">
+        <Text size="sm" c="dimmed">
           Se abre WhatsApp con el texto listo; nada se envía hasta que pulses enviar allá.
         </Text>
-        <Group justify="flex-end">
+        {/* Las dos acciones van dentro del cuerpo para que `CopyButton` pueda
+            cambiar su propia etiqueta a «Copiado»; en teléfono quedan al
+            alcance del pulgar porque el sheet scrollea hasta aquí. */}
+        <Group justify="flex-end" wrap="wrap">
           <CopyButton value={mensaje}>
             {({ copied, copy }) => (
               <Button
@@ -123,6 +127,6 @@ export function TutorReminderModal({ opened, onClose, alumno, academia, deuda = 
           </Button>
         </Group>
       </Stack>
-    </Modal>
+    </BottomSheet>
   );
 }

@@ -84,7 +84,36 @@ Read `landing/README.md` and `landing/AGENTS.md` before touching it: all copy li
 - Browser-only checks (install prompt, iOS detection) must run after mount (`InstallButton` does this); computing them during render causes hydration mismatches that can wipe form input.
 - Data access: TanStack Query hooks → `src/api/axios.ts` (JWT interceptor) → Express. Direct Supabase is limited to auth/profile screens and `AuthContext`; do not add direct Supabase queries to hooks.
 - Env vars are `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`; the API falls back to `http://localhost:3000/api`. `next.config.ts` injects `NEXT_PUBLIC_BUILD_ID` on every build to invalidate the persisted query cache.
-- PWA is **deferred**: there is no service worker or web manifest in this build. `playwright.pwa.config.ts` and `e2e/pwa.spec.ts` are dormant references for phase 2; don't run or extend them until the PWA is reimplemented.
+- PWA: `app/manifest.ts` serves `/manifest.webmanifest`, `public/sw.js` is a hand-written service worker (no Workbox/Serwist) registered by `src/components/pwa/ServiceWorkerRegistration.tsx` **in production only** — in dev it unregisters any leftover SW, because one serving stale chunks breaks HMR. Caches: `futcademic-assets` cache-first for `/_next/static` and static files, `futcademic-docs` network-first for HTML and RSC payloads, `/offline` as the navigation fallback. `/api/**` and other origins are never cached: data lives in the TanStack Query cache in localStorage. Verify with `npm run test:pwa` (`playwright.pwa.config.ts` → production build on 4173; `e2e/pwa.spec.ts`), which `playwright.config.ts` still ignores because it needs a build.
+- Offline writes: no custom queue — TanStack Query's own. `src/lib/offlineMutations.ts` registers `mutationFn`, optimistic update and `invalidateQueries` via `setMutationDefaults` for the queued mutations (roll call, training complete, student/teacher payment); **they must live in the defaults**, because a mutation rehydrated after a reload keeps only its `mutationKey`. Hooks declare just `mutationKey`; screens must not `await mutateAsync` (a paused mutation's promise never settles offline) and call `willQueueOffline()` to word the notice. `queryClient.ts` syncs `onlineManager` with `navigator.onLine` at startup: without it an app opened with no network thinks it is online (the `online`/`offline` events never fired) and burns the queue.
+- Offline auth lives in `src/lib/offlineAuth.ts`: without it `AuthContext` sends an offline user to `/login`, because `getSession()` returns null when the token refresh has no network. It falls back to the session written in localStorage by supabase-js and to the last profile fetched, and `onAuthStateChange` ignores a null session unless the event is `SIGNED_OUT`.
+
+### Mobile UI rules (phone, < 48em)
+
+Added with the November mobile redesign of the students area. `e2e/touch-targets.spec.ts`
+enforces the first rule; the rest are conventions.
+
+- **44 px touch floor comes from CSS, not `defaultProps`.** `src/lib/theme.ts` injects
+  `classNames: { root: 'touch-target' }` (and `touch-row` for Checkbox/Radio/Switch) and
+  `src/styles/globals.css` sets the minimum under `@media (max-width: 48em)`. `defaultProps`
+  loses against an explicit prop, so `size="compact-*"` is still allowed — the floor lifts it
+  on phones — but never build a phone-only control out of a compact size or a `Badge`.
+- **Decide phone vs desktop in CSS**, with `visibleFrom`/`hiddenFrom` or a CSS Module media
+  query. `useMediaQuery` returns `undefined` on the first render and paints the wrong branch;
+  `src/hooks/useEsMovil.ts` is the only allowed use, and only for content that appears after
+  an interaction (a sheet, a popover).
+- **Rendering both branches duplicates text.** `getByRole` ignores hidden elements but
+  `getByText`/`getByLabel` do not, so never render the same heading, label or input twice —
+  scope assertions to the table (`getByRole('cell', …)`) or to a named region instead.
+- **One primary action per screen**, in `components/common/ActionBar`. It sits above the
+  bottom nav by reading `--quick-dock-height`; don't hardcode that offset anywhere.
+- **Stacking order**: content < `MobileNav` 150 < `ActionBar` 160 < chat FAB 190 < Mantine
+  overlays 200. Anything fixed goes below 200 or it covers modals and sheets.
+- **`BottomSheet` instead of `Modal size="lg"`** on phones (`components/common/BottomSheet`,
+  built on Mantine's `Drawer`; `vaul` was considered and rejected).
+- **Information must never live only in a `Tooltip`** — it does not open on touch. Use
+  `components/common/InfoPopover`.
+- Every screen needs loading, empty **and error with retry** (`ErrorState`, `SkeletonPage`).
 
 ## Database
 

@@ -162,18 +162,20 @@ test('el widget ocupa la sección y el composer llena el panel', async ({ page }
   await expect(page.getByRole('button', { name: 'Enviar mensaje' })).toBeVisible();
 });
 
-test('en móvil el widget termina antes del dock', async ({ page }) => {
+test('en móvil el widget termina antes de la barra de navegación', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await loginAs(page, { goto: '/' });
 
-  const dock = page.getByRole('navigation', { name: 'Accesos rápidos' });
-  await expect(dock).toBeVisible();
+  const barra = page.getByRole('navigation', { name: 'Navegación principal' });
+  await expect(barra).toBeVisible();
+  const barraBox = (await barra.boundingBox())!;
 
   await page.getByRole('button', { name: 'Abrir asistente IA' }).click();
   const panel = widgetPanel(page);
   const panelBox = (await panel.boundingBox())!;
   expect(panelBox.y).toBeLessThanOrEqual(16);
-  expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(768);
+  // Contra la barra, no contra un número: su alto se ajusta en un sitio.
+  expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(barraBox.y + 1);
   await expect(page.getByPlaceholder('Escribe una orden o pregunta…')).toBeVisible();
 });
 

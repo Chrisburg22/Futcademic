@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useMediaQuery } from '@mantine/hooks';
 import {
   ActionIcon,
   Badge,
@@ -9,8 +8,8 @@ import {
   Collapse,
   Group,
   Indicator,
+  Box,
   Paper,
-  Pill,
   Select,
   SimpleGrid,
   Stack,
@@ -21,6 +20,8 @@ import {
 import {
   IconAdjustmentsHorizontal,
   IconAlertTriangle,
+  IconCash,
+  IconFileAlert,
   IconSearch,
   IconX,
 } from '@tabler/icons-react';
@@ -40,6 +41,9 @@ import {
   hayFiltros,
   type FiltrosAlumnos,
 } from '../../../lib/students';
+import { SearchInput } from '../../../components/common/SearchInput';
+import { FilterChip } from '../../../components/common/FilterChip';
+import { StudentsFilterSheet } from './StudentsFilterSheet';
 
 type Props = {
   filtros: FiltrosAlumnos;
@@ -56,6 +60,8 @@ type Props = {
   puedeVerPagos?: boolean;
   /** Cuántos alumnos tienen algo urgente, para el atajo "Por atender". */
   porAtender?: number;
+  /** Cuántos alumnos daría un borrador de filtros, para el botón del sheet. */
+  contarConFiltros?: (filtros: FiltrosAlumnos) => number;
 };
 
 /** Los filtros que viven detrás de «Más filtros». */
@@ -81,16 +87,15 @@ export function StudentsToolbar({
   puedeCambiarEstado,
   puedeVerPagos = false,
   porAtender = 0,
+  contarConFiltros,
 }: Props) {
   const secundarios = SECUNDARIOS.filter((clave) => filtros[clave]).length;
   // Los filtros secundarios arrancan abiertos si alguno ya está aplicado.
   const [masAbierto, setMasAbierto] = useState(() => secundarios > 0);
+  const [hojaAbierta, setHojaAbierta] = useState(false);
+  const activos = contarFiltros(filtros);
   // En móvil solo la búsqueda queda a la vista; el resto de filtros se pliega
   // para que la lista no empiece tres pantallas más abajo.
-  const esMovil = useMediaQuery('(max-width: 48em)');
-  const primariosActivos = [filtros.categoria, filtros.estado, filtros.expediente].filter(Boolean)
-    .length;
-  const pendientesDeVer = esMovil ? secundarios + primariosActivos : secundarios;
   const chips = chipsDeFiltros(filtros, categorias);
 
   const primarios = (
@@ -129,38 +134,89 @@ export function StudentsToolbar({
     </>
   );
 
+  const atajos = (
+    /*
+     * Los tres filtros que se usan a diario, a un toque. Antes «Por atender»
+     * estaba escondido al final de la barra y los otros dos, dentro de un
+     * desplegable.
+     */
+    <Group gap="xs" wrap="wrap" role="group" aria-label="Atajos de filtro">
+      {porAtender > 0 && (
+        <Button
+          variant={filtros.atencion ? 'filled' : 'light'}
+          color="orange"
+          leftSection={<IconAlertTriangle size={16} />}
+          aria-pressed={!!filtros.atencion}
+          onClick={() => onChange({ atencion: filtros.atencion ? null : 'si' })}
+        >
+          Por atender ({porAtender})
+        </Button>
+      )}
+      {puedeVerPagos && (
+        <Button
+          variant={filtros.adeudo === 'con' ? 'filled' : 'light'}
+          color="red"
+          leftSection={<IconCash size={16} />}
+          aria-pressed={filtros.adeudo === 'con'}
+          onClick={() => onChange({ adeudo: filtros.adeudo === 'con' ? null : 'con' })}
+        >
+          Debe
+        </Button>
+      )}
+      <Button
+        variant={filtros.expediente === 'incompleto' ? 'filled' : 'light'}
+        color="yellow"
+        leftSection={<IconFileAlert size={16} />}
+        aria-pressed={filtros.expediente === 'incompleto'}
+        onClick={() =>
+          onChange({ expediente: filtros.expediente === 'incompleto' ? null : 'incompleto' })
+        }
+      >
+        Expediente incompleto
+      </Button>
+    </Group>
+  );
+
   return (
     <Stack gap="sm" mb="md">
+      {/*
+        En teléfono queda a la vista el buscador y un botón, nada más: los diez
+        desplegables apilados medían unos 560 px de alto por encima de la lista.
+      */}
       <Paper withBorder radius="md" p="sm">
         <Stack gap="sm">
-          <Group align="flex-end" wrap="wrap" gap="sm">
-            <TextInput
-              style={{ flex: '1 1 240px' }}
-              label="Buscar"
-              placeholder="Nombre, tutor, categoría o teléfono"
-              leftSection={<IconSearch size={16} />}
-              value={filtros.busqueda}
-              onChange={(e) => onChange({ busqueda: e.currentTarget.value })}
-              rightSection={
-                filtros.busqueda ? (
-                  <ActionIcon
-                    variant="subtle"
-                    color="gray"
-                    aria-label="Borrar búsqueda"
-                    onClick={() => onChange({ busqueda: '' })}
-                  >
-                    <IconX size={14} />
-                  </ActionIcon>
-                ) : undefined
-              }
-            />
-            {!esMovil && primarios}
-            <Indicator
-              label={pendientesDeVer}
-              disabled={!pendientesDeVer || masAbierto}
-              size={16}
-              offset={4}
-            >
+          <SearchInput
+            label="Buscar"
+            placeholder="Nombre, tutor, categoría o teléfono"
+            value={filtros.busqueda}
+            onChange={(busqueda) => onChange({ busqueda })}
+          />
+
+          <Group gap="xs" wrap="nowrap" hiddenFrom="sm">
+            <Indicator label={activos} disabled={!activos} size={18} offset={4}>
+              <Button
+                variant="default"
+                leftSection={<IconAdjustmentsHorizontal size={18} />}
+                onClick={() => setHojaAbierta(true)}
+              >
+                Filtros
+              </Button>
+            </Indicator>
+            {hayFiltros(filtros) && (
+              <Button
+                variant="subtle"
+                leftSection={<IconX size={18} />}
+                onClick={() => onChange(FILTROS_VACIOS)}
+              >
+                Limpiar
+              </Button>
+            )}
+          </Group>
+          <Box hiddenFrom="sm">{atajos}</Box>
+
+          <Group align="flex-end" wrap="wrap" gap="sm" visibleFrom="sm">
+            {primarios}
+            <Indicator label={secundarios} disabled={!secundarios || masAbierto} size={16} offset={4}>
               <Button
                 variant="default"
                 leftSection={<IconAdjustmentsHorizontal size={16} />}
@@ -168,14 +224,13 @@ export function StudentsToolbar({
                 aria-controls="filtros-secundarios"
                 onClick={() => setMasAbierto((v) => !v)}
               >
-                {esMovil ? 'Filtros' : 'Más filtros'}
+                Más filtros
               </Button>
             </Indicator>
           </Group>
 
-          <Collapse in={masAbierto} id="filtros-secundarios">
+          <Collapse in={masAbierto} id="filtros-secundarios" visibleFrom="sm">
             <Stack gap="sm">
-              {esMovil && <Stack gap="sm">{primarios}</Stack>}
               <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
                 {puedeVerPagos && (
                   <Select
@@ -249,25 +304,14 @@ export function StudentsToolbar({
       {chips.length > 0 && (
         <Group gap={6} wrap="wrap" aria-label="Filtros aplicados">
           {chips.map((chip) => (
-            <Pill
+            <FilterChip
               key={chip.clave}
-              withRemoveButton
-              size="md"
-              // Mantine marca el botón de quitar como aria-hidden; aquí es la
-              // única forma de soltar el filtro, así que se expone.
-              removeButtonProps={{
-                'aria-label': `Quitar filtro ${chip.titulo}: ${chip.valor}`,
-                'aria-hidden': false,
-              }}
+              label={chip.titulo}
+              value={chip.valor}
               onRemove={() =>
                 onChange({ [chip.clave]: chip.clave === 'busqueda' ? '' : null } as Partial<FiltrosAlumnos>)
               }
-            >
-              <Text span size="xs" c="dimmed">
-                {chip.titulo}:{' '}
-              </Text>
-              {chip.valor}
-            </Pill>
+            />
           ))}
         </Group>
       )}
@@ -279,32 +323,39 @@ export function StudentsToolbar({
               ? `${total} ${total === 1 ? 'alumno' : 'alumnos'}`
               : `${mostrados} de ${total} alumnos`}
           </Badge>
-          {porAtender > 0 && (
-            <Button
-              variant={filtros.atencion ? 'filled' : 'light'}
-              color="orange"
-              size="compact-sm"
-              leftSection={<IconAlertTriangle size={14} />}
-              aria-pressed={!!filtros.atencion}
-              onClick={() => onChange({ atencion: filtros.atencion ? null : 'si' })}
-            >
-              Por atender ({porAtender})
-            </Button>
-          )}
-          {hayFiltros(filtros) && (
-            <Tooltip label="Quitar búsqueda y filtros">
-              <Button
-                variant="subtle"
-                size="compact-sm"
-                leftSection={<IconX size={14} />}
-                onClick={() => onChange(FILTROS_VACIOS)}
-              >
-                Limpiar{contarFiltros(filtros) ? ` (${contarFiltros(filtros)})` : ''}
-              </Button>
-            </Tooltip>
-          )}
+          <Box visibleFrom="sm">
+            <Group gap="xs">
+              {porAtender > 0 && (
+                <Button
+                  variant={filtros.atencion ? 'filled' : 'light'}
+                  color="orange"
+                  size="sm"
+                  leftSection={<IconAlertTriangle size={16} />}
+                  aria-pressed={!!filtros.atencion}
+                  onClick={() => onChange({ atencion: filtros.atencion ? null : 'si' })}
+                >
+                  Por atender ({porAtender})
+                </Button>
+              )}
+              {hayFiltros(filtros) && (
+                <Tooltip label="Quitar búsqueda y filtros">
+                  <Button
+                    variant="subtle"
+                    size="sm"
+                    leftSection={<IconX size={16} />}
+                    onClick={() => onChange(FILTROS_VACIOS)}
+                  >
+                    Limpiar{activos ? ` (${activos})` : ''}
+                  </Button>
+                </Tooltip>
+              )}
+            </Group>
+          </Box>
         </Group>
+        {/* El orden vivía en un Select de 220 px fijos que forzaba envolturas
+            en el teléfono; ahí ahora vive dentro del sheet de filtros. */}
         <Select
+          visibleFrom="sm"
           aria-label="Ordenar por"
           w={220}
           allowDeselect={false}
@@ -313,6 +364,21 @@ export function StudentsToolbar({
           data={OPCIONES_ORDEN}
         />
       </Group>
+
+      <StudentsFilterSheet
+        opened={hojaAbierta}
+        onClose={() => setHojaAbierta(false)}
+        filtros={filtros}
+        onApply={(nuevos) => onChange(nuevos)}
+        onClear={() => onChange(FILTROS_VACIOS)}
+        orden={orden}
+        onOrden={onOrden}
+        categorias={categorias}
+        anios={anios}
+        puedeCambiarEstado={puedeCambiarEstado}
+        puedeVerPagos={puedeVerPagos}
+        contar={contarConFiltros ?? (() => mostrados)}
+      />
     </Stack>
   );
 }

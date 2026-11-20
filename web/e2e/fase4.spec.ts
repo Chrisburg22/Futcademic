@@ -39,8 +39,8 @@ const TEAM = {
   color: '#3498db',
   birthYear: 2012,
   teammates: [{ id: 's2', full_name: 'Ana Torres' }],
-  teachers: [{ id: 't1', name: 'Prof. García', avatar: null }],
-  schedules: [{ id: 'ev1', name: 'Entrenamiento', time: '17:00', venue: 'Cancha Central' }],
+  teachers: [{ id: 't1', name: 'Prof. García', avatar: null, phone: null }],
+  schedules: [{ day: 'Martes', start_time: '17:00', venue: 'Cancha Central' }],
 };
 
 const STATS = {
@@ -79,7 +79,7 @@ test('login page tiene link "Acceso alumno"', async ({ page }) => {
 // --- Alumno dashboard ---
 test('alumno: dashboard muestra stats', async ({ page }) => {
   await loginAs(page, { profile: STUDENT_PROFILE, api: API_FX });
-  await expect(page.getByText('Racha')).toBeVisible();
+  await expect(page.getByText('Sesiones seguidas')).toBeVisible();
   await expect(page.getByText('Mañana 17:00 — Sub-12')).toBeVisible();
 });
 

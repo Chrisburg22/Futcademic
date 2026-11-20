@@ -57,7 +57,8 @@ test('padre: sidebar tiene "Mis hijos"', async ({ page }) => {
   await loginAs(page, { profile: PARENT_PROFILE, api: API_FX });
   const nav = page.getByRole('navigation');
   await expect(nav.getByRole('link', { name: 'Mis hijos' })).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'Finanzas' })).toBeVisible();
+  // Para el padre la sección se llama «Pagos», no «Finanzas».
+  await expect(nav.getByRole('link', { name: 'Pagos' })).toBeVisible();
   // No admin items
   await expect(nav.getByRole('link', { name: 'Profesores' })).toBeHidden();
 });
@@ -75,9 +76,9 @@ test('padre: página mis hijos y vincular', async ({ page }) => {
   await expect(page.getByText('Código del alumno')).toBeVisible();
 });
 
-test('padre: finanzas con estado de cuenta', async ({ page }) => {
+test('padre: pagos con estado de cuenta', async ({ page }) => {
   await loginAs(page, { profile: PARENT_PROFILE, api: API_FX });
   const nav = page.getByRole('navigation');
-  await nav.getByRole('link', { name: 'Finanzas' }).click();
-  await expect(page.getByText('Estado de cuenta de tus hijos')).toBeVisible();
+  await nav.getByRole('link', { name: 'Pagos' }).click();
+  await expect(page.getByRole('heading', { name: 'Pagos' })).toBeVisible();
 });

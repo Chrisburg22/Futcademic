@@ -1,5 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '../api/axios';
+import {
+  OFFLINE_MUTATION_KEYS,
+  type RegisterStudentPaymentPayload,
+  type RegisterTeacherPaymentPayload,
+} from '../lib/offlineMutations';
 
 export const useGetPayments = (filters?: {
   type?: 'mensualidad' | 'pago_profesor';
@@ -62,29 +67,14 @@ export const useGetAccountStatement = (studentId?: string) =>
     enabled: !!studentId,
   });
 
-export const useRegisterStudentPayment = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: {
-      student_id: string;
-      amount: number;
-      payment_date: string;
-      description?: string;
-      payment_month?: number;
-    }) => (await api.post('/payments/students', payload)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['payments'] }),
+// Igual que en asistencias: la función y los invalidate están en los defaults
+// de `src/lib/offlineMutations.ts` para que la cola sobreviva a una recarga.
+export const useRegisterStudentPayment = () =>
+  useMutation<unknown, Error, RegisterStudentPaymentPayload>({
+    mutationKey: OFFLINE_MUTATION_KEYS.registerStudentPayment,
   });
-};
 
-export const useRegisterTeacherPayment = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: {
-      teacher_id: string;
-      amount: number;
-      payment_date: string;
-      description?: string;
-    }) => (await api.post('/payments/teachers', payload)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['payments'] }),
+export const useRegisterTeacherPayment = () =>
+  useMutation<unknown, Error, RegisterTeacherPaymentPayload>({
+    mutationKey: OFFLINE_MUTATION_KEYS.registerTeacherPayment,
   });
-};

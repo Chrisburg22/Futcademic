@@ -9,6 +9,7 @@ import '@/styles/globals.css';
 
 import { Providers } from '@/components/providers/Providers';
 import { AuthLinkRedirect } from '@/components/auth/AuthLinkRedirect';
+import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 
 export const metadata: Metadata = {
   title: 'Futcademic',
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
+        <ServiceWorkerRegistration />
         <Providers>
           <AuthLinkRedirect>{children}</AuthLinkRedirect>
         </Providers>

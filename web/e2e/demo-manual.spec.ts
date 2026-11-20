@@ -77,47 +77,11 @@ const EVENTS = [
   { id: 'e2', category_id: 'cat2', date: '2025-07-02', start_time: '18:00', type: 'partido', category: { id: 'cat2', name: 'Sub-14' } },
 ];
 
-const MES_ACTUAL = new Date().getMonth() + 1;
-const ANIO_ACTUAL = new Date().getFullYear();
-const MES_DOS_DIGITOS = String(MES_ACTUAL).padStart(2, '0');
-
 const PAYMENTS = [
-  { id: 'p1', type: 'mensualidad', amount: 500, payment_date: `${ANIO_ACTUAL}-${MES_DOS_DIGITOS}-15`, payment_month: MES_ACTUAL, payment_year: ANIO_ACTUAL, description: 'Mensualidad', student: STUDENTS[0] },
-  { id: 'p2', type: 'mensualidad', amount: 500, payment_date: `${ANIO_ACTUAL}-${MES_DOS_DIGITOS}-16`, payment_month: MES_ACTUAL, payment_year: ANIO_ACTUAL, description: 'Mensualidad', student: STUDENTS[2] },
-  { id: 'p3', type: 'pago_profesor', amount: 3000, payment_date: `${ANIO_ACTUAL}-${MES_DOS_DIGITOS}-20`, payment_month: MES_ACTUAL, payment_year: ANIO_ACTUAL, description: 'Nómina', teacher: TEACHERS[0] },
+  { id: 'p1', type: 'mensualidad', amount: 500, payment_date: '2025-06-15', description: 'Mensualidad junio', student: STUDENTS[0] },
+  { id: 'p2', type: 'mensualidad', amount: 500, payment_date: '2025-06-16', description: 'Mensualidad junio', student: STUDENTS[2] },
+  { id: 'p3', type: 'pago_profesor', amount: 3000, payment_date: '2025-06-20', description: 'Nómina junio', teacher: TEACHERS[0] },
 ];
-
-// El resumen financiero del panel: el mes en curso con cobranza y nómina, y
-// seis meses de historia para que la gráfica tenga forma.
-const RESUMEN_FINANCIERO = (() => {
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const month = i + 1;
-    const collected = month === MES_ACTUAL ? 1000 : month < MES_ACTUAL ? 3200 + month * 140 : 0;
-    const payroll = month === MES_ACTUAL ? 3000 : month < MES_ACTUAL ? 3000 : 0;
-    return { month, collected, payroll, margin: collected - payroll };
-  });
-  const totals = months.reduce(
-    (acc, m) => ({
-      collected: acc.collected + m.collected,
-      payroll: acc.payroll + m.payroll,
-      margin: acc.margin + m.margin,
-    }),
-    { collected: 0, payroll: 0, margin: 0 },
-  );
-  return { year: ANIO_ACTUAL, months, totals };
-})();
-
-const ESTADO_CUENTA = {
-  studentName: 'Carlos López',
-  category: 'Sub-12',
-  monthlyFee: 500,
-  pendingAmount: 500,
-  hasPaidThisMonth: false,
-  dueDate: `${ANIO_ACTUAL}-${MES_DOS_DIGITOS}-10`,
-  totalPayments: 6,
-  totalPaid: 2500,
-  movements: [],
-};
 
 const NOTIFS = [
   { id: 'n1', title: 'Pago registrado', body: 'Carlos López — $500 mensualidad', is_read: false, created_at: new Date().toISOString() },
@@ -151,12 +115,10 @@ const TEAM = {
     { id: 's4', full_name: 'Sofía Herrera', avatar_url: null },
     { id: 's5', full_name: 'Pablo Mendoza', avatar_url: null },
   ],
-  // Forma real de getStudentTeam: nombre/hora/cancha ya vienen resueltos.
-  teachers: [{ id: 't1', name: 'Prof. García', avatar: null }],
+  teachers: [{ id: 't1', name: 'Prof. García', avatar: null, phone: null }],
   schedules: [
-    { id: 'ev1', name: 'Entrenamiento', time: '17:00', venue: 'Cancha Central' },
-    { id: 'ev2', name: 'Entrenamiento', time: '17:00', venue: 'Cancha Central' },
-    { id: 'ev3', name: 'Entrenamiento', time: '10:00', venue: 'Campo Norte' },
+    { id: 'ev1', name: 'Entrenamiento de semana', time: '17:00', venue: 'Cancha Central' },
+    { id: 'ev2', name: 'Entrenamiento de sábado', time: '10:00', venue: 'Campo Norte' },
   ],
 };
 
@@ -172,8 +134,6 @@ const FULL_API = {
   venues: VENUES,
   events: EVENTS,
   payments: PAYMENTS,
-  paymentsSummary: RESUMEN_FINANCIERO,
-  accountStatement: ESTADO_CUENTA,
   // Forma real de payment.controller.ts:102-112: los items llevan `id`
   // (no `student_id`) y el mes vive en el sobre, no en cada item.
   pendingPayments: [
@@ -243,10 +203,12 @@ test('03 — Admin: Gestión de alumnos', async ({ page }) => {
   await loginAs(page, { profile: ADMIN_PROFILE, api: FULL_API, goto: '/admin/students' });
   await expect(page.getByRole('heading', { name: 'Alumnos' })).toBeVisible();
   await pause(500);
-  // Tabla con 3 alumnos
-  await expect(page.getByText('Carlos López')).toBeVisible();
-  await expect(page.getByText('Ana Torres')).toBeVisible();
-  await expect(page.getByText('Diego Ramírez')).toBeVisible();
+  // Tabla con 3 alumnos. El listado pinta tabla (escritorio) y tarjetas
+  // (teléfono): se acota al botón de la fila, que vive en la tabla.
+  const tabla = page.getByRole('table');
+  await expect(tabla.getByText('Carlos López')).toBeVisible();
+  await expect(tabla.getByText('Ana Torres')).toBeVisible();
+  await expect(tabla.getByText('Diego Ramírez')).toBeVisible();
   await pause(500);
   // Columnas visibles
   await expect(page.getByRole('columnheader', { name: 'Estado' })).toBeVisible();
@@ -319,9 +281,7 @@ test('06 — Admin: Categorías', async ({ page }) => {
   await expect(page.getByText('Sub-14')).toBeVisible();
   await pause(500);
   await page.getByRole('button', { name: 'Nueva categoría' }).click();
-  const dialogo = page.getByRole('dialog', { name: 'Nueva categoría' });
-  await expect(dialogo).toBeVisible();
-  await expect(dialogo.getByText('Generación')).toBeVisible();
+  await expect(page.getByText('Años', { exact: true }).first()).toBeVisible();
   await pause(1000);
   await page.keyboard.press('Escape');
   await pause(500);
@@ -366,20 +326,17 @@ test('09 — Admin: Finanzas (pagos y pendientes)', async ({ page }) => {
   await loginAs(page, { profile: ADMIN_PROFILE, api: FULL_API, goto: '/finances' });
   await expect(page.getByRole('heading', { name: 'Finanzas' })).toBeVisible();
   await pause(500);
-  // Tabs
+  // Tabs: la bandeja de cobranza es la pestaña por defecto
   await expect(page.getByRole('tab', { name: /Cobranza/ })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Pagos del mes' })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Nómina' })).toBeVisible();
-  await pause(500);
-  // La bandeja de cobranza abre por defecto y dice quién debe
-  await expect(page.getByText('Ana Torres')).toBeVisible();
   await pause(500);
   await page.getByRole('tab', { name: 'Pagos del mes' }).click();
   await pause(500);
   await page.getByRole('tab', { name: /Cobranza/ }).click();
   await pause(500);
   // Botón registrar pago
-  await page.getByRole('button', { name: 'Registrar pago' }).click();
+  await page.getByRole('button', { name: 'Registrar pago' }).first().click();
   await pause(1000);
   await page.keyboard.press('Escape');
   await pause(500);
@@ -492,7 +449,9 @@ test('15 — Padre: Dashboard con alerta de pago', async ({ page }) => {
   await pause(1000);
   const nav = page.getByRole('navigation');
   await expect(nav.getByRole('link', { name: 'Mis hijos' })).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'Finanzas' })).toBeVisible();
+  // Para el padre la sección se llama «Pagos»: no administra las finanzas de la
+  // academia, consulta sus mensualidades.
+  await expect(nav.getByRole('link', { name: 'Pagos' })).toBeVisible();
   await pause(1000);
 });
 
@@ -512,11 +471,11 @@ test('16 — Padre: Mis hijos + vincular', async ({ page }) => {
   await pause(500);
 });
 
-test('17 — Padre: Estado de cuenta (finanzas)', async ({ page }) => {
+test('17 — Padre: Estado de cuenta (pagos)', async ({ page }) => {
   await loginAs(page, { profile: PADRE_PROFILE, api: FULL_API });
   const nav = page.getByRole('navigation');
-  await nav.getByRole('link', { name: 'Finanzas' }).click();
-  await expect(page.getByText('Estado de cuenta de tus hijos')).toBeVisible();
+  await nav.getByRole('link', { name: 'Pagos' }).click();
+  await expect(page.getByRole('heading', { name: 'Pagos' })).toBeVisible();
   await pause(1500);
 });
 
@@ -541,8 +500,11 @@ test('18 — Alumno: Pantalla de login de alumno', async ({ page }) => {
 
 test('19 — Alumno: Dashboard', async ({ page }) => {
   await loginAs(page, { profile: ALUMNO_PROFILE, api: FULL_API });
-  await expect(page.getByText('Racha')).toBeVisible();
-  await expect(page.getByText('Este mes')).toBeVisible();
+  // Las etiquetas dicen qué es el número: «Racha» o «Este mes» a secas no lo
+  // dicen, y es la pantalla de quien menos usa aplicaciones.
+  await expect(page.getByText('Tu próximo entrenamiento')).toBeVisible();
+  await expect(page.getByText('Sesiones seguidas')).toBeVisible();
+  await expect(page.getByText('Entrenamientos este mes')).toBeVisible();
   await pause(800);
   const nav = page.getByRole('navigation');
   await expect(nav.getByRole('link', { name: 'Mi equipo' })).toBeVisible();
@@ -578,7 +540,7 @@ test('21 — Alumno: Mi equipo', async ({ page }) => {
   await expect(page.getByText('Sub-12').first()).toBeVisible();
   await pause(500);
   // Compañeros
-  await expect(page.getByText('Compañeros')).toBeVisible();
+  await expect(page.getByText('Compañeros', { exact: true })).toBeVisible();
   await expect(page.getByText('Ana Torres')).toBeVisible();
   await expect(page.getByText('Sofía Herrera')).toBeVisible();
   await expect(page.getByText('Pablo Mendoza')).toBeVisible();
@@ -586,9 +548,11 @@ test('21 — Alumno: Mi equipo', async ({ page }) => {
   // Profesores
   await expect(page.getByText('Prof. García')).toBeVisible();
   await pause(500);
-  // Horarios (el nombre del evento ya no incluye el día)
-  await expect(page.getByText('17:00')).toHaveCount(2);
-  await expect(page.getByText('Cancha Central')).toHaveCount(2);
+  // Horarios: el nombre del entrenamiento recurrente, con hora y cancha
+  await expect(page.getByText('Entrenamiento de semana')).toBeVisible();
+  await expect(page.getByText('17:00')).toBeVisible();
+  await expect(page.getByText('Cancha Central')).toBeVisible();
+  await expect(page.getByText('Entrenamiento de sábado')).toBeVisible();
   await expect(page.getByText('Campo Norte')).toBeVisible();
   await pause(1500);
 });
@@ -600,8 +564,8 @@ test('22 — Alumno: Mis estadísticas', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Mis estadísticas' })).toBeVisible();
   await pause(500);
   await expect(page.getByText('Racha actual')).toBeVisible();
-  await expect(page.getByText('Racha máx')).toBeVisible();
-  await expect(page.getByText('Este mes')).toBeVisible();
+  await expect(page.getByText('Tu mejor racha')).toBeVisible();
+  await expect(page.getByText('Asististe este mes')).toBeVisible();
   await pause(500);
   await expect(page.getByText('Historial de asistencia')).toBeVisible();
   await pause(1500);

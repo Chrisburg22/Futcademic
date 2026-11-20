@@ -54,7 +54,7 @@ test.describe('regression: cada rol llega a su dashboard', () => {
     { role: 'admin' as const, expect: 'Alumnos activos' },
     { role: 'profesor' as const, expect: 'Mis categorías' },
     { role: 'padre' as const, expect: 'Mis hijos' },
-    { role: 'alumno' as const, expect: 'Racha' },
+    { role: 'alumno' as const, expect: 'Sesiones seguidas' },
   ] as const;
 
   for (const { role, expect: text } of roles) {
