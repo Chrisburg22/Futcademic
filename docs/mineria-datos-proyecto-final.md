@@ -100,17 +100,18 @@ El resto de las 20 escuelas son entornos de prueba (`Academia Smoke …`, `Test 
 
 La asistencia real es abundante (Serratos aporta 751 de los 779 pases válidos), pero **las 33 bajas pertenecen a otras academias que casi no registran asistencia, y Serratos no registra ninguna**. No existe un solo alumno con historial de asistencia **y** baja conocida. Por eso la deserción —el objetivo principal— **no se puede entrenar todavía con datos reales**, y el proyecto presenta **dos modelos separados**:
 
-**Modelo A · datos reales · ¿faltará a su siguiente sesión?** Entrenado solo con asistencia real de Serratos, sin ningún dato simulado ([`mineria/validar_real.py`](../mineria/validar_real.py)).
+**Modelo A · datos reales · ¿faltará a su siguiente sesión?** Entrenado solo con asistencia real extraída de la base de producción (casi toda de Serratos), sin ningún dato simulado ([`mineria/vista_minable.py`](../mineria/vista_minable.py) y [`mineria/entrenar_vista.py`](../mineria/entrenar_vista.py)).
 
 | | |
 |---|---|
-| Filas | 570 (154 alumnos, 18 fechas) |
-| Etiqueta | el alumno faltó a esa sesión (18.4 % de las filas) |
-| Partición | temporal: entrena hasta el 13/oct, prueba después (213 filas, 40 faltas) |
-| **AUC en prueba** | **0.779** (entrenamiento 0.775; sobreajuste −0.004) |
-| Marcando al 25 % de sesiones | recall 0.725 (detecta 7 de cada 10 faltas), precisión 0.547, lift 2.91x |
+| Filas | 544 (147 alumnos, 18 fechas) |
+| Etiqueta | el alumno faltó a esa sesión (14.3 % de las filas) |
+| Partición | temporal: entrena antes del 13/oct (344 filas), prueba después (200 filas, 24 faltas) |
+| **AUC en prueba** | **0.643** (entrenamiento 0.735; sobreajuste 0.091; scikit-learn idéntico) |
+| Marcando exactamente al 25 % de sesiones | recall 0.542 (detecta 5 de cada 10 faltas), precisión 0.260, lift 2.17x |
+| Validación por alumno y fecha | AUC media 0.620 |
 
-Hallazgo: **una falta llama a otra.** La racha de faltas es el mejor predictor (AUC 0.722): sin racha la probabilidad de faltar ronda el 12 %, tras una falta sube a cerca del 54 %. Límite: son 154 alumnos con entre 2 y 12 marcas cada uno, porque la hoja registra bloques cortos y no la temporada completa.
+Hallazgo: **una falta llama a otra.** La racha de faltas es el mejor predictor: sin racha la probabilidad de faltar es 10.9 %, tras una o más faltas sube a 38.2 %. Se excluyeron 18 alumnos que nunca asistieron, porque inflaban el AUC. Límite: son 147 alumnos con entre 2 y 7 marcas cada uno, porque la hoja registra bloques cortos y no la temporada completa.
 
 **Modelo B · datos simulados · ¿abandonará en 30 días?** Como no hay bajas con historial real, la deserción se modela sobre un conjunto sintético derivado del esquema real ([`mineria/generar_dataset.py`](../mineria/generar_dataset.py), validado con [`mineria/validar_dataset.py`](../mineria/validar_dataset.py)). Se compone de dos grupos, distinguibles por la columna `origen`:
 
@@ -119,9 +120,7 @@ Hallazgo: **una falta llama a otra.** La racha de faltas es el mejor predictor (
 
 Produce 10,259 registros de asistencia, 960 pagos y una tabla analítica de 1,731 filas. La calibración reproduce la tasa de presencia real con una desviación de 0.8 puntos (81.3 % generado contra 82.1 % observado; con la asistencia real ya cargada la tasa medida es 82.2 %, es decir, la calibración era correcta). Un árbol CART alcanza **AUC 0.779**, lift 3.38x y recall 0.566.
 
-**Coincidencia que conviene aclarar:** ambos modelos dieron AUC 0.779. Son modelos distintos, con etiquetas distintas y datos distintos.
-
-Detalle completo, diccionario de datos y advertencias metodológicas en [`mineria/README.md`](../mineria/README.md). El conjunto publicado del modelo real (`mineria/real/dataset_real.csv`) es anónimo: alumno seudonimizado, sin nombre ni fecha de nacimiento.
+Detalle completo, diccionario de datos y advertencias metodológicas en [`mineria/README.md`](../mineria/README.md). El conjunto publicado del modelo real (`mineria/real/vista_minable.csv`) es anónimo: alumno seudonimizado, sin nombre ni fecha de nacimiento.
 
 ---
 

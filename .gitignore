@@ -50,3 +50,6 @@ scripts/serratos_data_filtrado.json
 scripts/serratos_excluidos.txt
 scripts/serratos_descartes_calidad.txt
 scripts/carga/
+
+# Extracción privada de la base (identificadores y fechas de nacimiento)
+mineria/bd/
