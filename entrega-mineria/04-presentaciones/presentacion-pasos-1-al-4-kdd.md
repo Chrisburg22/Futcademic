@@ -1,6 +1,6 @@
 # Presentación: Pasos 1 al 4 KDD
 
-12 diapositivas. Enfocada solo en las etapas 1 a 4 de KDD: en cada paso, el archivo que entra, el que sale y cómo cambia la información, desde la base de producción hasta la vista lista para minar.
+13 diapositivas. Enfocada solo en las etapas 1 a 4 de KDD: en cada paso, el archivo que entra, el que sale y cómo cambia la información, desde la base de producción hasta la vista lista para minar.
 
 ---
 
@@ -191,7 +191,31 @@ Andrea
 
 ---
 
-## Diapositiva 7 · `p2-integrar`
+## Diapositiva 7 · `p1-errores`
+
+Paso 1 · Limpieza · errores y soluciones
+
+### Seis problemas encontrados y cómo se resolvieron
+
+| Problema | Casos | Qué se hizo |
+|---|---|---|
+| Marca registrada antes de su fecha | 31 | Fuera: es calendario, no asistencia |
+| Edad imposible (nacido en 2026) | 3 | Fuera: fecha de relleno al darlo de alta |
+| Alumno sin ninguna marca | 147 | Fuera: su academia aún no pasa lista |
+| Alumno que nunca asistió | 23 | Fuera: aciertos fáciles que inflaban el AUC |
+| Alumno con una sola marca | 35 | Fuera: no alcanza para una fila con historia |
+| Datos sensibles de menores | — | Nombre, CURP, teléfono y notas médicas no se leen |
+
+**Regla de la limpieza: lo dudoso se excluye, no se inventa**
+Ningún dato faltante se rellenó con un promedio ni con un valor supuesto.
+Problemas reales detectados al extraer la base con mineria/extraer_bd.py
+Andrea
+
+> **Notas del presentador:** Presenta: Andrea Lizbeth Torres Arana. Esta es la parte central de la limpieza: cada fila es un problema real que apareció al revisar los datos, y al lado, qué hicimos. 31 marcas se guardaron días antes de la fecha que dicen, por ejemplo marcas del 27 y 29 de octubre registradas el 22: no pueden ser asistencia, son calendario, y salen. 3 alumnos tienen fecha de nacimiento en 2026, edad cero: son fechas de relleno al darlos de alta. 147 alumnos están inscritos pero no tienen ninguna marca, porque su academia todavía no pasa lista en la app. 23 solo tienen faltas, nunca asistieron: ya no están activos, y cuando los dejamos dentro el modelo parecía mucho mejor de lo que era, llegó a un AUC de 0.78; eran aciertos fáciles. 35 tienen una sola marca, que no alcanza para construir una fila con historia. Y la última es una decisión de privacidad: la extracción nunca lee nombres, CURP, teléfonos ni notas médicas, porque son datos de menores. Termina con la regla: lo dudoso se excluye, nunca se rellena.
+
+---
+
+## Diapositiva 8 · `p2-integrar`
 
 Paso 2 · Integración 
 
@@ -232,7 +256,7 @@ Andrea
 
 ---
 
-## Diapositiva 8 · `p3-atributos`
+## Diapositiva 9 · `p3-atributos`
 
 Paso 3 · Selección · atributos 
 
@@ -254,7 +278,7 @@ Sergio
 
 ---
 
-## Diapositiva 9 · `p3-atipicos`
+## Diapositiva 10 · `p3-atipicos`
 
 Paso 3 · Selección · perfil y atípicos 
 
@@ -288,7 +312,7 @@ Sergio
 
 ---
 
-## Diapositiva 10 · `p4-ventana`
+## Diapositiva 11 · `p4-ventana`
 
 Paso 4 · Transformación 
 
@@ -321,7 +345,7 @@ Sergio
 
 ---
 
-## Diapositiva 11 · `p4-codigo`
+## Diapositiva 12 · `p4-codigo`
 
 Paso 4 · Transformación · el código 
 
@@ -356,7 +380,7 @@ Sergio
 
 ---
 
-## Diapositiva 12 · `resultado`
+## Diapositiva 13 · `resultado`
 
 Resultado 
 
