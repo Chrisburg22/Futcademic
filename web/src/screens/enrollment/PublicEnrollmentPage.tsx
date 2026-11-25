@@ -42,6 +42,8 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import dayjs from 'dayjs';
+
+import { validarFechaNacimiento } from '../../lib/edad';
 import {
   fetchPublicConsentPdf,
   usePublicEnrollment,
@@ -320,7 +322,10 @@ export function PublicEnrollmentPage({ token }: { token: string }) {
     },
     validate: {
       student_full_name: (v) => (v.trim() ? null : 'Escribe el nombre del alumno'),
-      student_birth_date: (v) => (v ? null : 'Selecciona la fecha de nacimiento'),
+      // Mismo rango que el alta presencial y que el backend: el tutor se entera
+      // aquí y no al enviar la solicitud.
+      student_birth_date: (v: Date | null) =>
+        v ? validarFechaNacimiento(v) : 'Selecciona la fecha de nacimiento',
       guardian_full_name: (v) => (v.trim() ? null : 'Escribe el nombre del tutor'),
       guardian_relationship: (v) => (v ? null : 'Selecciona el parentesco'),
       guardian_email: (v) =>

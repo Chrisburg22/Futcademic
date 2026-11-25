@@ -40,6 +40,7 @@ import { ActionBar } from '../../../components/common/ActionBar';
 import { BirthDateInput } from '../../../components/common/BirthDateInput';
 import { mensajeDeError } from '../../../lib/categories';
 import { calcularEdad } from '../../../lib/students';
+import { validarFechaNacimiento } from '../../../lib/edad';
 import type { Student } from '../../../types';
 
 export type StudentFormValues = {
@@ -77,11 +78,7 @@ const validarTelefono = (valor: string) => {
 export const validacionAlumno = {
   full_name: (v: string) =>
     v.trim().length < 3 ? 'Escribe el nombre completo (mínimo 3 letras)' : null,
-  birth_date: (v: Date | null) => {
-    if (!v) return 'La fecha de nacimiento es obligatoria';
-    if (dayjs(v).isAfter(dayjs(), 'day')) return 'La fecha no puede estar en el futuro';
-    return null;
-  },
+  birth_date: validarFechaNacimiento,
   category_id: (v: string | null) => (v ? null : 'Elige la categoría del alumno'),
   phone: validarTelefono,
   emergency_contact_phone: (v: string, valores: StudentFormValues) =>

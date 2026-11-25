@@ -88,6 +88,12 @@ type BarraProps = {
   guardado: boolean;
   guardadoEn?: string | null;
   guardando: boolean;
+  /**
+   * La sesión no ha ocurrido: no hay asistencia que registrar y el backend la
+   * rechaza. Se bloquea aquí para no ofrecer un botón que va a fallar.
+   */
+  bloqueado?: boolean;
+  motivoBloqueo?: string;
   onGuardar: () => void;
   onDescartar: () => void;
 };
@@ -102,12 +108,15 @@ export function RollCallBarraGuardado({
   guardado,
   guardadoEn,
   guardando,
+  bloqueado = false,
+  motivoBloqueo,
   onGuardar,
   onDescartar,
 }: BarraProps) {
   const nivel = nivelAsistencia(resumen.porcentaje);
-  const ayuda =
-    resumen.total === 0
+  const ayuda = bloqueado
+    ? motivoBloqueo || 'No se puede guardar'
+    : resumen.total === 0
       ? 'No hay alumnos en esta categoría'
       : sucio
         ? 'Guarda el pase de lista'
@@ -178,7 +187,7 @@ export function RollCallBarraGuardado({
                 aria-label="Guardar pase de lista"
                 leftSection={<IconDeviceFloppy size={16} />}
                 loading={guardando}
-                disabled={!sucio || resumen.total === 0}
+                disabled={bloqueado || !sucio || resumen.total === 0}
                 onClick={onGuardar}
               >
                 {b.etiqueta}

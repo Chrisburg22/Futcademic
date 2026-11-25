@@ -3,6 +3,7 @@
 import { Box, TextInput } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import dayjs from 'dayjs';
+import { fechaNacimientoMinima } from '../../lib/edad';
 
 export type BirthDateInputProps = {
   label?: string;
@@ -48,6 +49,7 @@ export function BirthDateInput({
         <TextInput
           type="date"
           max={dayjs().format(ISO)}
+          min={dayjs(fechaNacimientoMinima()).format(ISO)}
           value={value ? dayjs(value).format(ISO) : ''}
           onChange={(e) => {
             const texto = e.currentTarget.value;
@@ -61,6 +63,7 @@ export function BirthDateInput({
         <DateInput
           valueFormat="DD/MM/YYYY"
           maxDate={new Date()}
+          minDate={fechaNacimientoMinima()}
           value={value ?? null}
           onChange={onChange}
           {...comunes}

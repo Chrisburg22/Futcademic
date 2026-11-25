@@ -32,6 +32,7 @@ import {
 } from '@tabler/icons-react';
 import { BottomSheet } from '../../../components/common/BottomSheet';
 import { BirthDateInput } from '../../../components/common/BirthDateInput';
+import { validarFechaNacimiento } from '../../../lib/edad';
 import dayjs from 'dayjs';
 import { useCreateStudent } from '../../../hooks/useStudents';
 import { useInviteParent } from '../../../hooks/useUsers';
@@ -113,6 +114,9 @@ export function StudentWizard({ opened, onClose, categories, parents }: Props) {
     },
     validate: {
       full_name: (v) => (v.trim() ? null : 'Requerido'),
+      // Sin esto, el alta mandaba cualquier año al backend y de ahí salieron
+      // las edades imposibles de producción.
+      birth_date: validarFechaNacimiento,
       email: (v) => (/^\S+@\S+\.\S+$/.test(v) ? null : 'Correo inválido'),
       category_id: (v) => (v ? null : 'Requerido'),
     },
