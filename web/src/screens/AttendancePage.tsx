@@ -32,6 +32,7 @@ import {
   type SesionDelDia,
 } from '../components/attendance/AttendanceSessionBar';
 import { RollCallList } from '../components/attendance/RollCallList';
+import { PuedeFaltarHoy } from '../components/risk/PuedeFaltarHoy';
 import {
   RollCallBarraGuardado,
   RollCallResumen,
@@ -82,6 +83,9 @@ function RollCallScreen() {
   const params = useSearchParams();
   const esProfesor = profile?.role === 'profesor';
   const esAdmin = !esProfesor;
+  // Explícito aunque a esta pantalla solo lleguen estos tres roles: si mañana
+  // entra otro, el aviso no se le escapa por omisión.
+  const puedeVerRiesgo = ['super_admin', 'admin', 'profesor'].includes(profile?.role || '');
 
   const { data: misCategorias = [] } = useGetMyCategories(esProfesor);
   const { data: todasCategorias = [] } = useGetCategories(!esProfesor);
@@ -438,6 +442,11 @@ function RollCallScreen() {
                   El {dayjs(fecha).format('DD/MM/YYYY')} todavía no ocurre: puedes ver la sesión
                   programada, pero el pase de lista se guarda el día del entrenamiento.
                 </Alert>
+              )}
+              {/* Antes de marcar: a quién conviene llamar. Solo admin y
+                  profesor; la API no lo sirve a padre ni alumno. */}
+              {!esFutura && (
+                <PuedeFaltarHoy categoriaId={categoriaId} fecha={fecha} habilitado={puedeVerRiesgo} />
               )}
               <RollCallResumen resumen={resumen} />
               <RollCallList

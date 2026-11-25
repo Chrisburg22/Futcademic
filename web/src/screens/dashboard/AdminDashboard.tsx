@@ -7,6 +7,7 @@ import {
   Grid,
   Group,
   SimpleGrid,
+  Stack,
   Text,
   ThemeIcon,
   Title,
@@ -28,6 +29,7 @@ import { adminItems, visibleFor, type NavItem } from '../../components/layout/na
 import { enlaceAlListado, resumirAlumnos, type ContextoAlumnos } from '../../lib/students';
 import type { Student } from '../../types';
 import { MetricCard } from './components/MetricCard';
+import { RiesgoResumenCard } from '../../components/risk/RiesgoResumenCard';
 import { WorkQueueCard } from './components/WorkQueueCard';
 import { AgendaCard, type EventoProximo } from './components/AgendaCard';
 import { RecentStudentsCard } from './components/RecentStudentsCard';
@@ -198,7 +200,12 @@ export function AdminDashboard() {
 
       <Grid mb="md">
         <Grid.Col span={{ base: 12, lg: 5 }}>
-          <RecentStudentsCard alumnos={recientes} deudas={contexto.deudas} />
+          <Stack gap="md">
+            {/* Riesgo arriba de las altas recientes: lo que pide acción hoy va
+                antes de lo que solo informa. */}
+            <RiesgoResumenCard />
+            <RecentStudentsCard alumnos={recientes} deudas={contexto.deudas} />
+          </Stack>
         </Grid.Col>
         <Grid.Col span={{ base: 12, lg: 7 }}>
           {/* En escritorio hay sitio de sobra: tarjetas. En móvil estos accesos
