@@ -186,6 +186,9 @@ export function shortLabelFor(item: NavItem, role?: Role): string {
  * destinos, que es lo que pide el público de alumno y padre.
  */
 const BARRA_POR_ROL: Record<Role, string[]> = {
+  // El rol de plataforma no usa esta navegación: vive en `/platform` con su
+  // propio shell. Queda vacío para que el tipo lo cubra sin inventar destinos.
+  plataforma: [],
   super_admin: ['/', '/admin/students', '/finances', '/attendance'],
   admin: ['/', '/admin/students', '/finances', '/attendance'],
   profesor: ['/', '/attendance', '/admin/students', '/admin/categories'],

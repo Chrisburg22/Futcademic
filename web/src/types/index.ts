@@ -1,4 +1,4 @@
-export type Role = 'super_admin' | 'admin' | 'profesor' | 'padre' | 'alumno';
+export type Role = 'plataforma' | 'super_admin' | 'admin' | 'profesor' | 'padre' | 'alumno';
 
 export interface School {
   id: string;

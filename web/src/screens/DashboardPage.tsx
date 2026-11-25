@@ -15,6 +15,8 @@ import type { Role } from '../types';
  * entrenamiento y una mensualidad.
  */
 const DESCRIPCION: Record<Role, string> = {
+  // El rol de plataforma nunca llega aquí: `AuthGate` lo manda a /platform.
+  plataforma: 'Consola de plataforma',
   super_admin: 'Resumen de tu academia',
   admin: 'Resumen de tu academia',
   profesor: 'Tus categorías y lo que toca hoy',

@@ -8,6 +8,12 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const { profile } = useAuth();
   const pathname = usePathname();
 
+  // El dueño de la plataforma no tiene academia que mirar: su sitio es la
+  // consola. Sin esto, `/` intentaría pintar un panel de academia sin datos.
+  if (profile?.role === 'plataforma' && !pathname.startsWith('/platform')) {
+    return <Redirect to="/platform" />;
+  }
+
   if (profile?.must_change_password && pathname !== '/change-password') {
     return <Redirect to="/change-password" />;
   }

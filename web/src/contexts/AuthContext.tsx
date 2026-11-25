@@ -13,8 +13,9 @@ export type Profile = {
   id: string;
   email: string;
   full_name: string | null;
-  role: 'super_admin' | 'admin' | 'profesor' | 'padre' | 'alumno';
-  school_id: string;
+  role: 'plataforma' | 'super_admin' | 'admin' | 'profesor' | 'padre' | 'alumno';
+  /** Nulo para el rol `plataforma`: no pertenece a ninguna academia. */
+  school_id: string | null;
   must_change_password?: boolean;
   phone?: string | null;
   address?: string | null;
