@@ -32,6 +32,7 @@ import {
   type SesionDelDia,
 } from '../components/attendance/AttendanceSessionBar';
 import { RollCallList } from '../components/attendance/RollCallList';
+import { PuedeFaltarHoy } from '../components/risk/PuedeFaltarHoy';
 import {
   RollCallBarraGuardado,
   RollCallResumen,
@@ -82,6 +83,9 @@ function RollCallScreen() {
   const params = useSearchParams();
   const esProfesor = profile?.role === 'profesor';
   const esAdmin = !esProfesor;
+  // Explícito aunque a esta pantalla solo lleguen estos tres roles: si mañana
+  // entra otro, el aviso no se le escapa por omisión.
+  const puedeVerRiesgo = ['super_admin', 'admin', 'profesor'].includes(profile?.role || '');
 
   const { data: misCategorias = [] } = useGetMyCategories(esProfesor);
   const { data: todasCategorias = [] } = useGetCategories(!esProfesor);
@@ -104,6 +108,9 @@ function RollCallScreen() {
   }, [params]);
 
   const fecha = estado.fecha || dayjs().format('YYYY-MM-DD');
+  // Una sesión futura no tiene asistencia: el backend la rechaza (400) y aquí
+  // se bloquea el guardado para no ofrecer un botón que va a fallar.
+  const esFutura = dayjs(fecha).isAfter(dayjs(), 'day');
   const categoriaId = estado.categoria;
 
   const aplicar = useCallback(
@@ -425,15 +432,21 @@ function RollCallScreen() {
                   Lo que cambies aquí lo reemplaza.
                 </Alert>
               )}
-              {dayjs(fecha).isAfter(dayjs(), 'day') && (
+              {esFutura && (
                 <Alert
                   variant="light"
-                  color="orange"
+                  color="red"
                   icon={<IconAlertTriangle size={18} />}
                   py="xs"
                 >
-                  Estás pasando lista de una fecha futura.
+                  El {dayjs(fecha).format('DD/MM/YYYY')} todavía no ocurre: puedes ver la sesión
+                  programada, pero el pase de lista se guarda el día del entrenamiento.
                 </Alert>
+              )}
+              {/* Antes de marcar: a quién conviene llamar. Solo admin y
+                  profesor; la API no lo sirve a padre ni alumno. */}
+              {!esFutura && (
+                <PuedeFaltarHoy categoriaId={categoriaId} fecha={fecha} habilitado={puedeVerRiesgo} />
               )}
               <RollCallResumen resumen={resumen} />
               <RollCallList
@@ -451,6 +464,8 @@ function RollCallScreen() {
                 guardado={yaGuardado}
                 guardadoEn={guardadoEn}
                 guardando={save.isPending && !save.isPaused}
+                bloqueado={esFutura}
+                motivoBloqueo="La sesión aún no ocurre"
                 onGuardar={guardar}
                 onDescartar={() => {
                   setMarcas(guardadas);

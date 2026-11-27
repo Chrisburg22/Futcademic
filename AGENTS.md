@@ -4,7 +4,7 @@ Futcademic — multi-tenant football academy management system (Spanish-language
 
 ## Repo layout: `backend/` and `mobile/` are separate git repos
 
-- This root repo tracks only: `web/`, `landing/`, `docs/`, `migrations/`, `schema.sql`, `mineria/`, `compartir/`, `scripts/`.
+- This root repo tracks only: `web/`, `landing/`, `docs/`, `migrations/`, `schema.sql`, `mineria/`, `compartir/`, `scripts/`, `vault/`.
 - Current focus: **`backend/`, `web/`, and `landing/` only**. `mobile/` is a separate Expo repo and out of scope for now; don't mirror changes there unless asked.
 - `backend/` and `mobile/` are **independent git repos** (listed in root `.gitignore`, remotes `futcademic-backend` / `futcademic-mobile`). Root `git status` will not show their changes; commit and push them from inside their own directory.
 - No workspaces, no root task runner, no CI. Install and run each workspace independently.

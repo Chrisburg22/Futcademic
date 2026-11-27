@@ -32,6 +32,10 @@ npm-debug.log*
 .vscode/
 .idea/
 
+# Obsidian: la bóveda se versiona, el estado local de ventanas y la caché no
+vault/.obsidian/
+vault/.trash/
+
 # Design files
 *.pen
 

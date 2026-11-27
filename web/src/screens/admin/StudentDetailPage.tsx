@@ -90,6 +90,7 @@ import { StudentExpediente } from './components/StudentExpediente';
 import { StudentEditForm } from './components/StudentEditForm';
 import { StudentPaymentsPanel } from './components/StudentPaymentsPanel';
 import { StudentAttendanceHistory } from '../../components/attendance/StudentAttendanceHistory';
+import { RiesgoAlumnoCard } from '../../components/risk/RiesgoAlumnoCard';
 import { StudentAttendanceCard } from '../../components/attendance/StudentAttendanceCard';
 import { TutorReminderModal } from './components/TutorReminderModal';
 
@@ -879,7 +880,12 @@ export function StudentDetailPage() {
         )}
 
         <Tabs.Panel value="asistencia" pt="md">
-          <StudentAttendanceHistory studentId={id} nombre={student.full_name} />
+          <Stack gap="md">
+            {/* El riesgo arriba del histórico: primero qué conviene hacer,
+                después el detalle de dónde sale. */}
+            <RiesgoAlumnoCard studentId={id} />
+            <StudentAttendanceHistory studentId={id} nombre={student.full_name} />
+          </Stack>
         </Tabs.Panel>
       </Tabs>
     </Stack>
